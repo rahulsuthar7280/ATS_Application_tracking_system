@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Resume Analysis Results</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+        
+        :root {
+            --primary-blue: #3b82f6;
+            --primary-blue-dark: #2563eb;
+            --primary-green: #22c55e;
+            --primary-yellow: #f59e0b;
+            --primary-red: #ef4444;
+            --light-bg: #e5e7eb;
+            --dark-text: #1f2937;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: #f3f4f6;
+            color: var(--dark-text);
+            transition: background 0.5s ease;
+        }
+        .main-container {
+            background: #f3f4f6;
+            background-image: linear-gradient(135deg, #f0f4f8 0%, #d9e2ec 100%);
+        }
+        .back-link {
+            transition: all 0.3s ease;
+        }
+        .back-link:hover {
+            transform: translateX(-5px);
+        }
+        .card {
+            background-color: white;
+            border-radius: 1.5rem;
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.05);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            border: 1px solid #e2e8f0;
+        }
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.1);
+        }
+        .match-score-card {
+            background: linear-gradient(45deg, var(--primary-blue), var(--primary-blue-dark));
+            color: white;
+            border: none;
+        }
+        .match-score-card .score {
+            text-shadow: 1px 1px 4px rgba(0,0,0,0.2);
+        }
+        .score-display {
+            width: 8rem;
+            height: 8rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2.5rem;
+            font-weight: 700;
+            border-radius: 9999px;
+            border: 6px solid rgba(255, 255, 255, 0.3);
+            background-color: rgba(255, 255, 255, 0.1);
+        }
+
+        /* Timeline styles */
+        .timeline-container {
+            position: relative;
+        }
+        .timeline-container::before {
+            content: '';
+            position: absolute;
+            left: 20px;
+            top: 0;
+            bottom: 0;
+            width: 2px;
+            background-color: #d1d5db;
+        }
+        .timeline-item {
+            position: relative;
+            margin-bottom: 2rem;
+            padding-left: 3rem;
+        }
+        .timeline-item::before {
+            content: '';
+            position: absolute;
+            left: 17px;
+            top: 0.5rem;
+            width: 0.75rem;
+            height: 0.75rem;
+            border-radius: 9999px;
+            background-color: var(--primary-blue);
+            border: 3px solid white;
+            z-index: 10;
+        }
+        .timeline-item h2 {
+            position: relative;
+            z-index: 10;
+            padding-bottom: 0.5rem;
+            font-weight: 600;
+            color: var(--primary-blue);
+        }
+        .keyword-tag {
+            font-weight: 500;
+            padding: 0.25rem 0.75rem;
+            border-radius: 9999px;
+            font-size: 0.875rem;
+        }
+        .matching-tag {
+            background-color: #d1fae5;
+            color: #10b981;
+        }
+        .missing-tag {
+            background-color: #fee2e2;
+            color: #ef4444;
+        }
+        .tabs button {
+            transition: all 0.3s ease;
+        }
+    </style>
+</head>
+<body class="bg-gray-100 text-gray-800 antialiased">
+    <div class="main-container min-h-screen p-6 lg:p-10">
+        <div class="max-w-4xl mx-auto">
+            <div class="flex items-center justify-between mb-10">
+                <h1 class="text-3xl font-bold text-gray-900 tracking-tight">Resume Analysis</h1>
+                <a href="javascript:history.back()" class="back-link flex items-center text-blue-600 hover:text-blue-800">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-1" viewBox="0 0 20 20" fill="currentColor">
+                        <path fill-rule="evenodd" d="M9.707 16.707a1 1 0 01-1.414 0l-6-6a1 1 0 010-1.414l6-6a1 1 0 011.414 1.414L5.414 9H17a1 1 0 110 2H5.414l4.293 4.293a1 1 0 010 1.414z" clip-rule="evenodd" />
+                    </svg>
+                    <span class="font-medium">Back to Applications</span>
+                </a>
+            </div>
+
+            <div class="timeline-container">
+                {% if result_data %}
+                    <!-- Candidate Information -->
+                    <div class="timeline-item">
+                        <div class="card p-6">
+                            <h2 class="text-xl font-semibold text-gray-700 mb-4">Candidate Information</h2>
+                            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-gray-600">
+                                <div>
+                                    <span class="font-medium text-gray-500">Candidate:</span>
+                                    <p class="mt-1">{{ analysis.full_name }}</p>
+                                </div>
+                                <div>
+                                    <span class="font-medium text-gray-500">Job Role:</span>
+                                    <p class="mt-1">{{ analysis.job_role }}</p>
+                                </div>
+                                <div>
+                                    <span class="font-medium text-gray-500">Date Analyzed:</span>
+                                    <p class="mt-1">{{ analysis.created_at|date:"F j, Y" }}</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    {% if result_data.match_score is not none %}
+                        <!-- Match Score -->
+                        <div class="timeline-item">
+                            <div class="card match-score-card p-8 flex flex-col md:flex-row items-center justify-between">
+                                <div class="flex-1 text-center md:text-left mb-4 md:mb-0">
+                                    <h2 class="text-2xl font-bold mb-2 text-white">Match Score</h2>
+                                    <p class="text-sm opacity-90">A high score indicates a strong alignment between the candidate's resume and the job description.</p>
+                                </div>
+                                <div class="score-display">
+                                    <span class="score">{{ result_data.match_score }}%</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Analysis Summary and Keywords in Tabs -->
+                        <div class="timeline-item">
+                            <div class="card p-6">
+                                <div class="tabs flex space-x-2 mb-4">
+                                    <button class="tab-button py-2 px-4 rounded-lg bg-blue-500 text-white font-semibold" data-tab="summary">Summary</button>
+                                    <button class="tab-button py-2 px-4 rounded-lg text-gray-600 hover:bg-gray-200" data-tab="keywords">Keywords</button>
+                                </div>
+                                <div id="summary-content" class="tab-content">
+                                    <h2 class="text-xl font-semibold text-gray-700 mb-4">Analysis Summary</h2>
+                                    <div class="space-y-4 text-gray-600 leading-relaxed">
+                                        <div>
+                                            <h3 class="font-bold text-lg mb-2 text-gray-800">Overall Assessment</h3>
+                                            <p>{{ result_data.summary.overall_assessment }}</p>
+                                        </div>
+                                        <div>
+                                            <h3 class="font-bold text-lg mb-2 text-gray-800">Strengths</h3>
+                                            <ul class="list-disc list-inside space-y-2">
+                                                {% for point in result_data.summary.strengths %}
+                                                    <li>{{ point }}</li>
+                                                {% endfor %}
+                                            </ul>
+                                        </div>
+                                        <div>
+                                            <h3 class="font-bold text-lg mb-2 text-gray-800">Weaknesses</h3>
+                                            <ul class="list-disc list-inside space-y-2">
+                                                {% for point in result_data.summary.weaknesses %}
+                                                    <li>{{ point }}</li>
+                                                {% endfor %}
+                                            </ul>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div id="keywords-content" class="tab-content d-none">
+                                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                        <div>
+                                            <h2 class="text-xl font-semibold text-gray-700 mb-4">Matching Keywords</h2>
+                                            {% if result_data.matching_keywords %}
+                                                <div class="flex flex-wrap gap-2">
+                                                    {% for keyword in result_data.matching_keywords %}
+                                                        <span class="keyword-tag matching-tag">{{ keyword }}</span>
+                                                    {% endfor %}
+                                                </div>
+                                            {% else %}
+                                                <p class="text-gray-500">No matching keywords found.</p>
+                                            {% endif %}
+                                        </div>
+                                        <div>
+                                            <h2 class="text-xl font-semibold text-gray-700 mb-4">Missing Keywords</h2>
+                                            {% if result_data.missing_keywords %}
+                                                <div class="flex flex-wrap gap-2">
+                                                    {% for keyword in result_data.missing_keywords %}
+                                                        <span class="keyword-tag missing-tag">{{ keyword }}</span>
+                                                    {% endfor %}
+                                                </div>
+                                            {% else %}
+                                                <p class="text-gray-500">No missing keywords found.</p>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Areas for Improvement -->
+                        <div class="timeline-item">
+                            <div class="card p-6">
+                                <h2 class="text-xl font-semibold text-gray-700 mb-4">Areas for Improvement</h2>
+                                <ul class="list-disc list-inside space-y-2 text-gray-600">
+                                    {% for improvement in result_data.areas_for_improvement %}
+                                        <li>{{ improvement }}</li>
+                                    {% endfor %}
+                                </ul>
+                            </div>
+                        </div>
+                    {% else %}
+                        <!-- Basic Analysis Results -->
+                        <div class="timeline-item">
+                            <div class="card p-6">
+                                <h2 class="text-xl font-semibold text-gray-700 mb-4">Analysis Summary</h2>
+                                <p class="text-gray-600 leading-relaxed">{{ result_data.summary }}</p>
+                            </div>
+                        </div>
+                    {% endif %}
+                {% else %}
+                    <div class="timeline-item">
+                        <div class="card p-6 text-center text-gray-500">
+                            <p>No analysis results found.</p>
+                        </div>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const tabs = document.querySelectorAll('.tab-button');
+            const contents = document.querySelectorAll('.tab-content');
+
+            tabs.forEach(tab => {
+                tab.addEventListener('click', () => {
+                    const tabId = tab.dataset.tab;
+                    
+                    tabs.forEach(item => {
+                        item.classList.remove('bg-blue-500', 'text-white');
+                        item.classList.add('text-gray-600', 'hover:bg-gray-200');
+                    });
+
+                    tab.classList.add('bg-blue-500', 'text-white');
+                    tab.classList.remove('text-gray-600', 'hover:bg-gray-200');
+
+                    contents.forEach(content => {
+                        content.classList.add('hidden');
+                    });
+
+                    document.getElementById(tabId + '-content').classList.remove('hidden');
+                });
+            });
+        });
+    </script>
+</body>
+</html>

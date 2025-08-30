@@ -1,0 +1,175 @@
+{% extends 'base.html' %}
+
+{% block title %}Edit Job Description{% endblock %}
+{% block page_heading %}Edit Job Description{% endblock %}
+
+{% block content %}
+<div class="content-wrapper d-flex justify-content-center align-items-center min-vh-100 py-5">
+    {# Use a fluid container to allow content to span more width #}
+    <div class="container-fluid">
+        <div class="card p-5 shadow-lg custom-card mx-auto" style="max-width: 1200px; width: 100%;">
+            <h1 class="page-heading text-center mb-4">Edit Job Description: {{ jd.title }}</h1>
+            <p class="text-center text-muted mb-4">Modify the details for this IT job description.</p>
+
+            {% if messages %}
+                <div class="mb-4">
+                    {% for message in messages %}
+                        <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                            {{ message }}
+                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+
+            <form method="post" action="{% url 'edit_jd' jd.id %}">
+                {% csrf_token %}
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label for="title" class="form-label fw-bold">Job Title <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control universal-input" id="title" name="title" required value="{{ jd.title }}">
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label for="job_level" class="form-label fw-bold">Job Level</label>
+                        <select class="form-select universal-input" id="job_level" name="job_level">
+                            <option value="">Select Level</option>
+                            {% for level_value, level_label in jd.job_level_choices %}
+                                <option value="{{ level_value }}" {% if jd.job_level == level_value %}selected{% endif %}>{{ level_label }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label for="department" class="form-label fw-bold">Department</label>
+                        <input type="text" class="form-control universal-input" id="department" name="department" value="{{ jd.department|default_if_none:'' }}">
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label for="location" class="form-label fw-bold">Location</label>
+                        <input type="text" class="form-control universal-input" id="location" name="location" value="{{ jd.location|default_if_none:'' }}">
+                    </div>
+                </div>
+                
+                <div class="mb-4">
+                    <label for="employment_type" class="form-label fw-bold">Employment Type</label>
+                    <select class="form-select universal-input" id="employment_type" name="employment_type">
+                        <option value="">Select Type</option>
+                        {% for type_value, type_label in jd.employment_type_choices %}
+                            <option value="{{ type_value }}" {% if jd.employment_type == type_value %}selected{% endif %}>{{ type_label }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="mb-4">
+                    <label for="overview" class="form-label fw-bold">Job Overview</label>
+                    <textarea class="form-control universal-textarea" id="overview" name="overview" rows="4">{{ jd.overview|default_if_none:'' }}</textarea>
+                </div>
+
+                <div class="mb-4">
+                    <label for="responsibilities" class="form-label fw-bold">Key Responsibilities</label>
+                    <textarea class="form-control universal-textarea" id="responsibilities" name="responsibilities" rows="8">{{ jd.responsibilities|default_if_none:'' }}</textarea>
+                </div>
+
+                <div class="mb-4">
+                    <label for="required_skills" class="form-label fw-bold">Required Skills & Qualifications</label>
+                    <textarea class="form-control universal-textarea" id="required_skills" name="required_skills" rows="6">{{ jd.required_skills|default_if_none:'' }}</textarea>
+                </div>
+
+                <div class="mb-4">
+                    <label for="preferred_skills" class="form-label fw-bold">Preferred Skills</label>
+                    <textarea class="form-control universal-textarea" id="preferred_skills" name="preferred_skills" rows="4">{{ jd.preferred_skills|default_if_none:'' }}</textarea>
+                </div>
+
+                <div class="mb-4">
+                    <label for="education_experience" class="form-label fw-bold">Education & Experience</label>
+                    <textarea class="form-control universal-textarea" id="education_experience" name="education_experience" rows="4">{{ jd.education_experience|default_if_none:'' }}</textarea>
+                </div>
+
+                <div class="mb-4">
+                    <label for="benefits" class="form-label fw-bold">Benefits & Perks</label>
+                    <textarea class="form-control universal-textarea" id="benefits" name="benefits" rows="4">{{ jd.benefits|default_if_none:'' }}</textarea>
+                </div>
+
+                <div class="d-grid gap-2">
+                    <button type="submit" class="btn btn-primary enhanced-btn">
+                        <i class="fas fa-save me-2"></i>Save Changes
+                    </button>
+                    <a href="{% url 'analyze_jd' jd.id %}" class="btn btn-secondary universal-btn">
+                        <i class="fas fa-arrow-left me-2"></i>Cancel & Back to JD Details
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_head %}
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+    body {
+        font-family: 'Inter', sans-serif;
+        background-color: #f8f9fa;
+        color: #343a40;
+    }
+    .page-heading {
+        font-size: 2.2rem;
+        color: #0069d9;
+        font-weight: 700;
+    }
+    .custom-card {
+        border-radius: 1rem;
+        box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+        background-color: white;
+    }
+    .universal-input, .universal-textarea, .form-select {
+        border-radius: 0.5rem;
+        border: 1px solid #ced4da;
+        padding: 0.75rem 1rem;
+        transition: all 0.3s ease;
+    }
+    .universal-input:focus, .universal-textarea:focus, .form-select:focus {
+        border-color: #007bff;
+        box-shadow: 0 0 0 0.25rem rgba(0, 123, 255, 0.25);
+    }
+    .enhanced-btn {
+        border: none;
+        border-radius: 0.5rem;
+        font-weight: 600;
+        padding: 0.75rem 1.5rem;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
+        transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1), 0 1px 3px rgba(0, 0, 0, 0.08);
+    }
+    .enhanced-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 7px 14px rgba(0, 0, 0, 0.1), 0 3px 6px rgba(0, 0, 0, 0.08);
+    }
+    .btn-primary {
+        background: linear-gradient(45deg, #0d6efd, #0056b3);
+        color: white;
+    }
+    .btn-primary:hover {
+        background: linear-gradient(45deg, #0056b3, #003d80);
+        color: white;
+    }
+    .universal-btn {
+        font-weight: 600;
+        border-radius: 0.5rem;
+        padding: 0.75rem 1.5rem;
+    }
+    .alert {
+        border-radius: 0.5rem;
+    }
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+{% endblock %}

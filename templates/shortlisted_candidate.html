@@ -1,0 +1,292 @@
+{% extends 'base.html' %}
+
+{% block title %}Candidate Records{% endblock %}
+{% block page_heading %}Candidate Records{% endblock %}
+
+{% block content %}
+    <div class="card p-4">
+        {# STATIC DATA FOR DEMONSTRATION #}
+        {# In a real application, 'candidates' would come from your Django view context. #}
+        {# For now, we're simulating it directly in the template. #}
+
+        
+        {% if candidates %}
+            <div class="table-responsive">
+                <h2 class="section-title">Shortlisted Candidate</h2>
+
+                <div class="filter-buttons mb-3">
+                    <button class="btn btn-info filter-btn" data-filter="">All Candidates</button>
+                    <button class="btn btn-info filter-btn" data-filter="shortlisted">Shortlisted</button>
+                    <button class="btn btn-success filter-btn" data-filter="Selected">Selected</button>
+                    <button class="btn btn-danger filter-btn" data-filter="Rejected">Rejected</button>
+                    <button class="btn btn-info filter-btn" data-filter="Not Selected">Not Selected</button>
+                    <button class="btn btn-info filter-btn" data-filter="Interview Scheduled">Interview Scheduled</button>
+                </div>
+
+                {# Add an ID to your table for DataTables initialization #}
+                <table id="candidateRecordsTable" class="table table-striped table-hover">
+                    <thead>
+                        <tr>
+                            <th>S.No.</th>
+                            <th>Name</th>
+                            <th>Job Role</th>
+                            <th>Overall Exp.</th>
+                            <th>AI Rec.</th>
+                            <th>Suggested Salary</th>
+                            <th>Final Decision</th>
+                            <th>Final Salary</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for candidate in candidates %}
+                            <tr>
+                                <td>{{ forloop.counter }}</td> {# Using forloop.counter for S.No. #}
+                                <td>{{ candidate.full_name }}</td>
+                                <td>{{ candidate.job_role }}</td>
+                                <td>{{ candidate.overall_experience }}</td>
+                                <td>
+                                    <span class="badge 
+                                        {% if candidate.hiring_recommendation == 'Hire' or candidate.hiring_recommendation == 'Strong Hire' %}bg-success{% elif candidate.hiring_recommendation == 'Reject' %}bg-danger{% else %}bg-warning{% endif %}
+                                    ">{{ candidate.hiring_recommendation }}</span>
+                                </td>
+                                <td>{{ candidate.suggested_salary_range }}</td>
+                                <td>
+                                    <span class="badge font-weight-bold
+                                        {% if candidate.final_decision == 'Selected' %}bg-success{% elif candidate.final_decision == 'Rejected' %}bg-danger{% elif candidate.final_decision == 'Not Selected' %}bg-secondary{% elif candidate.final_decision == 'Interview Scheduled' %}bg-primary{% elif candidate.final_decision == 'shortlisted' %}bg-info{% else %}bg-muted{% endif %}
+                                    ">{{ candidate.final_decision|default:"Pending" }}</span>
+                                </td>
+                                <td>₹{{ candidate.final_salary|floatformat:2|default:"N/A" }}</td>
+                                <td>
+                                    {# Link to the individual interview status/detail page #}
+                                    <a href="{% url 'candidate_profile' candidate_id=candidate.id %}" class="btn btn-info btn-sm" title="View Details">
+                                        <i class="fas fa-eye"></i>
+                                    </a>
+                                    {# Add other action buttons if needed, e.g., edit, delete #}
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% else %}
+            <p>No candidate records found. Analyze a resume to add one!</p>
+            <a href="{% url 'resume_analysis' %}" class="btn btn-info">Go to Resume Analysis</a>
+        {% endif %}
+    </div>
+{% endblock %}
+
+<style>
+    /* Custom styles for the DataTables table if needed */
+    #candidateRecordsTable {
+        width: 100% !important; /* Ensure table takes full width of its container */
+        margin-top: 20px; /* Space above the table */
+    }
+
+    /* Adjust padding/margins for DataTables elements if they clash with Bootstrap */
+    .dataTables_wrapper .dataTables_filter {
+        margin-bottom: 15px; /* Space below search box */
+    }
+
+    .dataTables_wrapper .dataTables_length {
+        margin-bottom: 15px; /* Space below "Show entries" dropdown */
+    }
+
+    /* Styling for action buttons in the table */
+    .table td .btn-sm {
+        padding: 0.25rem 0.5rem;
+        font-size: 0.875rem;
+        line-height: 1.5;
+        border-radius: 0.2rem;
+    }
+
+    /* Section Titles within cards */
+    .section-title {
+        color: var(--secondary-color);
+        font-weight: 700;
+        margin-bottom: 2.5rem;
+        font-size: 2.0rem;
+        position: relative;
+        padding-bottom: 1rem;
+        text-shadow: 1px 1px 4px rgba(0,0,0,0.05);
+    }
+    .section-title::after {
+        content: '';
+        position: absolute;
+        left: 0;
+        bottom: 0;
+        width: 100px;
+        height: 6px;
+        background: linear-gradient(90deg, var(--success-color), var(--info-color));
+        border-radius: 3px;
+        animation: expandLine 1.5s ease-out forwards;
+    }
+
+    /* Recommendation and Decision text styling (now used for badge text color) */
+    /* The primary colors for badges will be handled by bg- classes */
+    .text-success { color: #28a745 !important; } /* Green */
+    .text-danger { color: #dc3545 !important; } /* Red */
+    .text-warning { color: #ffc107 !important; } /* Amber */
+    .text-primary { color: #007bff !important; } /* Blue */
+    .text-muted { color: #6c757d !important; } /* Grey */
+    .font-weight-bold { font-weight: bold !important; }
+
+    /* New styles for badge-like appearance */
+    .badge {
+        display: inline-block;
+        padding: 0.35em 0.6em;
+        font-size: 75%;
+        font-weight: 700;
+        line-height: 1;
+        text-align: center;
+        white-space: nowrap;
+        vertical-align: baseline;
+        border-radius: 0.25rem;
+        color: #fff; /* Default text color for badges */
+    }
+
+    .badge.bg-success { background-color: #28a745 !important; }
+    .badge.bg-danger { background-color: #dc3545 !important; }
+    .badge.bg-warning { background-color: #ffc107 !important; color: #333; } /* Darker text for warning badge */
+    .badge.bg-primary { background-color: #007bff !important; }
+    .badge.bg-muted { background-color: #dee2e6 !important; color: #333; } /* Lighter grey for 'Pending' */
+    .badge.bg-info { background-color: #17a2b8 !important; } /* For 'shortlisted' */
+    .badge.bg-secondary { background-color: #6c757d !important; } /* For 'Not Selected' - using Bootstrap's secondary color */
+
+
+    /* Adjust card padding for the records page */
+    .card.p-4 {
+        padding: 1.5rem !important; /* Standard Bootstrap padding for cards */
+    }
+
+    /* Ensure icons in headers are aligned (if used) */
+    .card-title .fas {
+        vertical-align: middle;
+    }
+
+    /* General Layout and containers (from previous code, ensure these are present in your style.css) */
+    body {
+        font-family: 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+        background-color: #f4f7f6; /* Light grey background */
+        color: #333;
+    }
+
+    /* Ensure your base.html provides necessary main content wrappers and headings */
+    .page-heading {
+        font-size: 2.2em;
+        color: #343a40;
+        margin-bottom: 25px;
+        text-align: center;
+        padding-top: 20px;
+    }
+
+    .content-wrapper {
+        padding: 20px;
+        max-width: 1200px;
+        margin: 0 auto;
+    }
+
+    /* Styling for DataTables buttons */
+    .dt-buttons {
+        margin-bottom: 15px; /* Space below the buttons */
+    }
+    .dt-buttons .dt-button {
+        background-color: #007bff; /* Primary blue */
+        color: white;
+        border: none;
+        padding: 8px 12px;
+        border-radius: 5px;
+        margin-right: 5px;
+        cursor: pointer;
+        transition: background-color 0.3s ease;
+    }
+    .dt-buttons .dt-button:hover {
+        background-color: #0056b3; /* Darker blue on hover */
+    }
+
+    /* Filter button styling */
+    .filter-buttons .btn {
+        margin-right: 8px;
+        margin-bottom: 8px;
+    }
+</style>
+
+{% block extra_js %}
+{# Load jQuery (DataTables dependency) and DataTables JS/CSS #}
+{% load static %}
+<script src="https://code.jquery.com/jquery-3.7.1.min.js" integrity="sha256-/JqT3SQfawRcv/BIHPThkBvs0OEvtFFmqPF/lYI/Cxo=" crossorigin="anonymous"></script>
+<link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/2.0.8/css/dataTables.dataTables.min.css"/>
+<script type="text/javascript" src="https://cdn.datatables.net/2.0.8/js/dataTables.min.js"></script>
+
+{# New Libraries for Buttons Extension #}
+<link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/buttons/3.0.2/css/buttons.dataTables.min.css"/>
+<script type="text/javascript" src="https://cdn.datatables.net/buttons/3.0.2/js/dataTables.buttons.min.js"></script>
+<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.1.3/jszip.min.js"></script>
+<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.53/pdfmake.min.js"></script>
+<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.53/vfs_fonts.js"></script>
+<script type="text/javascript" src="https://cdn.datatables.net/buttons/3.0.2/js/buttons.html5.min.js"></script>
+<script type="text/javascript" src="https://cdn.datatables.net/buttons/3.0.2/js/buttons.print.min.js"></script>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Initialize DataTables
+        var table = $('#candidateRecordsTable').DataTable({
+            "paging": true,       // Enable pagination
+            "searching": true,    // Enable search box
+            "ordering": true,     // Enable column sorting
+            "info": true,         // Show "Showing X to Y of Z entries" info
+            "lengthMenu": [[10, 25, 50, -1], [10, 25, 50, "All"]], // Rows per page options
+            "language": {
+                "search": "Search records:", // Custom search label
+                "lengthMenu": "Show _MENU_ entries" // Custom length menu label
+            },
+            "columnDefs": [
+                { "orderable": false, "targets": [8] }, // Disable sorting on the Actions column (index 8, shifted due to S.No.)
+                { "searchable": false, "targets": [8] }  // Disable searching on the Actions column
+            ],
+            // New options for buttons and layout
+            layout: {
+                topStart: {
+                    buttons: [
+                        'copy',
+                        'csv',
+                        'excel',
+                        'pdf',
+                        'print'
+                    ]
+                },
+                topEnd: 'search', // Place search box at top-end
+                bottomStart: 'info', // Place info at bottom-start
+                bottomEnd: 'paging' // Place pagination at bottom-end
+            }
+        });
+
+        // --- Debugging: Log Final Decision values ---
+        console.log("--- Debugging Final Decision Values ---");
+        table.rows().every(function() {
+            var rowNode = this.node(); // Get the DOM row element
+            // Assuming 'Final Decision' is at column index 6 (0-indexed, shifted due to S.No.)
+            var finalDecisionCell = $(rowNode).find('td').eq(6);
+            var finalDecisionText = finalDecisionCell.find('.badge').text().trim(); // Get text from the badge and trim whitespace
+            console.log('Final Decision value found in table:', finalDecisionText);
+        });
+        console.log("--- End Debugging ---");
+
+        // Filter button click handler
+        $('.filter-btn').on('click', function() {
+            var filterValue = $(this).data('filter');
+            // Column index for 'Final Decision' is 6 (0-indexed)
+            if (filterValue === "") {
+                table.column(6).search('').draw(); // Clear filter
+            } else {
+                table.column(6).search(filterValue, true, false).draw(); // Apply filter, exact match, no regex
+            }
+        });
+    });
+</script>
+{% endblock %}
+
+{% block extra_head %}
+{# Optional: Add Font Awesome if not already in base.html. If already in base.html, this block can be removed. #}
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+{% endblock %}

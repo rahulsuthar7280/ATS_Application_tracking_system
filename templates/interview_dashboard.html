@@ -1,0 +1,444 @@
+{% extends 'base.html' %}
+
+{% block title %}Interview Status - HR Talent Scout{% endblock %}
+
+{% block page_heading %}Interview Status{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="card p-4 shadow-lg rounded-lg border-0 bg-white custom-main-card">
+        <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap">
+            <h2 class="h4 text-dark mb-0 me-3 fw-bold">All Candidates & Interview Status</h2>
+            
+            <div class="d-flex align-items-center flex-wrap gap-2 mt-3 mt-md-0">
+                <form method="get" class="d-flex align-items-center gap-2">
+                    <label for="job_role_filter" class="form-label mb-0 text-muted fw-semibold small text-uppercase">Role:</label>
+                    <select name="job_role" id="job_role_filter" class="form-select form-select-sm custom-select-colorful" onchange="this.form.submit()">
+                        <option value="">All</option>
+                        {% for role in unique_job_roles %}
+                            <option value="{{ role }}" {% if selected_job_role == role %}selected{% endif %}>
+                                {{ role }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                    
+                    <label for="experience_filter" class="form-label mb-0 text-muted fw-semibold small text-uppercase">Exp:</label>
+                    <select name="experience" id="experience_filter" class="form-select form-select-sm custom-select-colorful" onchange="this.form.submit()">
+                        <option value="">All</option>
+                        <option value="1" {% if selected_experience == '1' %}selected{% endif %}>1 Yr</option>
+                        <option value="2" {% if selected_experience == '2' %}selected{% endif %}>2 Yrs</option>
+                        <option value="3" {% if selected_experience == '3' %}selected{% endif %}>3 Yrs</option>
+                        <option value="4" {% if selected_experience == '4' %}selected{% endif %}>4 Yrs</option>
+                        <option value="5" {% if selected_experience == '5' %}selected{% endif %}>5+ Yrs</option>
+                        <option value="10" {% if selected_experience == '10' %}selected{% endif %}>10+ Yrs</option>
+                    </select>
+                </form>
+
+                <div class="dropdown d-inline-block ms-md-3">
+                    <button class="btn btn-outline-secondary btn-sm rounded-pill px-3 custom-export-btn dropdown-toggle" type="button" id="exportDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                        <i class="bi bi-download me-1"></i> Export
+                    </button>
+                    <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="exportDropdown">
+                        <li><button class="dropdown-item" type="button" onclick="exportData('csv')">Export as CSV</button></li>
+                        <li><button class="dropdown-item" type="button" onclick="exportData('xls')">Export as Excel</button></li>
+                    </ul>
+                </div>
+
+                <form method="post" class="d-inline-block">
+                    {% csrf_token %}
+                    <input type="hidden" name="action" value="refresh_all_statuses">
+                    <button type="submit" class="btn btn-outline-primary btn-sm rounded-pill px-3 custom-refresh-btn">
+                        <i class="bi bi-arrow-clockwise me-1"></i> Refresh
+                    </button>
+                </form>
+            </div>
+        </div>
+
+        <div class="kanban-board-container" id="kanbanBoard">
+            <div class="kanban-column" id="upcoming-column">
+                <div class="kanban-column-header">
+                    <h5 class="kanban-column-title">
+                        <i class="bi bi-calendar-check me-2 text-info"></i>Upcoming
+                    </h5>
+                    <span class="kanban-card-count">{{ upcoming_interviews|length }}</span>
+                </div>
+                <div class="kanban-card-list">
+                    {% if upcoming_interviews %}
+                        {% for candidate in upcoming_interviews %}
+                            <div class="kanban-card">
+                                <h6 class="kanban-card-title">{{ candidate.full_name }}</h6>
+                                <p class="kanban-card-detail">
+                                    <span class="text-muted fw-semibold">Role:</span> {{ candidate.job_role }}
+                                </p>
+                                <p class="kanban-card-detail">
+                                    <span class="text-muted fw-semibold">Exp:</span> {{ candidate.overall_experience|default:"N/A" }} yrs
+                                </p>
+                                <div class="d-flex justify-content-between align-items-center mt-3">
+                                    <span class="badge rounded-pill custom-badge-pending">Pending</span>
+                                    <span class="badge rounded-pill custom-badge-hire">{{ candidate.hiring_recommendation|default:"N/A" }}</span>
+                                    <a href="{% url 'interview_detail' candidate.id %}" class="btn btn-sm btn-primary custom-btn-card">
+                                        <i class="bi bi-arrow-right-short"></i>
+                                    </a>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    {% else %}
+                        <div class="text-center text-muted p-4">
+                            <i class="bi bi-calendar-x d-block mb-2 fs-4"></i>
+                            <p class="mb-0">No upcoming interviews.</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <div class="kanban-column" id="completed-column">
+                <div class="kanban-column-header">
+                    <h5 class="kanban-column-title">
+                        <i class="bi bi-check-circle me-2 text-success"></i>Completed
+                    </h5>
+                    <span class="kanban-card-count">{{ completed_interviews|length }}</span>
+                </div>
+                <div class="kanban-card-list">
+                    {% if completed_interviews %}
+                        {% for candidate in completed_interviews %}
+                             <div class="kanban-card">
+                                <h6 class="kanban-card-title">{{ candidate.full_name }}</h6>
+                                <p class="kanban-card-detail">
+                                    <span class="text-muted fw-semibold">Role:</span> {{ candidate.job_role }}
+                                </p>
+                                <p class="kanban-card-detail">
+                                    <span class="text-muted fw-semibold">Exp:</span> {{ candidate.overall_experience|default:"N/A" }} yrs
+                                </p>
+                                <div class="d-flex justify-content-between align-items-center mt-3">
+                                    <span class="badge rounded-pill custom-badge-completed">Completed</span>
+                                    <span class="badge rounded-pill custom-badge-hire">{{ candidate.hiring_recommendation|default:"N/A" }}</span>
+                                    <a href="{% url 'interview_detail' candidate.id %}" class="btn btn-sm btn-primary custom-btn-card">
+                                        <i class="bi bi-arrow-right-short"></i>
+                                    </a>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    {% else %}
+                        <div class="text-center text-muted p-4">
+                            <i class="bi bi-journal-check d-block mb-2 fs-4"></i>
+                            <p class="mb-0">No completed interviews.</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <div class="kanban-column" id="other-column">
+                <div class="kanban-column-header">
+                    <h5 class="kanban-column-title">
+                        <i class="bi bi-people me-2 text-warning"></i>Other
+                    </h5>
+                    <span class="kanban-card-count">{{ all_candidates|length }}</span>
+                </div>
+                <div class="kanban-card-list">
+                    {% if all_candidates %}
+                        {% for candidate in all_candidates %}
+                             <div class="kanban-card">
+                                <h6 class="kanban-card-title">{{ candidate.full_name }}</h6>
+                                <p class="kanban-card-detail">
+                                    <span class="text-muted fw-semibold">Role:</span> {{ candidate.job_role }}
+                                </p>
+                                <p class="kanban-card-detail">
+                                    <span class="text-muted fw-semibold">Exp:</span> {{ candidate.overall_experience|default:"N/A" }} yrs
+                                </p>
+                                <div class="d-flex justify-content-between align-items-center mt-3">
+                                    <span class="badge rounded-pill 
+                                        {% if candidate.interview_status == 'Pending' %}custom-badge-pending{% else %}custom-badge-completed{% endif %}">
+                                        {{ candidate.interview_status|title }}
+                                    </span>
+                                    <span class="badge rounded-pill 
+                                        {% if candidate.hiring_recommendation == 'Hire' %}custom-badge-hire{% elif candidate.hiring_recommendation == 'Reject' %}custom-badge-reject{% else %}custom-badge-info{% endif %}">
+                                        {{ candidate.hiring_recommendation|default:"N/A" }}
+                                    </span>
+                                    <a href="{% url 'candidate_profile' candidate.id %}" class="btn btn-sm btn-primary custom-btn-card">
+                                        <i class="bi bi-arrow-right-short"></i>
+                                    </a>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    {% else %}
+                        <div class="text-center text-muted p-4">
+                            <i class="bi bi-people-fill d-block mb-2 fs-4"></i>
+                            <p class="mb-0">No other candidates.</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+    {% if not upcoming_interviews and not completed_interviews and not all_candidates %}
+        <div class="card p-5 mt-4 shadow-lg rounded-lg border-0 bg-white custom-main-card">
+            <div class="card-body text-center">
+                <i class="bi bi-people display-2 text-primary mb-4 opacity-75"></i>
+                <h3 class="card-title text-muted mb-3 fw-normal">No candidates found for interview tracking.</h3>
+                <p class="card-text mb-4 lead text-secondary">
+                    To add candidates for interview, please go to the Resume Analysis page.
+                </p>
+                <a href="{% url 'resume_analysis' %}" class="btn custom-btn-primary-outline btn-lg rounded-pill px-5 py-3 shadow-sm">
+                    <i class="bi bi-file-earmark-text me-2"></i> Go to Resume Analysis
+                </a>
+            </div>
+        </div>
+    {% endif %}
+    </div>
+</div>
+
+<style>
+    /* CSS variables for consistent theming */
+    :root {
+        --primary-main: #2079f5;
+        --primary-vibrant: #7743d9;
+        --secondary-vibrant: #ffc107;
+        --success-vibrant: #28a745;
+        --warning-vibrant: #ffc107;
+        --danger-vibrant: #dc3545;
+        --info-vibrant: #17a2b8;
+        --card-bg: #fff;
+        --card-shadow: 0 20px 40px rgba(0, 0, 0, 0.08);
+        --dark-text: #212529;
+        --muted-text: #6c757d;
+        --light-bg: #f8f9fa;
+        --border-color: #e9ecef;
+    }
+
+    body {
+        background-color: var(--light-bg);
+        font-family: 'Poppins', sans-serif;
+    }
+
+    /* Main Card with improved shadow and animation */
+    .custom-main-card {
+        box-shadow: var(--card-shadow);
+        animation: fadeIn 0.5s ease-in-out;
+    }
+
+    @keyframes fadeIn {
+        from {
+            opacity: 0;
+            transform: translateY(20px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    /* Filters and Export/Refresh Buttons */
+    .custom-select-colorful {
+        border-color: var(--border-color);
+        background-color: #fff;
+        font-size: 0.85rem;
+        padding: 0.4rem 1rem;
+        transition: all 0.2s ease-in-out;
+    }
+    .custom-select-colorful:focus {
+        border-color: var(--primary-main);
+        box-shadow: 0 0 0 0.25rem rgba(32, 121, 245, 0.25);
+    }
+    .custom-export-btn, .custom-refresh-btn {
+        font-weight: 500;
+        transition: all 0.3s ease-in-out;
+    }
+    .custom-export-btn {
+        border-color: var(--muted-text);
+        color: var(--muted-text);
+    }
+    .custom-export-btn:hover {
+        background-color: var(--muted-text);
+        color: #fff;
+    }
+    .custom-refresh-btn {
+        border-color: var(--primary-main);
+        color: var(--primary-main);
+    }
+    .custom-refresh-btn:hover {
+        background-color: var(--primary-main);
+        color: #fff;
+        transform: scale(1.05);
+    }
+    .dropdown-menu {
+        font-size: 0.9rem;
+    }
+
+    /* Kanban Board Layout */
+    .kanban-board-container {
+        display: flex;
+        gap: 1.5rem;
+        overflow-x: auto;
+        padding-bottom: 1rem;
+        white-space: nowrap;
+    }
+    .kanban-column {
+        min-width: 300px;
+        flex: 1 0 300px;
+        background-color: var(--light-bg);
+        border-radius: 0.75rem;
+        padding: 1rem;
+        box-shadow: inset 0 0 5px rgba(0,0,0,0.05);
+        display: flex;
+        flex-direction: column;
+    }
+    .kanban-column-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 1rem;
+        padding-bottom: 0.5rem;
+        border-bottom: 2px solid var(--border-color);
+    }
+    .kanban-column-title {
+        font-size: 1rem;
+        font-weight: 600;
+        color: var(--dark-text);
+        margin-bottom: 0;
+    }
+    .kanban-card-count {
+        background-color: var(--border-color);
+        color: var(--muted-text);
+        font-size: 0.8rem;
+        padding: 0.25rem 0.75rem;
+        border-radius: 50px;
+        font-weight: 600;
+    }
+    .kanban-card-list {
+        display: flex;
+        flex-direction: column;
+        gap: 0.75rem;
+        overflow-y: auto;
+        padding-right: 0.5rem;
+        height: 100%;
+    }
+    .kanban-card {
+        background-color: #fff;
+        border-radius: 0.5rem;
+        padding: 1rem;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+        transition: all 0.3s ease;
+        white-space: normal;
+    }
+    .kanban-card:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 8px 20px rgba(0,0,0,0.1);
+    }
+    .kanban-card-title {
+        font-size: 1rem;
+        font-weight: 600;
+        margin-bottom: 0.5rem;
+    }
+    .kanban-card-detail {
+        font-size: 0.85rem;
+        color: var(--muted-text);
+        margin-bottom: 0.25rem;
+    }
+    .kanban-card-detail span {
+        color: var(--dark-text);
+    }
+
+    /* Badges */
+    .custom-badge-pending, .custom-badge-hire, .custom-badge-completed, .custom-badge-reject, .custom-badge-info {
+        font-size: 0.7rem;
+        padding: 0.4em 0.8em;
+        font-weight: 600;
+        letter-spacing: 0.5px;
+    }
+    .custom-badge-pending { background-color: var(--warning-vibrant); color: #333; }
+    .custom-badge-hire { background-color: var(--success-vibrant); color: #fff; }
+    .custom-badge-completed { background-color: var(--info-vibrant); color: #fff; }
+    .custom-badge-reject { background-color: var(--danger-vibrant); color: #fff; }
+    .custom-badge-info { background-color: var(--muted-text); color: #fff; }
+
+    /* Action Buttons */
+    .custom-btn-card {
+        background-color: var(--primary-main);
+        border-color: var(--primary-main);
+        color: #fff;
+        font-weight: 500;
+        font-size: 0.85rem;
+        border-radius: 50px;
+        width: 30px;
+        height: 30px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.3s ease-in-out;
+    }
+    .custom-btn-card:hover {
+        background-color: var(--primary-vibrant);
+        border-color: var(--primary-vibrant);
+        transform: scale(1.1);
+    }
+    .custom-btn-primary-outline {
+        color: var(--primary-main);
+        border-color: var(--primary-main);
+        background-color: transparent;
+        transition: all 0.3s ease-in-out;
+    }
+    .custom-btn-primary-outline:hover {
+        color: #fff;
+        background-color: var(--primary-main);
+        border-color: var(--primary-main);
+        transform: translateY(-2px);
+    }
+</style>
+
+<script>
+    // Client-side script to export data from all candidate columns
+    function exportData(format) {
+        const board = document.getElementById('kanbanBoard');
+        if (!board) {
+            alert('No data found to export.');
+            return;
+        }
+
+        const headers = ['Candidate Name', 'Role', 'Experience', 'Status', 'AI Recommendation', 'Profile Link'];
+        let csvContent = headers.join(',') + '\n';
+        
+        // Loop through all kanban columns
+        const columns = board.querySelectorAll('.kanban-column');
+        columns.forEach(column => {
+            const cards = column.querySelectorAll('.kanban-card');
+            cards.forEach(card => {
+                const name = card.querySelector('.kanban-card-title').textContent.trim();
+                const role = card.querySelector('p:nth-of-type(1)').textContent.trim().split(':')[1].trim();
+                const exp = card.querySelector('p:nth-of-type(2)').textContent.trim().split(':')[1].trim();
+                const status = card.querySelector('.badge').textContent.trim();
+                const recommendation = card.querySelector('.badge:nth-of-type(2)').textContent.trim();
+                const profileLink = card.querySelector('.custom-btn-card').href;
+
+                const rowData = [
+                    `"${name.replace(/"/g, '""')}"`,
+                    `"${role.replace(/"/g, '""')}"`,
+                    `"${exp.replace(/"/g, '""')}"`,
+                    `"${status.replace(/"/g, '""')}"`,
+                    `"${recommendation.replace(/"/g, '""')}"`,
+                    `"${profileLink.replace(/"/g, '""')}"`
+                ];
+                csvContent += rowData.join(',') + '\n';
+            });
+        });
+
+        const filename = `interview_candidates.${format}`;
+        const mimeType = format === 'csv' ? 'text/csv' : 'application/vnd.ms-excel';
+        const blob = new Blob([csvContent], { type: `${mimeType};charset=utf-8;` });
+
+        const link = document.createElement('a');
+        if (link.download !== undefined) {
+            const url = URL.createObjectURL(blob);
+            link.setAttribute('href', url);
+            link.setAttribute('download', filename);
+            link.style.visibility = 'hidden';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        } else {
+            alert('Your browser does not support automatic downloads. Please copy the data manually.');
+        }
+    }
+</script>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
+{% endblock %}

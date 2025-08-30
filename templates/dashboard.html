@@ -1,0 +1,553 @@
+{% extends 'base.html' %}
+
+{% block title %}HR Talent Scout Dashboard{% endblock %}
+
+{% block content %}
+<style>
+    /* A more vibrant, professional color palette */
+    :root {
+
+        --primary-color: #6a11cb;
+        --sidebar-blue: #004d99; /* A deep, rich blue */
+        --accent-blue: #007bff; /* A bright, standard blue */
+
+        --text-dark-main: #212529; /* A classic dark text */
+        --text-muted: #6c757d;
+        --text-light: #f8f9fa;
+        --text-white-75: #ffffff;
+
+        --background-page: #f8f9fa; /* A very light gray */
+        --card-bg: #ffffff;
+        --border-color: #e9ecef;
+
+        /* Subtle Shadows */
+        --shadow-sm: 0 1px 3px rgba(0, 0, 0, .1);
+        --shadow-md: 0 4px 6px rgba(0, 0, 0, .1);
+
+        /* More saturated status colors */
+        --success-main: #28a745;
+        --success-light: #d4edda;
+        --warning-main: #ffc107;
+        --warning-light: #fff3cd;
+        --danger-main: #dc3545;
+        --danger-light: #f8d7da;
+        --info-main: #17a2b8;
+        --info-light: #d1ecf1;
+
+        /* Chart Colors - A vibrant, distinct set */
+        --chart-color-1: #4e73df; /* Vivid Blue */
+        --chart-color-2: #1cc88a; /* Vibrant Green */
+        --chart-color-3: #36b9cc; /* Teal */
+        --chart-color-4: #f6c23e; /* Gold */
+        --chart-color-5: #e74a3b; /* Red */
+        --chart-color-6: #6f42c1; /* Purple */
+    }
+
+    html, body {
+        font-family: 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
+        background-color: var(--background-page);
+        color: var(--text-dark-main);
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+    }
+
+    .dashboard-container {
+        max-width: 1600px;
+        margin-left: auto;
+        margin-right: auto;
+    }
+
+    .full-width-header {
+        margin-top: -50px;
+        margin-left: -50px;
+        margin-right: -16px;
+        padding-top: 1rem;
+        padding-bottom: 1rem;
+    }
+
+    .dashboard-gradient-bg {
+        background: linear-gradient(135deg, var(--accent-blue) 0%, #20c997 100%);
+    }
+
+    /* Card Styling */
+    .card {
+        border: 1px solid var(--border-color);
+        border-radius: 0.75rem;
+        background-color: var(--card-bg);
+        transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+        box-shadow: var(--shadow-sm); /* Default subtle shadow */
+    }
+
+    .card:hover {
+        transform: translateY(-3px);
+        box-shadow: var(--shadow-md);
+    }
+
+    .dashboard-metric-card .card-body,
+    .dashboard-chart-card .card-body {
+        padding: 1.5rem;
+    }
+
+    /* Metric Icon Circles */
+    .metric-icon-circle {
+        width: 50px;
+        height: 50px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+        transition: background-color 0.3s ease;
+    }
+    
+    .card:hover .metric-icon-circle {
+        background-color: rgba(255, 255, 255, 0.7);
+    }
+
+    /* Chart Card Specifics */
+    .dashboard-chart-card .card-header {
+        border-bottom: 1px solid var(--border-color);
+    }
+    .dashboard-chart-card .card-footer {
+        border-top: 1px solid var(--border-color);
+    }
+
+    .list-group-item.border-bottom-light {
+        border-bottom: 1px solid var(--border-color) !important;
+    }
+
+    /* Progress Bar */
+    .progress {
+        background-color: var(--border-color);
+    }
+    .progress-bar {
+        background-color: var(--accent-blue);
+    }
+
+    /* Text Colors */
+    .text-dark-main { color: var(--text-dark-main) !important; }
+    .text-muted-dark { color: var(--text-muted) !important; }
+    .text-primary-main { color: var(--accent-blue) !important; }
+    .text-success-main { color: var(--success-main) !important; }
+    .text-warning-main { color: var(--warning-main) !important; }
+    .text-danger-main { color: var(--danger-main) !important; }
+    .text-info-main { color: var(--info-main) !important; }
+    .text-white-75 { color: var(--text-white-75) !important; }
+
+    /* Background Colors */
+    .bg-success-light { background-color: var(--success-light) !important; }
+    .bg-info-light { background-color: var(--info-light) !important; }
+    .bg-warning-light { background-color: var(--warning-light) !important; }
+    .bg-danger-light { background-color: var(--danger-light) !important; }
+
+    /* Mobile Styles */
+    @media (max-width: 767px) {
+        .page-title {
+            font-size: 1.5rem;
+        }
+        .lead.text-muted {
+            font-size: 1rem;
+        }
+    }
+</style>
+
+<div class="full-width-header dashboard-gradient-bg">
+    <div class="container-fluid py-4 px-md-5">
+        <h1 class="text-white" style="font-size: 37px; font-family:Cambria, Cochin, Georgia, Times, 'Times New Roman', serif;">
+            <strong>Smart Talent Finder for HR: Streamlined Dashboard for Quick Insights</strong></h1>
+        <p class="lead text-white-75 mb-0">Smart Talent Finder is an intelligent HR dashboard designed to simplify and accelerate the recruitment process. It offers a clean, centralized interface where HR professionals can gain quick insights into candidate profiles, resume scores, AI-based job matching, and interview readiness.</p>
+    </div>
+</div>
+
+<div class="container-fluid dashboard-container py-5">
+    <div class="row row-cols-1 row-cols-md-2 row-cols-lg-4 g-4 mb-5">
+        <div class="col">
+            <div class="card h-100 dashboard-metric-card border-0 rounded-3">
+                <div class="card-body p-4">
+                    <div class="d-flex align-items-center mb-3">
+                        <div class="metric-icon-circle bg-success-light text-success-main me-3">
+                            <i class="bi bi-people-fill"></i>
+                        </div>
+                        <div>
+                            <h3 class="card-title fw-bold mb-0 text-dark-main">{{ total_candidates|default:1200 }}</h3>
+                            <p class="text-muted-dark mb-0">Total Candidates</p>
+                        </div>
+                    </div>
+                    <p class="metric-change text-success-main mt-2 mb-0">+{{ total_candidates_change|default:55 }}% than last week</p>
+                </div>
+            </div>
+        </div>
+        <div class="col">
+            <div class="card h-100 dashboard-metric-card border-0 rounded-3">
+                <div class="card-body p-4">
+                    <div class="d-flex align-items-center mb-3">
+                        <div class="metric-icon-circle bg-info-light text-info-main me-3">
+                            <i class="bi bi-check-circle-fill"></i>
+                        </div>
+                        <div>
+                            <h3 class="card-title fw-bold mb-0 text-dark-main">{{ completed_calls|default:850 }}</h3>
+                            <p class="text-muted-dark mb-0">Completed Interviews</p>
+                        </div>
+                    </div>
+                    <p class="metric-change text-info-main mt-2 mb-0">+{{ completed_calls_change|default:3 }}% than last week</p>
+                </div>
+            </div>
+        </div>
+        <div class="col">
+            <div class="card h-100 dashboard-metric-card border-0 rounded-3">
+                <div class="card-body p-4">
+                    <div class="d-flex align-items-center mb-3">
+                        <div class="metric-icon-circle bg-warning-light text-warning-main me-3">
+                            <i class="bi bi-hourglass-split"></i>
+                        </div>
+                        <div>
+                            <h3 class="card-title fw-bold mb-0 text-dark-main">{{ in_progress_calls|default:300 }}</h3>
+                            <p class="text-muted-dark mb-0">Interviews In Progress</p>
+                        </div>
+                    </div>
+                    <p class="metric-change text-danger-main mt-2 mb-0">-{{ in_progress_calls_change|default:2 }}% than last week</p>
+                </div>
+            </div>
+        </div>
+        <div class="col">
+            <div class="card h-100 dashboard-metric-card border-0 rounded-3">
+                <div class="card-body p-4">
+                    <div class="d-flex align-items-center mb-3">
+                        <div class="metric-icon-circle bg-danger-light text-danger-main me-3">
+                            <i class="bi bi-x-circle-fill"></i>
+                        </div>
+                        <div>
+                            <h3 class="card-title fw-bold mb-0 text-dark-main">{{ failed_calls|default:70 }}</h3>
+                            <p class="text-muted-dark mb-0">Failed Interviews</p>
+                        </div>
+                    </div>
+                    <p class="metric-change text-danger-main mt-2 mb-0">+{{ failed_calls_change|default:5 }}% than yesterday</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-4 mb-5">
+        <div class="col-12 col-md-6">
+            <div class="card h-100 dashboard-chart-card border-0 rounded-3">
+                <div class="card-header bg-white border-0 pb-0 pt-4 px-4">
+                    <h5 class="card-title fw-bold mb-0 text-dark-main">Recruiting Financials</h5>
+                    <p class="text-muted-dark small mb-0">Cost vs. Revenue Impact</p>
+                </div>
+                <div class="card-body p-4">
+                    <canvas id="revenueChart"></canvas>
+                </div>
+                <div class="card-footer bg-white border-0 pt-0 px-4 pb-4">
+                    <p class="text-muted-dark small mb-0"><i class="bi bi-currency-dollar me-1"></i> Based on cost-per-hire and total revenue generated</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-12 col-md-6">
+            <div class="card h-100 dashboard-chart-card border-0 rounded-3">
+                <div class="card-body p-4 text-center d-flex flex-column justify-content-center">
+                    <i class="bi bi-graph-up-arrow display-4 text-primary-main mb-3"></i>
+                    <h5 class="card-title fw-bold mb-1 text-dark-main">Overall Financial Health</h5>
+                    <p class="text-muted-dark mb-2">Cost per hire: <span class="fw-bold text-success-main">{{ cost_per_hire|default:"$1,500" }}</span></p>
+                    <p class="text-muted-dark mb-2">Total Revenue Impact: <span class="fw-bold text-info-main">{{ total_revenue_impact|default:"$2.5M" }}</span></p>
+                    <div class="progress" style="height: 10px;">
+                        <div class="progress-bar bg-success-main" role="progressbar" style="width: 85%" aria-valuenow="85" aria-valuemin="0" aria-valuemax="100"></div>
+                    </div>
+                    <p class="metric-change text-success-main mt-3 mb-0">ROI on Hiring: {{ roi_on_hiring|default:"85%" }}</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-4 mb-5">
+        <div class="col-12 col-lg-6">
+            <div class="card h-100 dashboard-chart-card border-0 rounded-3">
+                <div class="card-header bg-white border-0 pb-0 pt-4 px-4">
+                    <h5 class="card-title fw-bold mb-0 text-dark-main">Recruiting Funnel</h5>
+                    <p class="text-muted-dark small mb-0">Conversion rates at each stage</p>
+                </div>
+                <div class="card-body p-4">
+                    <canvas id="recruitingFunnelChart"></canvas>
+                </div>
+                <div class="card-footer bg-white border-0 pt-0 px-4 pb-4">
+                    <p class="text-muted-dark small mb-0"><i class="bi bi-funnel me-1"></i> Identify bottlenecks in your hiring process</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-12 col-lg-6">
+            <div class="card h-100 dashboard-chart-card border-0 rounded-3">
+                <div class="card-header bg-white border-0 pb-0 pt-4 px-4">
+                    <h5 class="card-title fw-bold mb-0 text-dark-main">Candidates by Source</h5>
+                    <p class="text-muted-dark small mb-0">Most effective recruiting channels</p>
+                </div>
+                <div class="card-body p-4">
+                    <canvas id="recruitmentSourceChart"></canvas>
+                </div>
+                <div class="card-footer bg-white border-0 pt-0 px-4 pb-4">
+                    <p class="text-muted-dark small mb-0"><i class="bi bi-share me-1"></i> Optimize your sourcing strategy</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-4">
+        <div class="col-12 col-lg-6">
+            <div class="card h-100 dashboard-chart-card border-0 rounded-3">
+                <div class="card-header bg-white border-0 pb-0 pt-4 px-4">
+                    <h5 class="card-title fw-bold mb-0 text-dark-main">Open Positions</h5>
+                    <p class="text-muted-dark small mb-0">Current vacancies and progress</p>
+                </div>
+                <div class="card-body p-4">
+                    <div class="table-responsive">
+                        <table class="table table-hover mb-0">
+                            <thead>
+                                <tr>
+                                    <th scope="col">Job Title</th>
+                                    <th scope="col">Department</th>
+                                    <th scope="col">Applicants</th>
+                                    <th scope="col">Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>Senior Software Engineer</td>
+                                    <td>Engineering</td>
+                                    <td>150</td>
+                                    <td><span class="badge bg-warning-light text-warning-main">Interviewing</span></td>
+                                </tr>
+                                <tr>
+                                    <td>Data Scientist</td>
+                                    <td>Data & Analytics</td>
+                                    <td>85</td>
+                                    <td><span class="badge bg-success-light text-success-main">Hiring</span></td>
+                                </tr>
+                                <tr>
+                                    <td>UX/UI Designer</td>
+                                    <td>Product</td>
+                                    <td>110</td>
+                                    <td><span class="badge bg-info-light text-info-main">Screening</span></td>
+                                </tr>
+                                <tr>
+                                    <td>HR Manager</td>
+                                    <td>Human Resources</td>
+                                    <td>45</td>
+                                    <td><span class="badge bg-warning-light text-warning-main">Interviewing</span></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-12 col-lg-6">
+            <div class="card h-100 dashboard-chart-card border-0 rounded-3">
+                <div class="card-header bg-white border-0 pb-0 pt-4 px-4">
+                    <h5 class="card-title fw-bold mb-0 text-dark-main">Recent Activity</h5>
+                    <p class="text-muted-dark small mb-0">Timeline of latest actions</p>
+                </div>
+                <div class="card-body p-4">
+                    <div class="list-group list-group-flush">
+                        <div class="list-group-item d-flex align-items-start border-bottom-light py-3 px-0">
+                            <i class="bi bi-person-plus-fill fs-5 text-success-main me-3"></i>
+                            <div class="flex-grow-1">
+                                <p class="mb-1 fw-bold text-dark-main">New Hire: Jane Doe</p>
+                                <p class="mb-0 text-muted-dark small">Accepted offer for Data Scientist position.</p>
+                            </div>
+                            <span class="text-muted-dark small text-nowrap ms-auto">2 min ago</span>
+                        </div>
+                        <div class="list-group-item d-flex align-items-start border-bottom-light py-3 px-0">
+                            <i class="bi bi-calendar-check-fill fs-5 text-info-main me-3"></i>
+                            <div class="flex-grow-1">
+                                <p class="mb-1 fw-bold text-dark-main">Interview Scheduled</p>
+                                <p class="mb-0 text-muted-dark small">Scheduled final interview with John Smith for Senior Software Engineer.</p>
+                            </div>
+                            <span class="text-muted-dark small text-nowrap ms-auto">1 hour ago</span>
+                        </div>
+                        <div class="list-group-item d-flex align-items-start border-bottom-light py-3 px-0">
+                            <i class="bi bi-file-earmark-text-fill fs-5 text-primary-main me-3"></i>
+                            <div class="flex-grow-1">
+                                <p class="mb-1 fw-bold text-dark-main">New Application</p>
+                                <p class="mb-0 text-muted-dark small">Received 10 new applications for UX/UI Designer role.</p>
+                            </div>
+                            <span class="text-muted-dark small text-nowrap ms-auto">3 hours ago</span>
+                        </div>
+                        <div class="list-group-item d-flex align-items-start py-3 px-0">
+                            <i class="bi bi-file-x-fill fs-5 text-danger-main me-3"></i>
+                            <div class="flex-grow-1">
+                                <p class="mb-1 fw-bold text-dark-main">Candidate Rejected</p>
+                                <p class="mb-0 text-muted-dark small">Michael Brown rejected for HR Manager role.</p>
+                            </div>
+                            <span class="text-muted-dark small text-nowrap ms-auto">Yesterday</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        function getCssVar(name) {
+            return getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+        }
+
+        const accentBlue = getCssVar('--accent-blue');
+        const successMain = getCssVar('--success-main');
+        const warningMain = getCssVar('--warning-main');
+        const dangerMain = getCssVar('--danger-main');
+        const infoMain = getCssVar('--info-main');
+        const textMuted = getCssVar('--text-muted');
+        const textDarkMain = getCssVar('--text-dark-main');
+        const borderColor = getCssVar('--border-color');
+        
+        // A new, more vibrant set of chart colors
+        const chartColors = [
+            getCssVar('--chart-color-1'),
+            getCssVar('--chart-color-2'),
+            getCssVar('--chart-color-3'),
+            getCssVar('--chart-color-4'),
+            getCssVar('--chart-color-5'),
+            getCssVar('--chart-color-6')
+        ];
+
+        function getDummyChartData(chartType) {
+            switch(chartType) {
+                case 'recruitingFunnel':
+                    return {
+                        labels: ['Applicants', 'Screening', 'Interviews', 'Offers', 'Hired'],
+                        data: [1000, 750, 400, 150, 50]
+                    };
+                case 'revenueChart':
+                    return {
+                        labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May'],
+                        datasets: [
+                            {
+                                label: 'Cost Per Hire',
+                                data: [1500, 1450, 1600, 1350, 1400],
+                                borderColor: dangerMain,
+                                backgroundColor: 'rgba(220, 53, 69, 0.2)', // Use a slightly transparent version of the main color
+                                fill: true,
+                                tension: 0.4
+                            },
+                            {
+                                label: 'Total Revenue Impact',
+                                data: [2.0, 2.1, 2.5, 2.4, 2.6], // In millions
+                                borderColor: successMain,
+                                backgroundColor: 'rgba(40, 167, 69, 0.2)',
+                                fill: true,
+                                tension: 0.4
+                            }
+                        ]
+                    };
+                case 'recruitmentSource':
+                    return {
+                        labels: ['LinkedIn', 'Company Website', 'Job Boards', 'Referrals', 'Campus'],
+                        data: [40, 25, 15, 10, 10]
+                    };
+                default:
+                    return {labels: [], data: []};
+            }
+        }
+
+        // Chart 1: Recruiting Funnel
+        const recruitingFunnelCtx = document.getElementById('recruitingFunnelChart');
+        if (recruitingFunnelCtx) {
+            const finalFunnelData = getDummyChartData('recruitingFunnel');
+            new Chart(recruitingFunnelCtx, {
+                type: 'bar',
+                data: {
+                    labels: finalFunnelData.labels,
+                    datasets: [{
+                        label: 'Candidates',
+                        data: finalFunnelData.data,
+                        backgroundColor: chartColors.slice(0, finalFunnelData.labels.length).map(color => color + 'b3'), // Add some transparency
+                        borderColor: chartColors.slice(0, finalFunnelData.labels.length),
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            grid: { color: borderColor }
+                        },
+                        x: {
+                            grid: { display: false }
+                        }
+                    },
+                    plugins: { legend: { display: false } }
+                }
+            });
+        }
+
+        // Chart 2: Revenue Chart
+        const revenueCtx = document.getElementById('revenueChart');
+        if (revenueCtx) {
+            const finalRevenueData = getDummyChartData('revenueChart');
+            new Chart(revenueCtx, {
+                type: 'line',
+                data: finalRevenueData,
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            title: {
+                                display: true,
+                                text: 'Amount (in millions for Revenue)',
+                                color: textMuted
+                            },
+                            grid: { color: borderColor }
+                        },
+                        x: {
+                            grid: { display: false }
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            position: 'top',
+                            labels: {
+                                color: textDarkMain
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        // Chart 3: Recruitment Source Pie Chart
+        const recruitmentSourceCtx = document.getElementById('recruitmentSourceChart');
+        if (recruitmentSourceCtx) {
+            const finalSourceData = getDummyChartData('recruitmentSource');
+            new Chart(recruitmentSourceCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: finalSourceData.labels,
+                    datasets: [{
+                        label: 'Candidates by Source',
+                        data: finalSourceData.data,
+                        backgroundColor: chartColors.slice(0, finalSourceData.labels.length),
+                        hoverOffset: 4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'right',
+                            labels: {
+                                color: textDarkMain
+                            }
+                        }
+                    }
+                }
+            });
+        }
+    });
+</script>
+{% endblock %}

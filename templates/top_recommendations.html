@@ -1,0 +1,135 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Top Recommendations{% endblock %}
+
+{% block page_heading %}Top Recommended Candidates{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="row g-4">
+
+        <div class="col-lg-3">
+            <div class="sidebar-filter-container p-4 rounded-4 shadow-sm h-100">
+                <h4 class="mb-4 text-primary fw-bold">
+                    <i class="fas fa-filter me-2"></i>Filter by Role
+                </h4>
+                <div class="list-group">
+                    <a href="{% url 'top_recommendations' %}" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center {% if not selected_job_role %}active{% endif %}">
+                        All Roles
+                        <span class="badge bg-primary rounded-pill">{{ total_candidates }}</span>
+                    </a>
+                    {% for role in unique_job_roles %}
+                        <a href="{% url 'top_recommendations' %}?job_role={{ role }}" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center {% if selected_job_role == role %}active{% endif %}">
+                            {{ role }}
+                            <span class="badge bg-primary rounded-pill">{{ role.candidate_count }}</span>
+                        </a>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-9">
+            {% if recommended_candidates %}
+                <h4 class="mb-3 fw-bold text-primary">Recommended Candidates {% if selected_job_role %}for "{{ selected_job_role }}"{% endif %}</h4>
+                <div class="masonry-grid-container">
+                    {% for candidate in recommended_candidates %}
+                        <div class="masonry-item">
+                            <a href="{% url 'interview_detail' candidate.id %}" class="text-decoration-none">
+                                <div class="card h-100 rounded-4 shadow-sm hover-scale">
+                                    <div class="card-body">
+                                        <div class="d-flex justify-content-between align-items-center mb-2">
+                                            <h5 class="mb-0 text-dark fw-bold">{{ candidate.full_name }}</h5>
+                                            <span class="badge bg-secondary text-white">{{ candidate.job_role }}</span>
+                                        </div>
+
+                                        <p class="mb-1 d-flex align-items-center small">
+                                            <i class="fas fa-check-circle me-2 {% if candidate.hiring_recommendation == 'Hire' %}text-success{% elif candidate.hiring_recommendation == 'Reject' %}text-danger{% else %}text-warning{% endif %}"></i>
+                                            <span class="fw-bold">Recommendation:</span>
+                                            <span class="ms-2 badge {% if candidate.hiring_recommendation == 'Hire' %}bg-success{% elif candidate.hiring_recommendation == 'Reject' %}bg-danger{% else %}bg-warning text-dark{% endif %}">
+                                                {{ candidate.hiring_recommendation }}
+                                            </span>
+                                        </p>
+                                        <p class="mb-1 d-flex align-items-center small">
+                                            <i class="fas fa-briefcase me-2 {% if candidate.experience_match == 'Good Match' %}text-info{% elif candidate.experience_match == 'Underqualified' %}text-danger{% else %}text-warning{% endif %}"></i>
+                                            <span class="fw-bold">Experience:</span>
+                                            <span class="ms-2 badge {% if candidate.experience_match == 'Good Match' %}bg-info text-dark{% elif candidate.experience_match == 'Underqualified' %}bg-danger{% else %}bg-warning text-dark{% endif %}">
+                                                {{ candidate.experience_match }}
+                                            </span>
+                                        </p>
+                                        
+                                        <hr class="my-2">
+                                        <div class="d-flex justify-content-between align-items-center text-muted small">
+                                            <span><i class="fas fa-money-bill-wave me-1"></i>{{ candidate.suggested_salary_range }}</span>
+                                            <span><i class="fas fa-chart-line me-1"></i>{{ candidate.overall_experience }}</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </a>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <div class="alert alert-info text-center py-5" role="alert">
+                    <h4 class="alert-heading fw-bold"><i class="fas fa-info-circle me-2"></i>No Candidates Found</h4>
+                    <p class="mb-4">It looks like there are no candidates for this role. Try selecting a different role from the sidebar or upload a new resume.</p>
+                    <a href="{% url 'upload_resume' %}" class="btn btn-primary btn-lg">
+                        <i class="fas fa-upload me-2"></i>Upload New Resume
+                    </a>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<style>
+    body {
+        background-color: #f8f9fa;
+    }
+    
+    .sidebar-filter-container {
+        background-color: white;
+        border: 1px solid #e0e0e0;
+    }
+    .list-group-item.active {
+        background-color: #007bff;
+        border-color: #007bff;
+    }
+    .list-group-item.active .badge {
+        background-color: white !important;
+        color: #007bff !important;
+    }
+    .list-group-item.list-group-item-action:hover {
+        background-color: #e9ecef;
+    }
+
+    .masonry-grid-container {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+        grid-gap: 1rem;
+        align-items: start;
+    }
+
+    /* Candidate Cards */
+    .card {
+        transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+        border: 1px solid #e0e0e0;
+    }
+    .card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.1);
+    }
+    .badge {
+        font-size: 0.8em;
+        font-weight: 600;
+        text-transform: uppercase;
+        padding: 0.4em 0.8em;
+    }
+    .rounded-4 {
+        border-radius: 1.5rem !important;
+    }
+    .shadow-sm {
+        box-shadow: 0 .125rem .25rem rgba(0,0,0,.075)!important;
+    }
+</style>
+{% endblock %}

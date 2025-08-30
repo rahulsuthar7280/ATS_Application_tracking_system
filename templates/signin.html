@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>AI Track Nexus – Sign In</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+  <style>
+    :root {
+      --primary: #6a11cb;
+      --secondary: #2575fc;
+      --gradient: linear-gradient(135deg, var(--primary), var(--secondary));
+      --card-bg: #ffffff;
+      --text: #333;
+      --subtext: #666;
+      --border: #ddd;
+      --error: #e74c3c;
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'Inter', sans-serif;
+      /* background: var(--gradient); */
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+    }
+    .container {
+      display: flex;
+      width: 90%;
+      max-width: 900px;
+      background: var(--card-bg);
+      border-radius: 16px;
+      overflow: hidden;
+      box-shadow: 0 12px 30px rgba(0,0,0,0.1);
+      animation: containerSlide 0.8s ease-out;
+    }
+    @keyframes containerSlide {
+      from { opacity: 0; transform: translateY(50px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .panel {
+      flex: 1;
+      padding: 2.5rem;
+      position: relative;
+    }
+    .left-panel {
+      background: var(--gradient);
+      color: #fff;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      text-align: center;
+    }
+    .left-panel h2 {
+      font-size: 2.5rem;
+      margin-bottom: 1rem;
+      opacity: 0;
+      animation: fadeInLeft 1s forwards 0.5s;
+    }
+    .left-panel p {
+      font-size: 1rem;
+      line-height: 1.5;
+      opacity: 0;
+      animation: fadeInLeft 1s forwards 0.7s;
+    }
+    @keyframes fadeInLeft {
+      from { opacity: 0; transform: translateX(-30px); }
+      to { opacity: 1; transform: translateX(0); }
+    }
+    .right-panel {
+      padding: 2.5rem;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+    }
+    .logo {
+      font-size: 1.75rem;
+      font-weight: 700;
+      color: var(--primary);
+      margin-bottom: 2rem;
+      text-align: center;
+      opacity: 0;
+      animation: fadeInRight 1s forwards 0.5s;
+    }
+    @keyframes fadeInRight {
+      from { opacity: 0; transform: translateX(30px); }
+      to { opacity: 1; transform: translateX(0); }
+    }
+    form {
+      opacity: 0;
+      animation: fadeInRight 1s forwards 0.7s;
+    }
+    .input-group {
+      position: relative;
+      margin-bottom: 1.75rem;
+    }
+    .input-group input {
+      width: 100%;
+      padding: 0.75rem 2.5rem 0.75rem 0.75rem;
+      border: none;
+      border-bottom: 2px solid var(--border);
+      font-size: 1rem;
+      transition: border-color 0.3s;
+      color: var(--text);
+    }
+    .input-group label {
+      position: absolute;
+      top: 0.75rem;
+      left: 0.75rem;
+      color: var(--subtext);
+      font-size: 1rem;
+      pointer-events: none;
+      transition: all 0.3s;
+    }
+    .input-group input:focus,
+    .input-group input:not(:placeholder-shown) {
+      border-bottom-color: var(--primary);
+    }
+    .input-group input:focus + label,
+    .input-group input:not(:placeholder-shown) + label {
+      top: -0.6rem;
+      font-size: 0.8rem;
+      color: var(--primary);
+      background: var(--card-bg);
+      padding: 0 3px;
+    }
+    .input-group .toggle-pass {
+      position: absolute;
+      right: 0.75rem;
+      top: 50%;
+      transform: translateY(-50%);
+      cursor: pointer;
+      color: var(--subtext);
+    }
+    .actions {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1.5rem;
+      font-size: 0.875rem;
+      color: var(--subtext);
+    }
+    .actions a {
+      color: var(--primary);
+      text-decoration: none;
+    }
+    .btn {
+      width: 100%;
+      padding: 0.85rem;
+      background: var(--gradient);
+      color: #fff;
+      border: none;
+      border-radius: 6px;
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+    .btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 5px 15px rgba(106,17,203,0.3);
+    }
+    .social-login {
+      margin-top: 1.5rem;
+      display: flex;
+      gap: 0.75rem;
+      justify-content: center;
+    }
+    .social-login button {
+      border: none;
+      padding: 0.5rem 1rem;
+      border-radius: 4px;
+      background: #eee;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-size: 0.9rem;
+      transition: background 0.3s;
+    }
+    .social-login button:hover {
+      background: #ddd;
+    }
+    .alert {
+      color: var(--error);
+      margin-bottom: 1rem;
+      text-align: center;
+    }
+
+    @media (max-width: 768px) {
+      .container {
+        flex-direction: column;
+      }
+      .left-panel {
+        display: none;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="panel left-panel">
+      <h2>Welcome Back!</h2>
+      <p>Your hiring journey starts here with intelligent tools to guide success.</p>
+    </div>
+    <div class="panel right-panel">
+      <div class="logo">AI Track Nexus</div>
+
+      {% if messages %}
+        {% for message in messages %}
+          <div class="alert">{{ message }}</div>
+        {% endfor %}
+      {% endif %}
+
+      <form method="post" novalidate>
+        {% csrf_token %}
+        <div class="input-group">
+          <input type="text" name="username" id="username" placeholder=" " required>
+          <label for="username">Email address</label>
+        </div>
+        <div class="input-group">
+          <input type="password" name="password" id="password" placeholder=" " required>
+          <label for="password">Password</label>
+          <span class="toggle-pass" onclick="togglePassword()">
+            <i class="fas fa-eye"></i>
+          </span>
+        </div>
+        <div class="actions">
+          <label><input type="checkbox" name="remember"> Remember me</label>
+          <a href="">Forgot?</a>
+        </div>
+        <button type="submit" class="btn">Sign In</button>
+      </form>
+
+      <div class="social-login">
+        <button><i class="fab fa-google"></i> Google</button>
+        <button><i class="fab fa-linkedin"></i> LinkedIn</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    function togglePassword() {
+      const pw = document.getElementById('password');
+      const icon = document.querySelector('.toggle-pass i');
+      if (pw.type === 'password') {
+        pw.type = 'text';
+        icon.classList.replace('fa-eye', 'fa-eye-slash');
+      } else {
+        pw.type = 'password';
+        icon.classList.replace('fa-eye-slash', 'fa-eye');
+      }
+    }
+  </script>
+</body>
+</html>

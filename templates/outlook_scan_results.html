@@ -1,0 +1,28 @@
+{% extends 'base.html' %}
+
+{% block title %}Outlook Scan Results{% endblock %}
+{% block page_heading %}Outlook Emails{% endblock %}
+
+{% block content %}
+    <div class="card p-4">
+        <h3>Your Latest Emails</h3>
+        {% if emails %}
+            <ul class="list-group">
+                {% for email in emails %}
+                    <li class="list-group-item">
+                        <strong>Subject:</strong> {{ email.subject }}<br>
+                        <strong>From:</strong> {{ email.from.emailAddress.name }} ({{ email.from.emailAddress.address }})<br>
+                        <strong>Received:</strong> {{ email.receivedDateTime|date:"DATETIME_FORMAT" }}<br>
+                        <strong>Read:</strong> {% if email.isRead %}Yes{% else %}No{% endif %}
+                    </li>
+                {% empty %}
+                    <li class="list-group-item">No emails found.</li>
+                {% endfor %}
+            </ul>
+        {% else %}
+            <p>No emails were retrieved. There might be an issue with your connection or permissions.</p>
+        {% endif %}
+        <p class="mt-4"><a href="{% url 'outlook_scan' %}" class="btn btn-info">Rescan Emails</a></p>
+        <p><a href="{% url 'home' %}" class="btn btn-secondary">Back to Home</a></p>
+    </div>
+{% endblock %}

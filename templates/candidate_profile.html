@@ -1,0 +1,1268 @@
+{% extends 'base.html' %}
+
+{% block title %}Candidate Profile{% endblock %}
+{% block page_heading %}AI Agent-Based Resume Screening and Evaluation{% endblock %}
+
+{% block content %}
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" xintegrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
+<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" rel="stylesheet">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+
+<style>
+    /* Your existing CSS from resume_analysis.html and candidate_profile.html combined */
+    :root {
+        --primary-color: #007BFF;
+        --primary-light: #66B2FF;
+        --secondary-color: #003366;
+        --accent-color: #FFC107;
+        --success-color: #28A745;
+        --success-light: #28a745;
+        --warning-color: #FFC107;
+        --info-color: #17A2B8;
+        --danger-color: #DC3545;
+        --bg-gradient-start: #E0F7FA;
+        --bg-gradient-end: #ffffff;
+        --card-bg: #FFFFFF;
+        --border-color: #D0E0F0;
+        --font-color-dark: #212529;
+        --font-color-muted: #6C757D;
+        --shadow-light: 0 4px 12px rgba(0, 0, 0, 0.1);
+        --shadow-medium: 0 10px 30px rgba(0, 0, 0, 0.2);
+        --shadow-strong: 0 20px 60px rgba(0, 0, 0, 0.3);
+    }
+    
+    body {
+        background: linear-gradient(135deg, var(--bg-gradient-start) 0%, var(--bg-gradient-end) 100%);
+        font-family: 'Inter', sans-serif;
+        color: var(--font-color-dark);
+        line-height: 1.6;
+        min-height: 100vh;
+        flex-direction: column;
+        align-items: center;
+        overflow-x: hidden;
+    }
+    .container-main {
+        max-width: 1400px;
+        width: 100%;
+    }
+    .page-heading {
+        color: var(--secondary-color);
+        font-weight: 800;
+        margin-bottom: 5rem;
+        text-align: center;
+        font-size: 45px;
+        text-shadow: 3px 3px 10px rgba(0,0,0,0.15);
+        background: linear-gradient(90deg, var(--primary-color), var(--info-color));
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        animation: slideInDown 1s ease-out forwards;
+    }
+    @keyframes slideInDown {
+        from { opacity: 0; transform: translateY(-50px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+
+    .content-section-card {
+        background-color: var(--card-bg);
+        border-radius: 20px;
+        box-shadow: var(--shadow-medium);
+        padding: 2.5rem;
+        transition: transform 0.4s cubic-bezier(0.25, 0.8, 0.25, 1), box-shadow 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
+        border-top: 8px solid var(--primary-color);
+        animation: fadeInUp 0.8s ease-out forwards;
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    .content-section-card.show-animation {
+        opacity: 1;
+        transform: translateY(0);
+    }
+    .content-section-card:hover {
+        transform: translateY(-10px);
+        box-shadow: var(--shadow-strong);
+    }
+    .section-title {
+        color: var(--secondary-color);
+        font-weight: 700;
+        margin-bottom: 2.5rem;
+        font-size: 2.0rem;
+        position: relative;
+        padding-bottom: 1rem;
+        text-shadow: 1px 1px 4px rgba(0,0,0,0.05);
+    }
+    .section-title::after {
+        content: '';
+        position: absolute;
+        left: 0;
+        bottom: 0;
+        width: 100px;
+        height: 6px;
+        background: linear-gradient(90deg, var(--success-color), var(--info-color));
+        border-radius: 3px;
+        animation: expandLine 1.5s ease-out forwards;
+    }
+    @keyframes expandLine {
+        from { width: 0; }
+        to { width: 100px; }
+    }
+    .form-group-floating {
+        position: relative;
+        margin-bottom: 1.5rem;
+    }
+    .form-control-custom, .form-select-custom {
+        width: 100%;
+        padding: 1.4rem 1.5rem 0.8rem 1.5rem;
+        border-radius: 12px;
+        border: 2px solid var(--border-color);
+        background-color: #FDFDFD;
+        font-size: 1.1rem;
+        color: var(--font-color-dark);
+        transition: all 0.3s ease, box-shadow 0.3s ease;
+    }
+    .form-control-custom:focus, .form-select-custom:focus {
+        border-color: var(--primary-color);
+        box-shadow: 0 0 0 5px rgba(0, 123, 255, 0.2), 0 0 10px rgba(0, 123, 255, 0.3);
+        outline: none;
+        background-color: #FFFFFF;
+    }
+    .form-group-floating .form-label {
+        position: absolute;
+        top: 0.5rem;
+        left: 1.5rem;
+        transition: all 0.2s ease-out;
+        pointer-events: none;
+        font-size: 1rem;
+        color: var(--font-color-muted);
+    }
+    .form-group-floating .form-control-custom:focus + .form-label,
+    .form-group-floating .form-control-custom.has-value + .form-label,
+    .form-group-floating .form-select-custom:focus + .form-label,
+    .form-group-floating .form-select-custom.has-value + .form-label {
+        top: 0.3rem;
+        font-size: 0.85rem;
+        color: var(--primary-color);
+        font-weight: 600;
+    }
+    .file-input-wrapper {
+        position: relative;
+        overflow: hidden;
+        display: inline-block;
+        width: 100%;
+        margin-bottom: 1.5rem;
+    }
+    .file-input-wrapper input[type=file] {
+        font-size: 100px;
+        position: absolute;
+        left: 0;
+        top: 0;
+        opacity: 0;
+        cursor: pointer;
+        width: 100%;
+        height: 100%;
+    }
+    .file-input-wrapper .btn-file-upload {
+        display: flex;
+        align-items: center;
+        width: 100%;
+        padding: 1rem 1.5rem;
+        border-radius: 12px;
+        border: 2px solid var(--border-color);
+        background-color: #FDFDFD;
+        color: var(--font-color-dark);
+        text-align: left;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        overflow: hidden;
+        white-space: nowrap;
+        text-overflow: ellipsis;
+        font-size: 1.1rem;
+    }
+    .btn-file-upload {
+        background: linear-gradient(135deg, #dffdff, #397eff);
+        color: white;
+        padding: 12px 20px;
+        border-radius: 8px;
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+        cursor: pointer;
+        font-weight: bold;
+        transition: transform 0.2s;
+    }
+    .btn-file-upload:hover {
+        transform: scale(1.05);
+    }
+    .btn-file-upload i {
+        font-size: 20px;
+    }
+    .btn-primary-custom {
+        font-weight: 700;
+        background-image: linear-gradient(to right, var(--primary-color) 0%, var(--primary-light) 100%);
+        border: none;
+        padding: 1.5rem 3.5rem;
+        border-radius: 15px;
+        box-shadow: 0 15px 40px rgba(0, 123, 255, 0.4);
+        transition: all 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
+        color: white;
+        text-transform: uppercase;
+        letter-spacing: 2px;
+        font-size: 1.25rem;
+        position: relative;
+        overflow: hidden;
+        z-index: 1;
+    }
+    .btn-primary-custom:hover {
+        background-image: linear-gradient(to right, var(--primary-light) 0%, var(--primary-color) 100%);
+        transform: translateY(-8px);
+        box-shadow: 0 22px 60px rgba(0, 123, 255, 0.6);
+    }
+    .btn-primary-custom::after {
+        content: '';
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        width: 0;
+        height: 0;
+        background: rgba(255, 255, 255, 0.3);
+        border-radius: 50%;
+        opacity: 0;
+        transform: translate(-50%, -50%);
+        transition: width 0.6s ease-out, height 0.6s ease-out, opacity 0.6s ease-out;
+        z-index: -1;
+    }
+    .btn-primary-custom:active::after {
+        width: 300%;
+        height: 300%;
+        opacity: 1;
+        transition: 0s;
+    }
+    .btn-icon-right {
+        margin-left: 18px;
+        transition: transform 0.3s ease;
+    }
+    .btn-primary-custom:hover .btn-icon-right {
+        transform: translateX(12px);
+    }
+
+    .pdf-preview-section {
+        background: linear-gradient(135deg, #ffffff 0%, #B2EBF2 100%);
+        border-radius: 20px;
+        padding: 2.5rem;
+        box-shadow: var(--shadow-light);
+        border: 2px dashed var(--info-color);
+        align-items: center;
+        justify-content: center;
+    }
+    .pdf-embed {
+        width: 100%;
+        height: 100%;
+        border-radius: 15px;
+        border: none !important;
+        outline: none !important;
+        box-shadow: none !important;
+    }
+    .pdf-placeholder {
+        text-align: center;
+        padding: 2.5rem;
+        color: var(--font-color-muted);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        height: 100%;
+        width: 100%;
+        position: absolute;
+        top: 0;
+        left: 0;
+    }
+    .pdf-placeholder i {
+        font-size: 5rem;
+        margin-bottom: 2rem;
+        color: var(--info-color);
+        animation: bounceIn 1s ease-out, pulse 2s infinite ease-in-out 1s;
+    }
+    @keyframes bounceIn {
+        0%, 20%, 40%, 60%, 80%, 100% { transition-timing-function: cubic-bezier(0.215, 0.610, 0.355, 1.000); }
+        0% { opacity: 0; transform: scale3d(0.3, 0.3, 0.3); }
+        20% { transform: scale3d(1.1, 1.1, 1.1); }
+        40% { transform: scale3d(0.9, 0.9, 0.9); }
+        60% { opacity: 1; transform: scale3d(1.03, 1.03, 1.03); }
+        80% { transform: scale3d(0.97, 0.97, 0.97); }
+        100% { opacity: 1; transform: scale3d(1, 1, 1); }
+    }
+    @keyframes pulse {
+        0% { transform: scale(1); opacity: 1; }
+        50% { transform: scale(1.03); opacity: 0.9; }
+        100% { transform: scale(1); opacity: 1; }
+    }
+    .pdf-placeholder .message {
+        font-size: 1.4rem;
+        font-weight: 700;
+        color: var(--secondary-color);
+        margin-bottom: 0.8rem;
+    }
+    .pdf-placeholder .sub-message {
+        font-size: 1.1rem;
+        color: var(--font-color-muted);
+    }
+    .pdf-placeholder .error-message {
+        color: var(--danger-color);
+        font-weight: 700;
+        margin-top: 1.5rem;
+        font-size: 1.2rem;
+    }
+
+    .results-section {
+        background-color: var(--card-bg);
+        border-radius: 10px;
+        box-shadow: var(--shadow-medium);
+        padding: 3rem;
+        border-top: 8px solid var(--primary-color);
+        opacity: 0;
+        transform: translateY(30px);
+        transition: opacity 0.8s ease-out, transform 0.8s ease-out;
+    }
+    .results-section.show {
+        opacity: 1;
+        transform: translateY(0);
+    }
+
+    .nav-tabs {
+        border-bottom: 2px solid var(--border-color);
+        margin-bottom: 2.5rem;
+    }
+    .nav-tabs .nav-item .nav-link {
+        color: var(--font-color-muted);
+        font-weight: 600;
+        border: none;
+        border-bottom: 4px solid transparent;
+        border-radius: 0;
+        padding: 1rem 1.8rem;
+        transition: all 0.3s ease;
+        font-size: 1.05rem;
+    }
+    .nav-tabs .nav-item .nav-link:hover {
+        color: var(--primary-color);
+        border-color: var(--primary-light);
+        transform: translateY(-2px) scale(1.02);
+    }
+    .nav-tabs .nav-item .nav-link.active {
+        color: var(--primary-color);
+        border-color: var(--primary-color);
+        background-color: transparent;
+    }
+
+    .tab-content {
+        padding-top: 1.5rem;
+    }
+    .tab-pane {
+        animation: fadeIn 0.5s ease-out;
+    }
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(10px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+    .summary-tile {
+        background-color: var(--bg-gradient-end);
+        border-radius: 15px;
+        padding: 1.8rem;
+        box-shadow: var(--shadow-light);
+        border: 1px solid var(--border-color);
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+        transition: all 0.3s ease;
+        opacity: 0;
+        transform: scale(0.9);
+    }
+    .summary-tile.show-animation {
+        opacity: 1;
+        transform: scale(1);
+        animation: zoomIn 0.6s ease-out forwards;
+    }
+    @keyframes zoomIn {
+        from { opacity: 0; transform: scale(0.9); }
+        to { opacity: 1; transform: scale(1); }
+    }
+    .summary-tile:hover {
+        transform: translateY(-5px) scale(1.02);
+        box-shadow: var(--shadow-medium);
+    }
+    .summary-tile h6 {
+        font-weight: 600;
+        color: var(--secondary-color);
+        margin-bottom: 0.8rem;
+        font-size: 1.15rem;
+        display: flex;
+        align-items: center;
+    }
+    .summary-tile h6 i {
+        font-size: 1.3rem;
+        margin-right: 0.7rem;
+        color: var(--primary-color);
+    }
+    .summary-tile p {
+        color: var(--font-color-dark);
+        font-weight: 700;
+        font-size: 1.5rem;
+        margin-bottom: 0;
+        flex-grow: 1;
+        display: flex;
+        align-items: flex-end;
+    }
+
+    .fitment-verdict-box {
+        background-color: var(--bg-gradient-end);
+        border-radius: 15px;
+        padding: 2.2rem;
+        box-shadow: var(--shadow-light);
+        border-left: 6px solid var(--primary-color);
+        text-align: center;
+        transition: all 0.3s ease;
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    .fitment-verdict-box.show-animation {
+        opacity: 1;
+        transform: translateY(0);
+        animation: fadeInUp 0.8s ease-out forwards;
+    }
+    @keyframes fadeInUp {
+        from { opacity: 0; transform: translateY(20px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+    .fitment-verdict-box:hover {
+        transform: translateY(-5px);
+        box-shadow: var(--shadow-medium);
+    }
+    .fitment-verdict {
+        font-size: 3.2rem;
+        font-weight: 800;
+        letter-spacing: 1.5px;
+        text-transform: uppercase;
+        animation: fadeInScale 1s cubic-bezier(0.25, 0.8, 0.25, 1);
+        text-shadow: 2px 2px 5px rgba(0,0,0,0.15);
+    }
+    .fitment-verdict.selected { color: var(--success-color); }
+    .fitment-verdict.marginal { color: var(--warning-color); }
+    .fitment-verdict.rejected { color: var(--danger-color); }
+
+    .content-box {
+        background-color: var(--bg-gradient-end);
+        border-radius: 15px;
+        padding: 2rem;
+        box-shadow: var(--shadow-light);
+        border: 1px solid var(--border-color);
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+        transition: all 0.3s ease;
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    .content-box.show-animation {
+        opacity: 1;
+        transform: translateY(0);
+        animation: fadeInUp 0.8s ease-out forwards;
+    }
+    .content-box:hover {
+        transform: translateY(-5px);
+        box-shadow: var(--shadow-medium);
+    }
+    .content-box h6 {
+        font-weight: 700;
+        color: var(--secondary-color);
+        margin-bottom: 1.5rem;
+        font-size: 1.2rem;
+        display: flex;
+        align-items: center;
+    }
+    .content-box h6 i {
+        margin-right: 0.8rem;
+        font-size: 1.3rem;
+        color: var(--primary-color);
+    }
+    .content-box p, .content-box ul {
+        font-size: 1rem;
+        color: var(--font-color-dark);
+        flex-grow: 1;
+    }
+    .content-box ul {
+        list-style-type: disc;
+        padding-left: 1.2rem;
+    }
+    .content-box ul li {
+        margin-bottom: 0.5rem;
+    }
+
+    .table-responsive {
+        margin-top: 2rem;
+        border-radius: 15px;
+        overflow: hidden;
+        box-shadow: var(--shadow-medium);
+        border: 1px solid var(--border-color);
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    .table-responsive.show-animation {
+        opacity: 1;
+        transform: translateY(0);
+        animation: fadeInUp 0.8s ease-out forwards;
+    }
+    .table {
+        border-collapse: separate;
+        border-spacing: 0;
+        width: 100%;
+        background-color: var(--card-bg);
+    }
+    .table thead th {
+        background-color: var(--secondary-color);
+        color: white;
+        font-weight: 600;
+        border: none;
+        padding: 1.2rem 1.2rem;
+        text-transform: uppercase;
+        font-size: 0.95rem;
+    }
+    .table tbody tr {
+        transition: all 0.3s ease;
+    }
+    .table tbody tr:hover {
+        background-color: #F0F8FF;
+    }
+    .table-striped > tbody > tr:nth-of-type(odd) {
+        background-color: var(--bg-gradient-end);
+    }
+    .table-sm th, .table-sm td {
+        padding: 1.1rem;
+        border-color: var(--border-color);
+        color: var(--font-color-dark);
+        vertical-align: middle;
+        font-size: 0.95rem;
+    }
+
+    .questions-list {
+        list-style-type: none;
+        padding-left: 0;
+    }
+    .questions-list li {
+        margin-bottom: 1rem;
+        line-height: 1.8;
+        padding: 1.2rem 1.5rem 1.2rem 3rem;
+        position: relative;
+        background-color: var(--bg-gradient-end);
+        border-radius: 12px;
+        box-shadow: var(--shadow-light);
+        color: var(--font-color-dark);
+        font-size: 1rem;
+        transition: all 0.3s ease;
+        border-left: 4px solid var(--info-color);
+        opacity: 0;
+        transform: translateX(-20px);
+    }
+    .questions-list li.show-animation {
+        opacity: 1;
+        transform: translateX(0);
+        animation: slideInLeft 0.6s ease-out forwards;
+    }
+    @keyframes slideInLeft {
+        from { opacity: 0; transform: translateX(-20px); }
+        to { opacity: 1; transform: translateX(0); }
+    }
+    .questions-list li:hover {
+        transform: translateX(5px);
+        box-shadow: var(--shadow-medium);
+        border-left-color: var(--primary-light);
+    }
+    .questions-list li::before {
+        content: "\f058";
+        font-family: "Font Awesome 5 Free";
+        font-weight: 900;
+        color: var(--success-color);
+        position: absolute;
+        left: 1rem;
+        top: 50%;
+        transform: translateY(-50%);
+        font-size: 1.4rem;
+    }
+    .no-results-message {
+        text-align: center;
+        padding: 4rem;
+        background-color: var(--bg-gradient-end);
+        border-radius: 20px;
+        border: 3px dashed var(--info-color);
+        color: var(--font-color-muted);
+        margin-top: 2.5rem;
+        font-size: 1.2rem;
+        box-shadow: var(--shadow-light);
+    }
+    .no-results-message i {
+        font-size: 5rem;
+        color: var(--info-color);
+        margin-bottom: 2rem;
+        animation: pulse 2s infinite ease-in-out;
+    }
+    #preloader {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        z-index: 9999;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        background: rgba(0, 0, 0, 0.75);
+        backdrop-filter: blur(8px);
+        opacity: 0;
+        visibility: hidden;
+        transition: opacity 0.4s ease, visibility 0.4s ease;
+    }
+    #preloader.show {
+        opacity: 1;
+        visibility: visible;
+    }
+    .preloader-content {
+        background-color: var(--card-bg);
+        border-radius: 20px;
+        padding: 4rem;
+        text-align: center;
+        box-shadow: var(--shadow-strong);
+        width: 90%;
+        max-width: 550px;
+        transform: translateY(20px);
+        opacity: 0;
+        transition: transform 0.5s cubic-bezier(0.25, 0.8, 0.25, 1), opacity 0.5s cubic-bezier(0.25, 0.8, 0.25, 1);
+    }
+    #preloader.show .preloader-content {
+        transform: translateY(0);
+        opacity: 1;
+    }
+    .preloader-title {
+        color: var(--secondary-color);
+        font-weight: 800;
+        margin-bottom: 1.5rem;
+        font-size: 2.5rem;
+    }
+    .preloader-text {
+        color: var(--font-color-muted);
+        font-size: 1.15rem;
+        margin-bottom: 2.5rem;
+        min-height: 2.5em;
+    }
+    .progress-container {
+        width: 100%;
+        height: 30px;
+        background-color: var(--border-color);
+        border-radius: 15px;
+        overflow: hidden;
+        box-shadow: inset 0 2px 5px rgba(0,0,0,0.1);
+    }
+    .progress-bar {
+        height: 100%;
+        width: 0%;
+        background-image: linear-gradient(90deg, var(--success-color), var(--info-color));
+        transition: width 0.6s ease-in-out;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        color: white;
+        font-weight: 700;
+        font-size: 1rem;
+        text-shadow: 1px 1px 3px rgba(0,0,0,0.3);
+    }
+    .modern-card {
+        background-color: #fff;
+        border-radius: 1rem;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        border: 1px solid #e2e8f0;
+        transition: transform 0.2s, box-shadow 0.2s;
+        padding: 1.5rem;
+    }
+    .modern-card:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+    }
+    .card-section-heading {
+        font-weight: 600;
+        font-size: 1rem;
+        color: #4a5568;
+        margin-bottom: 0.5rem;
+    }
+    .final-decision-section .card-section-heading {
+        margin-bottom: 1rem;
+    }
+    .badge-hire {
+        background-color: #d1fae5;
+        color: #065f46;
+        font-weight: 700;
+        padding: 0.25rem 0.75rem;
+        border-radius: 9999px;
+    }
+    .badge-suggested {
+        background-color: #dbeafe;
+        color: #1e40af;
+        font-weight: 700;
+        padding: 0.25rem 0.75rem;
+        border-radius: 9999px;
+    }
+    .final-decision-btn {
+        background-color: #10b981;
+        color: #fff;
+        font-weight: 600;
+        padding: 1rem 2.5rem;
+        border-radius: 0.75rem;
+        display: block;
+        width: 100%;
+        border: none;
+        transition: background-color 0.2s;
+    }
+    .final-decision-btn:hover {
+        background-color: #059669;
+    }
+    .final-decision-btn .bi {
+        margin-right: 0.5rem;
+    }
+    .ai-interview-btn {
+        background-color: #2563eb;
+        color: #fff;
+        font-weight: 600;
+        padding: 1rem 2.5rem;
+        border-radius: 0.75rem;
+        display: block;
+        width: 100%;
+        border: none;
+        transition: background-color 0.2s;
+    }
+    .ai-interview-btn:hover {
+        background-color: #1e40af;
+    }
+    .ai-interview-btn .bi {
+        margin-right: 0.5rem;
+    }
+    .form-control-lg {
+        padding: 1rem 1.5rem;
+        font-size: 1.25rem;
+    }
+    .form-control-lg::-webkit-input-placeholder {
+        color: #a0aec0;
+    }
+    .form-control-lg::-moz-placeholder {
+        color: #a0aec0;
+    }
+</style>
+
+<div class="container container-main">
+    {% if messages %}
+    <div class="row">
+        <div class="col-12">
+            {% for message in messages %}
+            <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+
+    {% if candidate %}
+    <div class="row g-4 mb-4">
+        <div class="col-12">
+            <div class="modern-card p-4">
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <div>
+                        <h4 class="fw-bold mb-0">{{ candidate.full_name|default:"N/A" }}</h4>
+                        <p class="text-muted mb-0">{{ candidate.job_role|default:"N/A" }}</p>
+                    </div>
+                    <div class="text-end">
+                        <p class="card-section-heading mb-1">AI RECOMMENDATION</p>
+                        <span class="badge badge-hire" style="font-size: 20px;">{{ candidate.hiring_recommendation|default:"N/A" }}</span>
+                    </div>
+                    <div class="text-end">
+                        <p class="card-section-heading mb-1">SUGGESTED SALARY</p>
+                        <span class="text-success fw-bold">{{ candidate.suggested_salary_range|default:"N/A" }}</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="modern-card h-100">
+                <h5 class="fw-bold mb-3"><i class="bi bi-robot me-2 text-primary"></i> Initiate AI Interview</h5>
+                <form method="post" action="" class="d-grid gap-3">
+                    {% csrf_token %}
+                    <input type="hidden" name="form_type" value="initiate_interview_form">
+                    <div class="form-group">
+                        <label for="id_phone_number" class="card-section-heading">Phone Number for Interview</label>
+                        <input type="text" name="phone_number" class="form-control form-control-lg mt-2" placeholder="e.g. +919876543210" required id="id_phone_number" value="{{ candidate.phone_no|default:'' }}">
+                    </div>
+                    <button type="submit" class="btn ai-interview-btn">
+                        <i class="bi bi-telephone-inbound me-2"></i> Start Interview Call
+                    </button>
+                    <p class="text-muted mt-3 mb-0">
+                        <i class="bi bi-phone me-1"></i> Candidate Phone No.
+                        <span class="fw-bold text-dark ms-2">{{ candidate.phone_no|default:"N/A" }}</span>
+                    </p>
+                </form>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="modern-card h-100">
+                <h5 class="fw-bold mb-3"><i class="bi bi-wallet2 me-2 text-success"></i> Finalize Decision & Salary</h5>
+                <form method="post" action="" class="d-grid gap-3">
+                    {% csrf_token %}
+                    <input type="hidden" name="form_type" value="finalize_decision_form">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <label for="id_final_decision" class="card-section-heading">Final Decision</label>
+                            <div class="form-group">
+                                <select name="final_decision" class="form-select form-control-lg" id="id_final_decision">
+                                    <option value="selected" {% if candidate.final_decision == 'selected' %}selected{% endif %}>Selected</option>
+                                    <option value="not_selected" {% if candidate.final_decision == 'not_selected' %}selected{% endif %}>Not Selected</option>
+                                    <option value="shortlisted" {% if candidate.final_decision == 'shortlisted' %}selected{% endif %}>Shortlisted</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="id_final_salary" class="card-section-heading">Final Salary (INR)</label>
+                            <div class="input-group">
+                                <span class="input-group-text">₹</span>
+                                <input type="number" name="final_salary" class="form-control form-control-lg" placeholder="e.g., 80000" id="id_final_salary" value="{{ candidate.final_salary|default:'' }}">
+                            </div>
+                        </div>
+                        {# NEW: Interview Status Selection #}
+                        <div class="col-12 mt-3">
+                            <label for="id_interview_status" class="card-section-heading">Interview Status</label>
+                            <div class="form-group">
+                                <select name="interview_status" class="form-select form-control-lg" id="id_interview_status">
+                                    <option value="Pending" {% if candidate.interview_status == 'Pending' %}selected{% endif %}>Pending</option>
+                                    <option value="Complete" {% if candidate.interview_status == 'Complete' %}selected{% endif %}>Complete</option>
+                                    <option value="Cancelled" {% if candidate.interview_status == 'Cancelled' %}selected{% endif %}>Cancelled</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    <button type="submit" class="btn final-decision-btn mt-3">
+                        <i class="bi bi-check-circle me-2"></i> Save Final Decision
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+        <div class="content-section-card results-section show" data-analysis-loaded="true">
+            <h2 class="section-title">AI Analysis for <span class="text-primary">{{ candidate.full_name|default:"Candidate" }}</span></h2>
+            <ul class="nav nav-tabs" id="analysisTabs" role="tablist">
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link active" id="summary-tab" data-bs-toggle="tab" data-bs-target="#summary" type="button" role="tab" aria-controls="summary" aria-selected="true">
+                        <i class="fas fa-chart-pie me-2"></i> Summary
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="contact-tab" data-bs-toggle="tab" data-bs-target="#contact" type="button" role="tab" aria-controls="contact" aria-selected="false">
+                        <i class="fas fa-address-book me-2"></i> Contact Info
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="details-tab" data-bs-toggle="tab" data-bs-target="#details" type="button" role="tab" aria-controls="details" aria-selected="false">
+                        <i class="fas fa-info-circle me-2"></i> Detailed Analysis
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="skills-projects-tab" data-bs-toggle="tab" data-bs-target="#skills-projects" type="button" role="tab" aria-controls="skills-projects" aria-selected="false">
+                        <i class="fas fa-code me-2"></i> Skills & Projects
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="recommendations-tab" data-bs-toggle="tab" data-bs-target="#recommendations" type="button" role="tab" aria-controls="recommendations" aria-selected="false">
+                        <i class="fas fa-lightbulb me-2"></i> Recommendations
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="questions-tab" data-bs-toggle="tab" data-bs-target="#questions" type="button" role="tab" aria-controls="questions" aria-selected="false">
+                        <i class="fas fa-question-circle me-2"></i> Interview Questions
+                    </button>
+                </li>
+            </ul>
+
+            <div class="tab-content" id="analysisTabContent">
+                <div class="tab-pane fade show active" id="summary" role="tabpanel" aria-labelledby="summary-tab">
+                    <div class="row g-4 mb-4">
+                        <div class="col-md-3 col-sm-6">
+                            <div class="summary-tile fade-in-item">
+                                <h6><i class="fas fa-briefcase me-2"></i> Job Role</h6>
+                                <p>{{ candidate.job_role|default:"N/A" }}</p>
+                            </div>
+                        </div>
+                        <div class="col-md-3 col-sm-6">
+                            <div class="summary-tile fade-in-item">
+                                <h6><i class="fas fa-chart-line me-2"></i> Overall Experience</h6>
+                                <p>{{ candidate.overall_experience|default:"N/A" }}</p>
+                            </div>
+                        </div>
+                        <div class="col-md-3 col-sm-6">
+                            <div class="summary-tile fade-in-item">
+                                <h6><i class="fas fa-thumbs-up me-2"></i> Hiring Recommendation</h6>
+                                <p class="
+                                    {% if candidate.hiring_recommendation == 'Hire' or candidate.hiring_recommendation == 'Strong Hire' %}text-success
+                                    {% elif candidate.hiring_recommendation == 'Reject' %}text-danger
+                                    {% else %}text-warning{% endif %}">
+                                    {{ candidate.hiring_recommendation|default:"N/A" }}
+                                </p>
+                            </div>
+                        </div>
+                        <div class="col-md-3 col-sm-6">
+                            <div class="summary-tile fade-in-item">
+                                <h6><i class="fas fa-percentage me-2"></i> Experience Match</h6>
+                                <p class="text-success">{{ candidate.experience_match|default:"N/A" }}</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row g-4 mb-4">
+                        <div class="col-md-6">
+                            <div class="fitment-verdict-box fade-in-item">
+                                <h5 class="text-primary"><i class="fas fa-shield-alt me-2"></i> Candidate Fitment Verdict</h5>
+                                <p class="fitment-verdict mt-3
+                                        {% if candidate.fitment_verdict == 'SELECTED' %}selected
+                                        {% elif candidate.fitment_verdict == 'MARGINALLY FIT' %}marginal
+                                        {% else %}rejected{% endif %}">
+                                    {{ candidate.fitment_verdict|default:"N/A" }}
+                                </p>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="content-box fade-in-item">
+                                <h6><i class="fas fa-sitemap me-2"></i> Strategic Alignment</h6>
+                                <p>{{ candidate.strategic_alignment|default:"N/A" }}</p>
+                            </div>
+                        </div>
+                    </div>
+                    <h4 class="section-title mt-5">Core Competency Assessment</h4>
+                    <div class="row g-4 mb-4">
+                        {# Core Competency Assessment data is not directly stored as a separate field in the model, it's part of analysis_summary_dict if you kept it #}
+                        {# If you want to store this separately, you'd need to add a field like core_competencies_assessment_json to your model #}
+                        {# For now, I'll assume it's still coming from analysis_summary_dict if you kept that. #}
+                        {# If you removed analysis_summary_dict, this section would need a new model field. #}
+                        {% if analysis_summary_dict.core_competencies_assessment %}
+                            {% for competency in analysis_summary_dict.core_competencies_assessment %}
+                                <div class="col-md-3 col-sm-6">
+                                    <div class="summary-tile fade-in-item">
+                                        <h6><i class="fas fa-star me-2"></i> {{ competency.competency|default:"N/A" }}</h6>
+                                        <p class="
+                                            {% if competency.level == 'Excellent' or competency.level == 'Advanced' %}text-success
+                                            {% elif competency.level == 'Proficient' %}text-primary
+                                            {% elif competency.level == 'Intermediate' %}text-warning
+                                            {% else %}text-muted{% endif %}
+                                        ">
+                                            {{ competency.level|default:"N/A" }}
+                                        </p>
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        {% else %}
+                            <div class="col-12">
+                                <div class="content-box text-center text-muted fade-in-item">
+                                    <p>No core competency assessment data available.</p>
+                                </div>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <div class="tab-pane fade" id="contact" role="tabpanel" aria-labelledby="contact-tab">
+                    <h4 class="section-title">Candidate Contact Information</h4>
+                    <div class="row g-4 mb-4">
+                        <div class="col-md-4 col-sm-6">
+                            <div class="summary-tile fade-in-item">
+                                <h6><i class="fas fa-user me-2"></i> Full Name</h6>
+                                <p>{{ candidate.full_name|default:"N/A" }}</p>
+                            </div>
+                        </div>
+                        <div class="col-md-4 col-sm-6">
+                            <div class="summary-tile fade-in-item">
+                                <h6><i class="fas fa-phone me-2"></i> Phone Number</h6>
+                                <p>{{ candidate.phone_no|default:"N/A" }}</p>
+                            </div>
+                        </div>
+                        <div class="col-md-4 col-sm-6">
+                            <div class="summary-tile fade-in-item">
+                                <h6><i class="fas fa-envelope me-2"></i> Email Address</h6>
+                                <p>{{ candidate.email|default:"N/A" }}</p> {# Assuming 'email' field exists in CandidateAnalysis model #}
+                            </div>
+                        </div>
+                        <div class="col-md-4 col-sm-6">
+                            <div class="summary-tile fade-in-item">
+                                <h6><i class="fab fa-linkedin me-2"></i> LinkedIn Profile</h6>
+                                {% if candidate.linkedin_url %} {# Assuming 'linkedin_url' field exists in CandidateAnalysis model #}
+                                    <p><a href="{{ candidate.linkedin_url }}" target="_blank" class="text-primary">{{ candidate.linkedin_url|truncatechars:30 }}</a></p>
+                                {% else %}
+                                    <p>N/A</p>
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="col-md-4 col-sm-6">
+                            <div class="summary-tile fade-in-item">
+                                <h6><i class="fab fa-github me-2"></i> GitHub Profile</h6>
+                                {% if candidate.github_url %} {# Assuming 'github_url' field exists in CandidateAnalysis model #}
+                                    <p><a href="{{ candidate.github_url }}" target="_blank" class="text-primary">{{ candidate.github_url|truncatechars:30 }}</a></p>
+                                {% else %}
+                                    <p>N/A</p>
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="col-md-4 col-sm-6">
+                            <div class="summary-tile fade-in-item">
+                                <h6><i class="fas fa-map-marker-alt me-2"></i> Current Company Address</h6>
+                                <p>{{ candidate.current_company_address|default:"N/A" }}</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="tab-pane fade" id="details" role="tabpanel" aria-labelledby="details-tab">
+                    <h4 class="section-title">Deep-Dive Scoring Matrix</h4>
+                    <div class="table-responsive fade-in-item">
+                        <table class="table table-striped table-sm">
+                            <thead>
+                                <tr>
+                                    <th>Evaluation Dimension</th>
+                                    <th>Weight</th>
+                                    <th>Score</th>
+                                    <th>Evidence-Based Justification</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for item in scoring_matrix_list %}
+                                    <tr>
+                                        <td class="fw-bold">{{ item.dimension|default:"N/A" }}</td>
+                                        <td>{{ item.weight|default:"N/A" }}</td>
+                                        <td>{{ item.score|default:"N/A" }}</td>
+                                        <td>{{ item.justification|default:"N/A" }}</td>
+                                    </tr>
+                                {% empty %}
+                                    <tr>
+                                        <td colspan="4" class="text-center text-muted">No scoring matrix data available.</td>
+                                    </tr>
+                                {% endfor %}
+                                <tr>
+                                    <td class="fw-bold">➤ Aggregate Score</td>
+                                    <td>100%</td>
+                                    <td class="fw-bold">{{ candidate.aggregate_score|default:"N/A" }}</td>
+                                    <td></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <h4 class="section-title mt-5">Detailed Analysis Summary</h4>
+                    <div class="row g-4">
+                        <div class="col-md-6">
+                            <div class="content-box fade-in-item">
+                                <h6><i class="fas fa-user-circle me-2 text-primary"></i> Candidate Overview</h6>
+                                <p>{{ candidate.candidate_overview|default:"No candidate overview provided." }}</p>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="content-box fade-in-item">
+                                <h6><i class="fas fa-chart-line me-2 text-success"></i> Quantifiable Impact</h6>
+                                <p>{{ candidate.quantifiable_impact|default:"N/A" }}</p>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="content-box fade-in-item">
+                                <h6><i class="fas fa-exclamation-triangle me-2 text-danger"></i> Potential Gaps & Risks</h6>
+                                <p>{{ candidate.potential_gaps_risks|default:"N/A" }}</p>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="content-box fade-in-item">
+                                <h6><i class="fas fa-briefcase me-2 text-info"></i> Comparable Experience</h6>
+                                <p>{{ candidate.comparable_experience|default:"N/A" }}</p>
+                            </div>
+                        </div>
+                        <div class="col-12">
+                            <div class="content-box fade-in-item">
+                                <h6><i class="fas fa-check-circle me-2 text-secondary"></i> Conclusion</h6>
+                                <p>{{ candidate.conclusion_summary|default:"No conclusion provided." }}</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="tab-pane fade" id="skills-projects" role="tabpanel" aria-labelledby="skills-projects-tab">
+                    <h4 class="section-title">Technical Skills & Education</h4>
+                    <div class="row g-4">
+                        <div class="col-md-6">
+                            <div class="content-box fade-in-item">
+                                <h6><i class="fas fa-laptop-code me-2 text-primary"></i> Technical Prowess</h6>
+                                <ul>
+                                    {% if technical_prowess_dict %}
+                                        {% for skill_category, skills in technical_prowess_dict.items %}
+                                            <li><strong>{{ skill_category }}:</strong> {{ skills|join:", " }}</li>
+                                        {% empty %}
+                                            <li>No technical skills identified.</li>
+                                        {% endfor %}
+                                    {% else %}
+                                        <li>No technical skills identified.</li>
+                                    {% endif %}
+                                </ul>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="content-box fade-in-item">
+                                <h6><i class="fas fa-graduation-cap me-2 text-primary"></i> Education & Certifications</h6>
+                                <ul>
+                                    {% if education_certifications_dict.education %}
+                                        {% for edu in education_certifications_dict.education %}
+                                            <li>{{ edu }}</li>
+                                        {% empty %}
+                                            <li>No education details provided.</li>
+                                        {% endfor %}
+                                    {% else %}
+                                        <li>No education details provided.</li>
+                                    {% endif %}
+                                    {% if education_certifications_dict.certifications %}
+                                        {% for cert in education_certifications_dict.certifications %}
+                                            <li>{{ cert }}</li>
+                                        {% empty %}
+                                            <li>No certifications provided.</li>
+                                        {% endfor %}
+                                    {% else %}
+                                        <li>No certifications provided.</li>
+                                    {% endif %}
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <h4 class="section-title mt-5">Project Impact & Achievements</h4>
+                    <div class="row g-4">
+                        {% if project_impact_list %}
+                            {% for project in project_impact_list %}
+                                <div class="col-12">
+                                    <div class="content-box fade-in-item">
+                                        <h6><i class="fas fa-project-diagram me-2 text-warning"></i> {{ project.title|default:"Project Title N/A" }}</h6>
+                                        <p><strong>Company:</strong> {{ project.company|default:"N/A" }}</p>
+                                        <p><strong>Role:</strong> {{ project.role|default:"N/A" }}</p>
+                                        <p><strong>Achievements:</strong></p>
+                                        <ul>
+                                            {% for achievement in project.achievements %}
+                                                <li>{{ achievement }}</li>
+                                            {% empty %}
+                                                <li>No specific achievements listed.</li>
+                                            {% endfor %}
+                                        </ul>
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        {% else %}
+                            <div class="col-12">
+                                <div class="content-box text-muted fade-in-item">
+                                    <p>No project impact or achievements found.</p>
+                                </div>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <div class="tab-pane fade" id="recommendations" role="tabpanel" aria-labelledby="recommendations-tab">
+                    <div class="row g-4">
+                        <div class="col-md-6">
+                            <div class="content-box fade-in-item">
+                                <h6><i class="fas fa-tasks me-2 text-primary"></i> Bench & Alternative Roles</h6>
+                                <p><strong>Retain for future consideration?</strong> {{ bench_recommendation_dict.retain|default:"N/A" }}</p>
+                                <p><strong>Ideal Future Role(s):</strong> {{ bench_recommendation_dict.ideal_future_roles|join:", "|default:"N/A" }}</p>
+                                <p><strong>Justification:</strong> {{ bench_recommendation_dict.justification|default:"N/A" }}</p>
+                                <h6 class="mt-4"><i class="fas fa-exchange-alt me-2 text-info"></i> Alternative Role Recommendations</h6>
+                                <ul>
+                                    {% for role in alternative_role_recommendations_list %}
+                                        <li><strong>{{ role.role|default:"N/A" }}:</strong> {{ role.explanation|default:"N/A" }}</li>
+                                    {% empty %}
+                                        <li>No alternative roles suggested.</li>
+                                    {% endfor %}
+                                </ul>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="content-box fade-in-item">
+                                <h6><i class="fas fa-lightbulb me-2 text-warning"></i> Automated Recruiter Insights</h6>
+                                <p><strong>Red Flag Detection:</strong> {{ automated_recruiter_insights_dict.red_flag_detection|default:"None" }}</p>
+                                <p><strong>Growth Indicators:</strong> {{ automated_recruiter_insights_dict.growth_indicators|default:"None" }}</p>
+                                <p><strong>Cross-Industry Potential:</strong> {{ automated_recruiter_insights_dict.cross_industry_potential|default:"None" }}</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="tab-pane fade" id="questions" role="tabpanel" aria-labelledby="questions-tab">
+                    <h4 class="section-title">Suggested Interview Questions for <span class="text-primary">{{ candidate.full_name|default:"the Candidate" }}</span></h4>
+                    <ul class="questions-list">
+                        {% for question in interview_questions_list %}
+                            <li class="fade-in-item">{{ question }}</li>
+                        {% empty %}
+                            <li class="text-muted fade-in-item">No specific questions were generated.</li>
+                        {% endfor %}
+                    </ul>
+                    <div class="d-flex justify-content-end mt-4 pt-3 border-top fade-in-item">
+                        {# This link assumes you have a separate URL pattern named 'interview_status' #}
+                        {# If you are handling all POSTs in candidate_profile_view, this button might just trigger the phone call logic #}
+                        {% if candidate.id %}
+                            <a href="{% url 'interview_status' candidate_id=candidate.id %}" class="btn btn-primary-custom btn-lg">
+                                Proceed to Call Interview <i class="fas fa-arrow-right btn-icon-right"></i>
+                            </a>
+                        {% else %}
+                            <button type="button" class="btn btn-secondary btn-lg" disabled>
+                                Proceed to Call Interview (No Candidate ID) <i class="fas fa-arrow-right btn-icon-right"></i>
+                            </button>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    {% else %}
+        <div class="no-results-message text-center">
+            <i class="fas fa-robot"></i>
+            <p class="mt-4 fw-bold">No Candidate Analysis Available</p>
+            <p>Please ensure you have analyzed a resume previously or navigate to a specific candidate's profile.</p>
+        </div>
+    {% endif %}
+</div>
+
+<div id="preloader">
+    <div class="preloader-overlay"></div>
+    <div class="preloader-content">
+        <h3 class="preloader-title">Analyzing Resume...</h3>
+        <p class="preloader-text" id="preloaderMessage">Initializing AI agents...</p>
+        <div class="progress-container">
+            <div id="progressBar" class="progress-bar" role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100">
+                <span id="progressText">0%</span>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" xintegrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        // Removed experience type logic as the form is no longer present
+        // Removed file input logic as the form is no longer present
+        // Removed preloader logic as the form is no longer present
+
+        const resultsSection = document.querySelector('.results-section');
+
+        // This ensures the results section fades in when the page loads with analysis_result
+        if (resultsSection) {
+            resultsSection.classList.add('show');
+            const fadeInItems = document.querySelectorAll('.results-section .fade-in-item');
+            fadeInItems.forEach((item, index) => {
+                item.style.animationDelay = `${index * 0.1}s`;
+                item.classList.add('show-animation');
+            });
+        }
+    });
+</script>
+
+{% endblock %}

@@ -1,0 +1,453 @@
+{% extends 'base.html' %}
+
+{% block title %}Resume Analysis{% endblock %}
+{% block page_heading %}AI Agent-Based Resume Screening and Evaluation{% endblock %}
+
+{% block content %}
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Resume Analysis Dashboard</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap">
+
+    <style>
+        :root {
+            --primary-color: #4f46e5; /* A deep purple */
+            --primary-light: #eef2ff;
+            --secondary-color: #6b7280;
+            --background-color: #f9fafb; /* A very soft gray */
+            --card-background: #ffffff;
+            --text-color: #374151;
+            --heading-color: #1f2937;
+            --border-color: #e5e7eb;
+            --success-color: #10b981; /* A friendly green */
+            --danger-color: #ef4444; /* A clear red */
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--background-color);
+            color: var(--text-color);
+            line-height: 1.6;
+        }
+
+        .container-main {
+            max-width: 1200px;
+            margin: 2rem auto;
+            padding: 0 1rem;
+        }
+
+        .page-heading {
+            text-align: center;
+            margin-bottom: 2.5rem;
+            font-weight: 800;
+            color: var(--heading-color);
+            font-size: 2.5rem;
+        }
+
+        /* --- Dashboard Layout --- */
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: 1fr 2.5fr; 
+            gap: 2rem;
+        }
+
+        .dashboard-sidebar,
+        .dashboard-main-content {
+            background-color: var(--card-background);
+            padding: 2.5rem;
+            border-radius: 1rem;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.08);
+            border: 1px solid var(--border-color);
+        }
+
+        .dashboard-sidebar {
+            height: fit-content; 
+        }
+        
+        /* Sidebar Sections */
+        .section-title {
+            font-weight: 700;
+            color: var(--heading-color);
+            font-size: 1.5rem;
+            margin-bottom: 1.5rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 2px solid var(--primary-light);
+        }
+        
+        .sidebar-section {
+            margin-bottom: 2rem;
+        }
+        
+        .sidebar-section h5 {
+            color: var(--heading-color);
+            font-weight: 600;
+            margin-bottom: 1rem;
+        }
+
+        .sidebar-section p {
+            font-size: 0.95rem;
+            margin-bottom: 0.5rem;
+        }
+        
+        .score-circle {
+            width: 150px;
+            height: 150px;
+            border-radius: 50%;
+            background-color: var(--primary-color);
+            color: white;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin: 1.5rem auto;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+            transition: transform 0.3s ease-in-out;
+        }
+        
+        .score-circle:hover {
+            transform: scale(1.05);
+        }
+        
+        .status-badge {
+            display: inline-block;
+            padding: 0.3em 0.8em;
+            font-size: 0.8em;
+            font-weight: 600;
+            line-height: 1;
+            color: #fff;
+            border-radius: 9999px; /* Pill shape */
+            text-transform: uppercase;
+        }
+
+        .badge-success { background-color: var(--success-color); }
+        .badge-danger { background-color: var(--danger-color); }
+        .badge-info { background-color: #3b82f6; } /* A new, distinct blue */
+
+        /* Main Content Accordion */
+        .accordion-item {
+            border: 1px solid var(--border-color);
+            margin-bottom: 1rem;
+            border-radius: 0.75rem;
+            overflow: hidden;
+            transition: box-shadow 0.3s ease;
+        }
+        
+        .accordion-item:hover {
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+        }
+
+        .accordion-button {
+            background-color: var(--card-background);
+            color: var(--heading-color);
+            font-weight: 600;
+            padding: 1.5rem;
+            border: none;
+            width: 100%;
+            text-align: left;
+            transition: all 0.3s ease;
+            box-shadow: none;
+        }
+        
+        .accordion-button:hover {
+            background-color: var(--primary-light);
+            color: var(--primary-color);
+        }
+
+        .accordion-button:not(.collapsed) {
+            background-color: var(--primary-color);
+            color: white;
+        }
+        
+        .accordion-button i {
+            color: var(--primary-color);
+            transition: color 0.3s ease, transform 0.3s ease;
+        }
+        
+        .accordion-button:not(.collapsed) i {
+            color: white;
+            transform: rotate(90deg);
+        }
+        
+        .accordion-header {
+            position: relative;
+        }
+
+        .accordion-button:not(.collapsed)::after {
+            content: "\f078"; /* fa-chevron-down */
+            font-family: "Font Awesome 5 Free";
+            font-weight: 900;
+            position: absolute;
+            right: 1.5rem;
+            top: 50%;
+            transform: translateY(-50%) rotate(180deg);
+            color: white;
+        }
+        
+        .accordion-button.collapsed::after {
+            content: "\f054"; /* fa-chevron-right */
+            font-family: "Font Awesome 5 Free";
+            font-weight: 900;
+            position: absolute;
+            right: 1.5rem;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--secondary-color);
+        }
+
+        .accordion-body {
+            padding: 2rem;
+            background-color: #fafafc;
+        }
+        
+        .accordion-body h6 {
+            color: var(--heading-color);
+            font-weight: 600;
+            font-size: 1rem;
+            margin-top: 1.5rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        /* List and Table Styles */
+        ul {
+            list-style-type: none;
+            padding-left: 0;
+            margin-bottom: 1rem;
+        }
+
+        ul li {
+            position: relative;
+            padding-left: 1.5rem;
+            margin-bottom: 0.5rem;
+        }
+        
+        ul li::before {
+            content: '\f058'; 
+            font-family: 'Font Awesome 5 Free';
+            font-weight: 900;
+            color: var(--success-color);
+            position: absolute;
+            left: 0;
+            top: 0;
+        }
+
+        .table-bordered {
+            border: 1px solid var(--border-color);
+            border-radius: 0.5rem;
+            overflow: hidden;
+        }
+
+        .table-bordered th,
+        .table-bordered td {
+            border-color: var(--border-color);
+            padding: 0.75rem;
+        }
+
+        .table thead th {
+            background-color: var(--primary-light);
+            color: var(--primary-color);
+            font-weight: 700;
+            text-transform: uppercase;
+            font-size: 0.8rem;
+        }
+        
+        hr.section-divider {
+            border-top: 1px dashed var(--border-color);
+            margin: 2rem 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container container-main">
+        <h1 class="page-heading">AI Agent-Based Advanced Resume Screening and Evaluation</h1>
+
+        {% if analysis_result %}
+        <div class="dashboard-grid">
+            <div class="dashboard-sidebar">
+                <h3 class="section-title">Candidate Summary</h3>
+                <div class="text-center">
+                    <p class="h5 mb-0 text-muted">{{ analysis_result.full_name|default:"Candidate" }}</p>
+                    <p class="small mb-3 text-secondary">{{ analysis_result.current_company_name }}</p>
+                    <div class="score-circle">
+                        <span>{{ analysis_result.aggregate_score }}<span style="font-size: 1rem;">%</span></span>
+                    </div>
+                    <p class="h6 text-uppercase fw-bold text-center">Overall Score</p>
+                </div>
+                
+                <hr class="section-divider">
+                
+                <div class="sidebar-section">
+                    <h5><i class="fas fa-chart-bar me-2 text-primary"></i> Key Metrics</h5>
+                    <p><strong>Fitment Verdict:</strong> <span class="status-badge {% if 'strong' in analysis_result.fitment_verdict|lower %}badge-success{% else %}badge-danger{% endif %}">{{ analysis_result.fitment_verdict }}</span></p>
+                    <p><strong>Hiring Recommendation:</strong> <span class="status-badge {% if 'yes' in analysis_result.hiring_recommendation|lower %}badge-success{% else %}badge-info{% endif %}">{{ analysis_result.hiring_recommendation }}</span></p>
+                    <p><strong>Overall Experience:</strong> {{ analysis_result.overall_experience }}</p>
+                    <p><strong>Job Role:</strong> {{ form.job_role.value|default:"N/A" }}</p>
+                </div>
+
+                <hr class="section-divider">
+
+                <div class="sidebar-section">
+                    <h5><i class="fas fa-lightbulb me-2 text-primary"></i> Recruiter Insights</h5>
+                    <p><strong>Red Flags:</strong> {{ analysis_result.automated_recruiter_insights.red_flag_detection }}</p>
+                    <p><strong>Growth Indicators:</strong> {{ analysis_result.automated_recruiter_insights.growth_indicators }}</p>
+                    <p><strong>Cross-Industry Potential:</strong> {{ analysis_result.automated_recruiter_insights.cross_industry_potential }}</p>
+                </div>
+            </div>
+
+            <div class="dashboard-main-content">
+                <h2 class="section-title">Detailed Breakdown</h2>
+                <div class="accordion" id="analysisAccordion">
+                    
+                    <div class="accordion-item">
+                        <h2 class="accordion-header">
+                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseContact">
+                                <i class="fas fa-address-card me-3"></i> Contact Information
+                            </button>
+                        </h2>
+                        <div id="collapseContact" class="accordion-collapse collapse" data-bs-parent="#analysisAccordion">
+                            <div class="accordion-body">
+                                <p><i class="fas fa-phone me-2 text-primary"></i> {{ analysis_result.contact_number }}</p>
+                                <p><i class="fas fa-envelope me-2 text-primary"></i> {{ analysis_result.email }}</p>
+                                <p><i class="fas fa-map-marker-alt me-2 text-primary"></i> {{ analysis_result.current_company_address }}</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="accordion-item">
+                        <h2 class="accordion-header">
+                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseDetails">
+                                <i class="fas fa-chart-line me-3"></i> Strategic Analysis
+                            </button>
+                        </h2>
+                        <div id="collapseDetails" class="accordion-collapse collapse" data-bs-parent="#analysisAccordion">
+                            <div class="accordion-body">
+                                <h6>Strategic Alignment</h6>
+                                <p>{{ analysis_result.candidate_fitment_analysis.strategic_alignment }}</p>
+                                <h6>Comparable Experience Analysis</h6>
+                                <p>{{ analysis_result.candidate_fitment_analysis.comparable_experience_analysis }}</p>
+                                <h6>Quantifiable Impact</h6>
+                                <p>{{ analysis_result.candidate_fitment_analysis.quantifiable_impact }}</p>
+                                <h6>Potential Gaps / Risks</h6>
+                                <p>{{ analysis_result.candidate_fitment_analysis.potential_gaps_risks }}</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="accordion-item">
+                        <h2 class="accordion-header">
+                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSkills">
+                                <i class="fas fa-tools me-3"></i> Skills & Projects
+                            </button>
+                        </h2>
+                        <div id="collapseSkills" class="accordion-collapse collapse" data-bs-parent="#analysisAccordion">
+                            <div class="accordion-body">
+                                <h6>Technical Skills</h6>
+                                <ul>{% for skill in analysis_result.analysis_summary.technical_prowess.Languages %}<li>{{ skill }}</li>{% endfor %}</ul>
+                                <h6>Frameworks</h6>
+                                <ul>{% for f in analysis_result.analysis_summary.technical_prowess.Frameworks %}<li>{{ f }}</li>{% endfor %}</ul>
+                                <h6>Databases</h6>
+                                <ul>{% for d in analysis_result.analysis_summary.technical_prowess.Databases %}<li>{{ d }}</li>{% endfor %}</ul>
+                                <h6>Tools & Libraries</h6>
+                                <ul>{% for t in analysis_result.analysis_summary.technical_prowess.Tools_Libraries %}<li>{{ t }}</li>{% endfor %}</ul>
+
+                                <h6 class="mt-4">Projects</h6>
+                                {% for proj in analysis_result.analysis_summary.project_impact %}
+                                    <div class="mb-3">
+                                        <strong>{{ proj.title }}</strong> ({{ proj.company }}) - {{ proj.role }}
+                                        <ul>{% for ach in proj.achievements %}<li>{{ ach }}</li>{% endfor %}</ul>
+                                    </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="accordion-item">
+                        <h2 class="accordion-header">
+                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseEducation">
+                                <i class="fas fa-graduation-cap me-3"></i> Education & Certifications
+                            </button>
+                        </h2>
+                        <div id="collapseEducation" class="accordion-collapse collapse" data-bs-parent="#analysisAccordion">
+                            <div class="accordion-body">
+                                <h6>Education</h6>
+                                <ul>{% for e in analysis_result.analysis_summary.education_certifications.education %}<li>{{ e }}</li>{% endfor %}</ul>
+                                <h6>Certifications</h6>
+                                <ul>{% for c in analysis_result.analysis_summary.education_certifications.certifications %}<li>{{ c }}</li>{% endfor %}</ul>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="accordion-item">
+                        <h2 class="accordion-header">
+                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseScoring">
+                                <i class="fas fa-table me-3"></i> Scoring Matrix
+                            </button>
+                        </h2>
+                        <div id="collapseScoring" class="accordion-collapse collapse" data-bs-parent="#analysisAccordion">
+                            <div class="accordion-body">
+                                <table class="table table-bordered">
+                                    <thead>
+                                        <tr><th>Dimension</th><th>Weight</th><th>Score</th><th>Justification</th></tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for s in analysis_result.scoring_matrix %}
+                                        <tr>
+                                            <td>{{ s.dimension }}</td>
+                                            <td>{{ s.weight }}</td>
+                                            <td>{{ s.score }}</td>
+                                            <td>{{ s.justification }}</td>
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="accordion-item">
+                        <h2 class="accordion-header">
+                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseRecs">
+                                <i class="fas fa-lightbulb me-3"></i> Recommendations
+                            </button>
+                        </h2>
+                        <div id="collapseRecs" class="accordion-collapse collapse" data-bs-parent="#analysisAccordion">
+                            <div class="accordion-body">
+                                <h6>Bench Recommendation</h6>
+                                <p>{{ analysis_result.bench_recommendation.justification }}</p>
+                                <h6>Alternative Roles</h6>
+                                <ul>
+                                    {% for role in analysis_result.alternative_role_recommendations %}
+                                        <li>{{ role.role }} – {{ role.explanation }}</li>
+                                    {% endfor %}
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="accordion-item">
+                        <h2 class="accordion-header">
+                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseQuestions">
+                                <i class="fas fa-comments me-3"></i> Interview Questions
+                            </button>
+                        </h2>
+                        <div id="collapseQuestions" class="accordion-collapse collapse" data-bs-parent="#analysisAccordion">
+                            <div class="accordion-body">
+                                <h6>Suggested Interview Questions</h6>
+                                <ul>{% for q in analysis_result.interview_questions %}<li>{{ q }}</li>{% endfor %}</ul>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+        {% else %}
+        <div class="text-center p-5"><h4>No Analysis Available</h4></div>
+        {% endif %}
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+{% endblock %}

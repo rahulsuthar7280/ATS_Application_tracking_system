@@ -1,0 +1,30 @@
+{
+  "candidates": [
+    {
+      "content": {
+        "parts": [
+          {
+            "text": "{\n  \"full_name\": \"N/A\",\n  \"job_role\": \"Python Developer\",\n  \"phone_no\": \"N/A\",\n  \"overall_experience\": \"N/A\",\n  \"experience_match\": \"No resume provided to assess experience against the 3-5 years requirement.\",\n  \"hiring_recommendation\": \"Reject\",\n  \"suggested_salary_range\": \"N/A (Cannot determine without resume)\",\n  \"current_company_name\": \"N/A\",\n  \"current_company_address\": \"N/A\",\n  \"analysis_summary\": {\n    \"candidate_overview\": \"No resume text provided. Therefore, no information is available to conduct an assessment of the candidate's skills, experience, or qualifications against the Job Description.\",\n    \"technical_prowess\": {},\n    \"project_impact\": [],\n    \"education_certifications\": {\n      \"education\": [],\n      \"certifications\": []\n    },\n    \"overall_rating\": \"0/5\",\n    \"conclusion\": \"Without any resume content, it is impossible to evaluate the candidate's suitability for the Python Developer role. No technical prowess, project impact, or educational background can be assessed. The candidate cannot be considered further in the hiring process based on the lack of information.\"\n  },\n  \"candidate_fitment_analysis\": {\n    \"strategic_alignment\": \"Cannot assess strategic alignment without candidate data. No information to match skills or experience with company goals.\",\n    \"comparable_experience_analysis\": \"Cannot perform a comparable experience analysis as no prior roles or responsibilities are provided in a resume.\",\n    \"quantifiable_impact\": \"No data available to identify or quantify any past achievements or impacts.\",\n    \"potential_gaps_risks\": \"The most significant gap is the complete absence of a resume, leading to a high risk of an unknown candidate profile and fit. All potential technical and soft skill gaps are unidentifiable.\"\n  },\n  \"scoring_matrix\": [\n    {\n      \"dimension\": \"Technical Skills\",\n      \"weight\": \"20%\",\n      \"score\": \"0/20\",\n      \"justification\": \"No resume provided, unable to assess technical skills.\"\n    },\n    {\n      \"dimension\": \"Experience & Relevance\",\n      \"weight\": \"25%\",\n      \"score\": \"0/25\",\n      \"justification\": \"No resume provided, unable to assess experience duration or relevance to the role.\"\n    },\n    {\n      \"dimension\": \"Problem-Solving & Analytical\",\n      \"weight\": \"20%\",\n      \"score\": \"0/20\",\n      \"justification\": \"No resume provided, no evidence of problem-solving or analytical skills.\"\n    },\n    {\n      \"dimension\": \"Collaboration & Communication\",\n      \"weight\": \"15%\",\n      \"score\": \"0/15\",\n      \"justification\": \"No resume provided, no information regarding teamwork or communication abilities.\"\n    },\n    {\n      \"dimension\": \"Learning & Adaptability\",\n      \"weight\": \"20%\",\n      \"score\": \"0/20\",\n      \"justification\": \"No resume provided, no indicators of willingness to learn or adaptability.\"\n    }\n  ],\n  \"aggregate_score\": \"0/100\",\n  \"fitment_verdict\": \"REJECTED\",\n  \"bench_recommendation\": {\n    \"retain\": \"No\",\n    \"ideal_future_roles\": [],\n    \"justification\": \"No information available to justify retaining or recommending for future roles. A resume is essential for any consideration.\"\n  },\n  \"alternative_role_recommendations\": [],\n  \"automated_recruiter_insights\": {\n    \"red_flag_detection\": \"Critical red flag: No resume provided. This prevents any form of candidate assessment, verification, or pre-screening.\",\n    \"growth_indicators\": \"N/A (No data available to identify growth potential or career trajectory.)\",\n    \"cross_industry_potential\": \"N/A (No data available to assess transferable skills or potential for other industries.)\"\n  },\n  \"interview_questions\": []\n}"
+          }
+        ],
+        "role": "model"
+      },
+      "finishReason": "STOP",
+      "index": 0
+    }
+  ],
+  "usageMetadata": {
+    "promptTokenCount": 1299,
+    "candidatesTokenCount": 933,
+    "totalTokenCount": 3247,
+    "promptTokensDetails": [
+      {
+        "modality": "TEXT",
+        "tokenCount": 1299
+      }
+    ],
+    "thoughtsTokenCount": 1015
+  },
+  "modelVersion": "gemini-2.5-flash",
+  "responseId": "8kCPaJ2PLfCvmtkP7MbN4A0"
+}

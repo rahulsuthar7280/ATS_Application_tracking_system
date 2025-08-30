@@ -1,0 +1,340 @@
+{% extends 'base.html' %}
+
+{% block title %}Interview Status - HR Talent Scout{% endblock %}
+
+{% block page_heading %}Interview Status{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    {% if candidate %}
+        {# Candidate Overview Section - A focused, clear header #}
+        <div class="bg-white rounded-lg p-4 mb-5 shadow-sm border-start border-5 border-primary">
+            <div class="d-flex align-items-center mb-3">
+                <i class="bi bi-person-fill display-6 text-primary me-3"></i>
+                <div>
+                    <h2 class="h4 fw-bold text-dark mb-0">{{ candidate.full_name }}</h2>
+                    <p class="text-muted small mb-0">{{ candidate.job_role }}</p>
+                </div>
+            </div>
+
+            <div class="row align-items-center pt-3 border-top mx-0">
+                <div class="col-sm-6 mb-2 mb-sm-0">
+                    <small class="text-uppercase fw-bold text-muted d-block mb-1">AI Recommendation</small>
+                    <span class="badge fs-5 px-3 py-1 rounded-pill 
+                        {% if candidate.hiring_recommendation == 'Hire' %}bg-success-subtle text-success border border-success
+                        {% elif candidate.hiring_recommendation == 'Reject' %}bg-danger-subtle text-danger border border-danger
+                        {% else %}bg-info-subtle text-info border border-info{% endif %}">
+                        {{ candidate.hiring_recommendation|default:"N/A" }}
+                    </span>
+                </div>
+                <div class="col-sm-6 text-sm-end">
+                    <small class="text-uppercase fw-bold text-muted d-block mb-1">Suggested Salary</small>
+                    <h4 class="h5 text-dark mb-0">{{ candidate.suggested_salary_range|default:"N/A" }}</h4>
+                </div>
+            </div>
+        </div>
+
+        <div class="row g-4">
+            {# Initiate AI Call Card #}
+            <div class="col-lg-6">
+                <div class="card h-100 shadow-sm border-0 rounded-lg">
+                    <div class="card-body d-flex flex-column">
+                        <h3 class="card-title text-info fw-bold mb-4 pb-2 border-bottom border-light">
+                            <i class="bi bi-robot me-2"></i> Initiate AI Interview
+                        </h3>
+                        <form method="post" class="flex-grow-1 d-flex flex-column">
+                            {% csrf_token %}
+                            <input type="hidden" name="action" value="start_call">
+                            <div class="mb-4 flex-grow-1">
+                                <label for="{{ phone_form.phone_number.id_for_label }}" class="form-label fw-semibold">
+                                    {{ phone_form.phone_number.label }}
+                                </label>
+                                {{ phone_form.phone_number }}
+                                {% if phone_form.phone_number.errors %}
+                                    <div class="text-danger small mt-1">{{ phone_form.phone_number.errors }}</div>
+                                {% endif %}
+                                <div class="form-text text-muted">{{ phone_form.phone_number.help_text }}</div>
+                            </div>
+                            <button type="submit" class="btn btn-primary btn-lg w-100 rounded-pill py-3">
+                                <i class="bi bi-phone-vibrate me-2"></i> Start Interview Call
+                            </button>
+                        </form>
+                        <div class="mt-4 pt-3 border-top">
+                            <h5 class="text-muted fw-semibold mb-2"><i class="bi bi-person-lines-fill me-2"></i>Candidate Phone No.</h5>
+                            <p class="lead fw-bold mb-0 text-dark">{{ candidate.phone_no|default:"N/A" }}</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            {# Bland.ai Call Status Card #}
+            <div class="col-lg-6">
+                <div class="card h-100 shadow-sm border-0 rounded-lg">
+                    <div class="card-body d-flex flex-column">
+                        <h3 class="card-title text-dark fw-bold mb-4 pb-2 border-bottom border-light">
+                            <i class="bi bi-activity me-2"></i> AI Call Status
+                        </h3>
+                        {% if candidate.bland_call_id %}
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <p class="mb-0 text-muted small"><strong>Call ID:</strong> <span class="text-monospace text-primary fw-semibold">{{ candidate.bland_call_id }}</span></p>
+                                <form method="post" class="d-inline-block">
+                                    {% csrf_token %}
+                                    <input type="hidden" name="action" value="fetch_status">
+                                    <button type="submit" class="btn btn-outline-secondary btn-sm rounded-pill px-3">
+                                        <i class="bi bi-arrow-clockwise me-1"></i> Refresh
+                                    </button>
+                                </form>
+                            </div>
+
+                            {% if call_details and not call_details.error %}
+                                <div class="alert 
+                                    {% if call_details.status == 'completed' %}alert-success
+                                    {% elif call_details.status == 'in_progress' %}alert-warning text-dark
+                                    {% else %}alert-info{% endif %} 
+                                    py-3 px-4 d-flex align-items-center mb-3 rounded-lg border-0">
+                                    <i class="bi 
+                                        {% if call_details.status == 'completed' %}bi-check-circle-fill
+                                        {% elif call_details.status == 'in_progress' %}bi-hourglass-split
+                                        {% else %}bi-info-circle-fill{% endif %} 
+                                        me-3 fs-4"></i>
+                                    <div>
+                                        <span class="fw-bold me-2 h5 mb-0">Status:</span> 
+                                        <span class="lead mb-0">{{ call_details.status|title }}</span>
+                                        {% if call_details.duration_in_seconds %}<span class="text-muted ms-2 small">({{ call_details.duration_in_seconds }} seconds)</span>{% endif %}
+                                    </div>
+                                </div>
+                                {% if call_details.error %}<p class="text-danger small mb-3"><i class="bi bi-exclamation-triangle-fill me-1"></i>{{ call_details.error }}</p>{% endif %}
+
+                                {% if call_summary and not call_summary.error %}
+                                    <h5 class="mt-3 mb-2 text-dark"><i class="bi bi-journal-text me-2"></i>Call Summary</h5>
+                                    <div class="bg-light p-3 rounded border overflow-auto small flex-grow-1 mb-3" style="max-height: 250px; min-height: 80px;">
+                                        <p class="mb-0 text-dark">{{ call_summary.summary|default:"No summary available yet. The call might still be in progress or processing." }}</p>
+                                    </div>
+                                    <h5 class="mt-4 mb-2 text-dark"><i class="bi bi-mic-fill me-2"></i>Call Recording</h5>
+                                    {% if call_details.recording_url %}
+                                        <p class="mb-0"><a href="{{ call_details.recording_url }}" target="_blank" class="btn btn-outline-dark rounded-pill px-4 py-2">
+                                            <i class="bi bi-play-circle me-2"></i>Listen to Recording
+                                        </a></p>
+                                    {% else %}
+                                        <p class="text-muted small">Recording not available.</p>
+                                    {% endif %}
+                                {% else %}
+                                    <div class="alert alert-light border text-muted py-3 px-4 rounded-lg d-flex align-items-center" role="alert" style="min-height: 120px;">
+                                        <i class="bi bi-hourglass-split me-3 fs-4"></i>
+                                        <div>
+                                            <h6 class="mb-1">Processing Call Summary...</h6>
+                                            <p class="mb-0 small">The AI is generating the interview summary. Please refresh in a moment.</p>
+                                            {% if call_summary.error %}<br><span class="text-danger small">{{ call_summary.error }}</span>{% endif %}
+                                        </div>
+                                    </div>
+                                {% endif %}
+                            {% else %}
+                                <div class="alert alert-info py-3 px-4 d-flex align-items-center mb-3 rounded-lg border-0" style="min-height: 150px;">
+                                    <i class="bi bi-question-circle-fill me-3 fs-4"></i>
+                                    <div>
+                                        <h6 class="mb-1">No call details available.</h6>
+                                        <p class="mb-0 small">The call may not have started, or there was an issue fetching its current status.</p>
+                                    </div>
+                                </div>
+                            {% endif %}
+                        {% else %}
+                            <div class="alert alert-secondary py-3 px-4 d-flex align-items-center rounded-lg border-0" style="min-height: 150px;">
+                                <i class="bi bi-phone-off me-3 fs-4"></i>
+                                <div>
+                                    <h6 class="mb-1">No AI call initiated yet.</h6>
+                                    <p class="mb-0 small">Use the section on the left to start an AI interview for this candidate.</p>
+                                </div>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    {% else %}
+        {# No Candidate Selected Message - Clearer guidance #}
+        <div class="card shadow-sm border-0 rounded-lg text-center py-5">
+            <div class="card-body">
+                <i class="bi bi-person-slash display-2 text-muted mb-4"></i>
+                <h3 class="card-title text-muted mb-3">No candidate selected for interview.</h3>
+                <p class="card-text mb-4 lead">
+                    To access interview status or initiate an AI call, please select a candidate from the Resume Analysis page.
+                </p>
+                <a href="{% url 'resume_analysis' %}" class="btn btn-info btn-lg rounded-pill px-5 py-3 shadow-sm">
+                    <i class="bi bi-file-earmark-text me-2"></i> Go to Resume Analysis
+                </a>
+            </div>
+        </div>
+    {% endif %}
+</div>
+
+<style>
+    /* Base styles for a clean, modern look */
+    body {
+        background-color: #f5f7fa; /* A very light, modern background */
+        font-family: 'Inter', 'Segoe UI', 'Roboto', 'Helvetica Neue', Arial, sans-serif; /* Modern sans-serif font */
+        color: #343a40; /* Standard dark text color */
+    }
+
+    /* General card styling */
+    .card {
+        border-radius: 0.85rem; /* Slightly more rounded */
+        transition: all 0.2s ease-in-out;
+        box-shadow: 0 0.25rem 0.75rem rgba(0, 0, 0, 0.04); /* Lighter shadow */
+    }
+
+    .card:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 0.5rem 1.2rem rgba(0, 0, 0, 0.08); /* More noticeable hover shadow */
+    }
+
+    /* Candidate Header Card */
+    .border-start.border-5.border-primary {
+        border-left-width: 5px !important;
+        border-color: #007bff !important; /* Bootstrap primary blue */
+    }
+
+    /* Headings */
+    .card-title {
+        font-weight: 600; /* Semi-bold for section titles */
+        color: #212529; /* Darker for emphasis */
+    }
+
+    /* Sub-text and labels */
+    .text-muted {
+        color: #6c757d !important;
+    }
+    .text-uppercase {
+        letter-spacing: 0.04em;
+    }
+    .fw-semibold {
+        font-weight: 600 !important;
+    }
+    .fw-bold {
+        font-weight: 700 !important;
+    }
+
+    /* Badges for AI Recommendation */
+    .badge {
+        font-size: 0.95rem; /* Slightly larger for readability */
+        padding: 0.5em 1em; /* More padding */
+        font-weight: 600;
+    }
+    .bg-success-subtle { background-color: #d4edda !important; }
+    .text-success { color: #155724 !important; }
+    .border-success { border-color: #28a745 !important; }
+
+    .bg-danger-subtle { background-color: #f8d7da !important; }
+    .text-danger { color: #721c24 !important; }
+    .border-danger { border-color: #dc3545 !important; }
+
+    .bg-info-subtle { background-color: #d1ecf1 !important; }
+    .text-info { color: #0c5460 !important; }
+    .border-info { border-color: #17a2b8 !important; }
+
+    /* Form elements */
+    .form-label {
+        font-size: 0.9rem;
+        color: #495057;
+    }
+    .form-control {
+        border-radius: 0.6rem;
+        padding: 0.75rem 1rem;
+        border-color: #dee2e6;
+        box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.03); /* Subtle inner shadow */
+    }
+    .form-control:focus {
+        border-color: #80bdff;
+        box-shadow: 0 0 0 0.25rem rgba(0, 123, 255, 0.25);
+    }
+
+    /* Buttons */
+    .btn {
+        font-weight: 600;
+        letter-spacing: 0.02em;
+        transition: all 0.2s ease;
+    }
+    .btn-primary {
+        background-color: #007bff;
+        border-color: #007bff;
+    }
+    .btn-primary:hover {
+        background-color: #0056b3;
+        border-color: #004085;
+        transform: translateY(-1px);
+    }
+    .btn-outline-secondary {
+        color: #6c757d;
+        border-color: #6c757d;
+    }
+    .btn-outline-secondary:hover {
+        background-color: #6c757d;
+        color: white;
+    }
+    .btn-info {
+        background-color: #17a2b8;
+        border-color: #17a2b8;
+    }
+    .btn-info:hover {
+        background-color: #117a8b;
+        border-color: #0d6b7e;
+    }
+    .btn-lg {
+        padding: 0.75rem 2rem;
+        font-size: 1.15rem;
+    }
+
+    /* Alerts and status messages */
+    .alert {
+        border-width: 1px;
+        font-size: 0.95rem;
+        line-height: 1.4;
+    }
+    /* Specific alert styles for better visual distinction */
+    .alert-info {
+        background-color: #e6f7ff; /* Lighter, almost white-blue */
+        color: #004085;
+        border-color: #b8daff;
+    }
+    .alert-success {
+        background-color: #e9f9ee; /* Lighter, almost white-green */
+        color: #0f5132;
+        border-color: #badbcc;
+    }
+    .alert-warning {
+        background-color: #fffde7; /* Lighter, almost white-yellow */
+        color: #664d03;
+        border-color: #ffeeba;
+    }
+    .alert-secondary {
+        background-color: #e9ecef;
+        color: #495057;
+        border-color: #d6d8db;
+    }
+    .alert-light {
+        background-color: #f8f9fa;
+        color: #495057;
+        border-color: #e2e6ea;
+    }
+
+    /* Scrollbar for summary */
+    .overflow-auto {
+        scrollbar-width: thin;
+        scrollbar-color: #ced4da #f8f9fa;
+    }
+    .overflow-auto::-webkit-scrollbar {
+        width: 8px;
+    }
+    .overflow-auto::-webkit-scrollbar-track {
+        background: #f8f9fa;
+    }
+    .overflow-auto::-webkit-scrollbar-thumb {
+        background-color: #ced4da;
+        border-radius: 10px;
+        border: 2px solid #f8f9fa;
+    }
+    .overflow-auto::-webkit-scrollbar-thumb:hover {
+        background-color: #aeb5bd;
+    }
+</style>
+{% endblock %}

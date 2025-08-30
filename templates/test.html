@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sign In</title>
+    <!-- Tailwind CSS CDN for quick setup -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Custom styles for the Inter font */
+        body {
+            font-family: 'Inter', sans-serif;
+            margin: 0;
+            padding: 0;
+        }
+
+        /* Consistent styling for all input types used in the form */
+        input[type="text"],
+        input[type="email"],
+        input[type="password"] {
+            /* Apply Tailwind classes for full width, generous padding, subtle border,
+               soft shadow, and distinct focus states for a professional feel. */
+            @apply w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400
+                   focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent
+                   transition-all duration-200 text-gray-800 text-base;
+        }
+    </style>
+</head>
+<body class="bg-gray-100 min-h-screen flex items-center justify-center p-6">
+    <!-- Main container for the sign-in card -->
+    <div class="w-full max-w-sm bg-white p-8 rounded-lg shadow-md">
+        <div class="text-center mb-6">
+            <!-- Icon placeholder (replace with your actual logo/icon SVG or image) -->
+            <svg class="mx-auto h-12 w-12 text-blue-600 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1"></path>
+            </svg>
+            <h2 class="text-3xl font-bold text-center text-gray-900 tracking-tight leading-tight">
+                Sign In
+            </h2>
+        </div>
+
+        <!-- Success Message Placeholder -->
+        <div id="success-message" class="hidden bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded relative mb-6" role="alert">
+            <strong class="font-bold">Success!</strong>
+            <span class="block sm:inline">You have successfully signed in.</span>
+        </div>
+
+        <!-- Sign-in form -->
+        <form method="post" class="space-y-6">
+            <!-- CSRF Token: Essential for security in web frameworks like Django -->
+            {% csrf_token %}
+
+            <!-- Loop through form fields to render them dynamically -->
+            {% for field in form %}
+                <div class="mb-4">
+                    <!-- Label for the input field, linked via 'for' attribute for accessibility -->
+                    <label for="{{ field.id_for_label }}" class="block text-gray-700 text-sm font-semibold mb-2">
+                        {{ field.label }}:
+                    </label>
+                    <!-- Render the actual form input field -->
+                    {{ field }}
+
+                    <!-- Display help text associated with the field, if any -->
+                    {% if field.help_text %}
+                        <p class="text-gray-600 text-xs mt-1">{{ field.help_text }}</p>
+                    {% endif %}
+
+                    <!-- Display field-specific validation errors, if any -->
+                    {% for error in field.errors %}
+                        <p class="text-red-600 text-xs mt-1">{{ error }}</p>
+                    {% endfor %}
+                </div>
+            {% endfor %}
+
+            <!-- Sign In Button with professional styling -->
+            <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2.5 px-4 rounded-md shadow-sm
+                                       focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors duration-200">
+                Sign In
+            </button>
+        </form>
+
+        <!-- Link to the Sign Up page -->
+        <p class="text-center text-gray-600 text-sm mt-6">
+            Don't have an account?
+            <a href="{% url 'signup' %}" class="text-blue-600 hover:text-blue-800 font-bold transition-colors duration-200">
+                Sign Up
+            </a>
+        </p>
+    </div>
+</body>
+</html>
+    

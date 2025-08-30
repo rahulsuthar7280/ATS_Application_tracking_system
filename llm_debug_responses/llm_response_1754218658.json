@@ -1,0 +1,30 @@
+{
+  "candidates": [
+    {
+      "content": {
+        "parts": [
+          {
+            "text": "{\n  \"full_name\": \"N/A\",\n  \"job_role\": \"Python Developer\",\n  \"phone_no\": \"N/A\",\n  \"overall_experience\": \"N/A\",\n  \"experience_match\": \"N/A - No resume provided to assess experience.\",\n  \"hiring_recommendation\": \"Reject\",\n  \"suggested_salary_range\": \"N/A - Cannot determine without candidate profile.\",\n  \"current_company_name\": \"N/A\",\n  \"current_company_address\": \"N/A\",\n  \"analysis_summary\": {\n    \"candidate_overview\": \"No resume text was provided for this candidate. Therefore, a detailed overview of their background, skills, and experience cannot be generated. All assessments are based on the complete absence of information.\",\n    \"technical_prowess\": {},\n    \"project_impact\": [],\n    \"education_certifications\": {\n      \"education\": [],\n      \"certifications\": []\n    },\n    \"overall_rating\": \"0/5\",\n    \"conclusion\": \"Without a resume, no assessment of the candidate's qualifications, experience, or skills can be made against the job description. The candidate cannot be considered for this role due to a complete lack of verifiable information.\"\n  },\n  \"candidate_fitment_analysis\": {\n    \"strategic_alignment\": \"N/A - Cannot assess strategic alignment without a resume.\",\n    \"comparable_experience_analysis\": \"N/A - No experience provided for comparison.\",\n    \"quantifiable_impact\": \"N/A - No quantifiable achievements to assess.\",\n    \"potential_gaps_risks\": \"Major gaps in all areas due to lack of information. The primary risk is hiring an unknown candidate, which is unfeasible.\"\n  },\n  \"scoring_matrix\": [\n    {\n      \"dimension\": \"Technical Skills (Python, Frameworks, DBs, Testing)\",\n      \"weight\": \"High\",\n      \"score\": \"0/10\",\n      \"justification\": \"No resume provided.\"\n    },\n    {\n      \"dimension\": \"Experience & Application (Years of Experience, Building Software, Asyncio)\",\n      \"weight\": \"High\",\n      \"score\": \"0/10\",\n      \"justification\": \"No resume provided.\"\n    },\n    {\n      \"dimension\": \"Problem Solving & Collaboration (Debugging, Teamwork, Code Reviews)\",\n      \"weight\": \"Medium\",\n      \"score\": \"0/10\",\n      \"justification\": \"No resume provided.\"\n    },\n    {\n      \"dimension\": \"Culture & Learning (Willingness to Learn, Passion for Clean Code)\",\n      \"weight\": \"Medium\",\n      \"score\": \"0/10\",\n      \"justification\": \"No resume provided.\"\n    },\n    {\n      \"dimension\": \"Good to Haves (CI/CD, Docker, ML/DS, DevOps)\",\n      \"weight\": \"Low\",\n      \"score\": \"0/10\",\n      \"justification\": \"No resume provided.\"\n    }\n  ],\n  \"aggregate_score\": \"0/50\",\n  \"fitment_verdict\": \"REJECTED\",\n  \"bench_recommendation\": {\n    \"retain\": \"No\",\n    \"ideal_future_roles\": [],\n    \"justification\": \"No profile information available to justify retention or recommend future roles. The candidate cannot be benched without any data.\"\n  },\n  \"alternative_role_recommendations\": [],\n  \"automated_recruiter_insights\": {\n    \"red_flag_detection\": \"No resume provided, making any assessment impossible. This is a critical red flag as there's no data to evaluate the candidate's suitability.\",\n    \"growth_indicators\": \"N/A - Cannot determine without resume.\",\n    \"cross_industry_potential\": \"N/A - Cannot determine without resume.\"\n  },\n  \"interview_questions\": []\n}"
+          }
+        ],
+        "role": "model"
+      },
+      "finishReason": "STOP",
+      "index": 0
+    }
+  ],
+  "usageMetadata": {
+    "promptTokenCount": 1299,
+    "candidatesTokenCount": 887,
+    "totalTokenCount": 3514,
+    "promptTokensDetails": [
+      {
+        "modality": "TEXT",
+        "tokenCount": 1299
+      }
+    ],
+    "thoughtsTokenCount": 1328
+  },
+  "modelVersion": "gemini-2.5-flash",
+  "responseId": "p0CPaKXxIbmtz7IPwoSU6As"
+}

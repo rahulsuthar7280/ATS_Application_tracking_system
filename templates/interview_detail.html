@@ -1,0 +1,167 @@
+{% extends 'base.html' %}
+{% block title %}Interview Details{% endblock %} {# Changed title to reflect single candidate detail #}
+{% block page_heading %}Candidate Interview Details{% endblock %} {# Changed heading #}
+
+{% block content %}
+    <div class="card p-4 mb-4">
+        {% if candidate %}
+            <div class="d-flex align-items-center mb-4 pb-3 border-bottom">
+                <i class="bi bi-person-circle fs-2 text-primary me-3"></i>
+                <div>
+                    <h3 class="fw-bold mb-0">{{ candidate.full_name }}</h3>
+                    <p class="text-muted mb-0">{{ candidate.job_role }}</p>
+                </div>
+            </div>
+
+            <div class="row mb-4">
+                <div class="col-md-6">
+                    <p class="mb-1"><strong>AI Recommendation:</strong> 
+                        <span class="badge rounded-pill px-3 py-1 fw-semibold
+                            {% if candidate.hiring_recommendation == 'Hire' %}bg-success-subtle text-success border border-success
+                            {% elif candidate.hiring_recommendation == 'Reject' %}bg-danger-subtle text-danger border border-danger
+                            {% else %}bg-info-subtle text-info border border-info{% endif %}">
+                            {{ candidate.hiring_recommendation|default:"N/A" }}
+                        </span>
+                    </p>
+                </div>
+                <div class="col-md-6">
+                    <p class="mb-1"><strong>Suggested Salary:</strong> {{ candidate.suggested_salary_range|default:"N/A" }}</p>
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-lg-6 mb-4">
+                    <div class="card h-100 border-primary-subtle bg-light">
+                        <div class="card-header bg-primary text-white fw-bold">
+                            <i class="bi bi-phone-vibrate me-2"></i> Initiate AI Interview Call
+                        </div>
+                        <div class="card-body">
+                            <form method="post">
+                                {% csrf_token %}
+                                <input type="hidden" name="action" value="start_call">
+                                <div class="mb-3">
+                                    <label for="{{ phone_form.phone_number.id_for_label }}" class="form-label">
+                                        {{ phone_form.phone_number.label }}
+                                    </label>
+                                    {{ phone_form.phone_number }}
+                                    {% if phone_form.phone_number.errors %}
+                                        <div class="text-danger small mt-1">{{ phone_form.phone_number.errors }}</div>
+                                    {% endif %}
+                                    <div class="form-text text-muted">{{ phone_form.phone_number.help_text }}</div>
+                                </div>
+                                <button type="submit" class="btn btn-success w-100 mt-2">
+                                    <i class="bi bi-telephone-plus me-2"></i>Start AI Call
+                                </button>
+                            </form>
+                            <p class="mt-3 mb-0 text-muted small"><strong>Candidate Contact:</strong> {{ candidate.phone_no|default:"N/A" }}</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-lg-6 mb-4">
+                    <div class="card h-100 border-info-subtle bg-light">
+                        <div class="card-header bg-info text-white fw-bold">
+                            <i class="bi bi-info-circle me-2"></i> Bland.ai Call Status
+                        </div>
+                        <div class="card-body d-flex flex-column">
+                            {% if candidate.bland_call_id %}
+                                <p class="mb-2"><strong>Call ID:</strong> <span class="text-monospace">{{ candidate.bland_call_id }}</span></p>
+                                {% if call_details and not call_details.error %}
+                                    <p class="mb-2">
+                                        <strong>Status:</strong> 
+                                        {% if call_details.status == 'completed' %}
+                                            <span class="badge bg-success"><i class="bi bi-check-circle"></i> Completed</span>
+                                        {% elif call_details.status == 'in_progress' %}
+                                            <span class="badge bg-warning text-dark"><i class="bi bi-hourglass-split"></i> In Progress</span>
+                                        {% elif call_details.status == 'failed' %}
+                                            <span class="badge bg-danger"><i class="bi bi-x-circle"></i> Failed</span>
+                                        {% else %}
+                                        {% endif %}
+                                    </p>
+                                    <p class="mb-2"><strong>Duration:</strong> {{ call_details.duration_in_seconds|default:"N/A" }} seconds</p>
+                                    {% if call_details.error %}<p class="mb-2 text-danger"><strong>Error:</strong> {{ call_details.error }}</p>{% endif %}
+                                    
+                                    <div class="mt-auto">
+                                        <form method="post" class="d-inline-block">
+                                            {% csrf_token %}
+                                            <input type="hidden" name="action" value="fetch_status">
+                                            <button type="submit" class="btn btn-primary btn-sm mt-3"><i class="bi bi-arrow-clockwise me-1"></i> Refresh Status</button>
+                                        </form>
+                                    </div>
+
+                                {% else %}
+                                    <p>Fetching call details... 
+                                        <form method="post" class="d-inline-block">
+                                            <input type="hidden" name="action" value="fetch_status">{% csrf_token %}<button type="submit" class="btn btn-primary btn-sm">Refresh Status</button>
+                                        </form>
+                                    </p>
+                                    <p class="text-danger">{% if call_details.error %}{{ call_details.error }}{% endif %}</p>
+                                {% endif %}
+
+                                {% if call_summary and not call_summary.error %}
+                                    <h5 class="mt-4 border-top pt-3">Call Summary</h5>
+                                    <div class="bg-light p-3 rounded border" style="max-height: 200px; overflow-y: auto;">
+                                        <pre class="mb-0 text-break">{{ call_summary.summary }}</pre>
+                                    </div>
+                                    <h5 class="mt-4">Call Recording</h5>
+                                    {% if call_details.recording_url %}
+                                        <p><a href="{{ call_details.recording_url }}" target="_blank" class="btn btn-outline-secondary btn-sm">
+                                            <i class="bi bi-file-earmark-music me-1"></i> Listen to Recording
+                                        </a></p>
+                                    {% else %}
+                                        <p class="text-muted small">No recording URL available yet.</p>
+                                    {% endif %}
+                                {% else %}
+                                    <p class="mt-4 text-muted">No call summary available yet or error fetching summary.</p>
+                                    <p class="text-danger small">{% if call_summary.error %}{{ call_summary.error }}{% endif %}</p>
+                                {% endif %}
+
+                            {% else %}
+                                <p class="text-muted">No Bland.ai call has been initiated for this candidate yet.</p>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        {% else %}
+            <div class="card shadow-sm border-0 rounded-lg text-center py-5">
+                <div class="card-body">
+                    <i class="bi bi-person-slash display-2 text-muted mb-4"></i>
+                    <h3 class="card-title text-muted mb-3">No candidate selected.</h3>
+                    <p class="card-text mb-4 lead">
+                        Please go back to the Interview Dashboard or Resume Analysis to select a candidate.
+                    </p>
+                    <a href="{% url 'interview_status' %}" class="btn btn-info btn-lg rounded-pill px-5 py-3 shadow-sm me-3">
+                        <i class="bi bi-grid me-2"></i> View All Interviews
+                    </a>
+                    <a href="{% url 'resume_analysis' %}" class="btn btn-primary btn-lg rounded-pill px-5 py-3 shadow-sm">
+                        <i class="bi bi-file-earmark-text me-2"></i> Go to Resume Analysis
+                    </a>
+                </div>
+            </div>
+        {% endif %}
+    </div>
+
+    <style>
+        /* Specific styles for the detail page, complementing base.html styles */
+        .card-header {
+            padding: 1rem 1.5rem;
+            font-size: 1.1rem;
+            border-bottom: 1px solid rgba(0,0,0,.125);
+            background-color: #f8f9fa; /* Example, adjust as per your theme */
+            border-top-left-radius: calc(0.85rem - 1px);
+            border-top-right-radius: calc(0.85rem - 1px);
+        }
+        .card.border-primary-subtle { border-color: rgba(0, 123, 255, 0.25) !important; }
+        .card.border-info-subtle { border-color: rgba(23, 162, 184, 0.25) !important; }
+        .bg-primary-subtle { background-color: rgba(0, 123, 255, 0.08) !important; }
+        .bg-info-subtle { background-color: rgba(23, 162, 184, 0.08) !important; }
+
+        pre.text-break {
+            white-space: pre-wrap; /* Allows text to wrap */
+            word-break: break-word; /* Breaks long words */
+            font-family: inherit; /* Use main font for readability, not monospace */
+        }
+    </style>
+{% endblock %}

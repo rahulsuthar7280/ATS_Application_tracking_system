@@ -1,0 +1,30 @@
+{
+  "candidates": [
+    {
+      "content": {
+        "parts": [
+          {
+            "text": "{\n  \"full_name\": \"N/A\",\n  \"job_role\": \"Python Developer\",\n  \"phone_no\": \"N/A\",\n  \"overall_experience\": \"N/A\",\n  \"experience_match\": \"N/A\",\n  \"hiring_recommendation\": \"Reject\",\n  \"suggested_salary_range\": \"N/A\",\n  \"current_company_name\": \"N/A\",\n  \"current_company_address\": \"N/A\",\n  \"analysis_summary\": {\n    \"candidate_overview\": \"No resume text was provided for analysis. Therefore, a comprehensive overview of the candidate's profile, including their experience, skills, and qualifications, cannot be generated.\",\n    \"technical_prowess\": {},\n    \"project_impact\": [],\n    \"education_certifications\": {\n      \"education\": [],\n      \"certifications\": []\n    },\n    \"overall_rating\": \"0/5\",\n    \"conclusion\": \"Without a resume, it is impossible to assess the candidate's fit for the Python Developer role. All assessments are based on the absence of information.\"\n  },\n  \"candidate_fitment_analysis\": {\n    \"strategic_alignment\": \"Cannot assess due to no resume provided.\",\n    \"comparable_experience_analysis\": \"Cannot assess due to no resume provided.\",\n    \"quantifiable_impact\": \"Cannot assess due to no resume provided.\",\n    \"potential_gaps_risks\": \"Significant gap: No resume provided, leading to an inability to assess any aspect of the candidate's profile.\"\n  },\n  \"scoring_matrix\": [\n    {\n      \"dimension\": \"Technical Skills\",\n      \"weight\": \"25%\",\n      \"score\": \"0/25\",\n      \"justification\": \"No resume provided.\"\n    },\n    {\n      \"dimension\": \"Experience & Qualifications\",\n      \"weight\": \"25%\",\n      \"score\": \"0/25\",\n      \"justification\": \"No resume provided.\"\n    },\n    {\n      \"dimension\": \"Problem-Solving & Collaboration\",\n      \"weight\": \"20%\",\n      \"score\": \"0/20\",\n      \"justification\": \"No resume provided.\"\n    },\n    {\n      \"dimension\": \"Learning & Growth Potential\",\n      \"weight\": \"15%\",\n      \"score\": \"0/15\",\n      \"justification\": \"No resume provided.\"\n    },\n    {\n      \"dimension\": \"Cultural & Team Fit\",\n      \"weight\": \"15%\",\n      \"score\": \"0/15\",\n      \"justification\": \"No resume provided.\"\n    }\n  ],\n  \"aggregate_score\": \"0/100\",\n  \"fitment_verdict\": \"REJECTED\",\n  \"bench_recommendation\": {\n    \"retain\": \"No\",\n    \"ideal_future_roles\": [],\n    \"justification\": \"Cannot retain or recommend without any candidate information.\"\n  },\n  \"alternative_role_recommendations\": [],\n  \"automated_recruiter_insights\": {\n    \"red_flag_detection\": \"Primary red flag: Absence of candidate resume, preventing any meaningful evaluation.\",\n    \"growth_indicators\": \"N/A - Cannot determine without resume.\",\n    \"cross_industry_potential\": \"N/A - Cannot determine without resume.\"\n  },\n  \"interview_questions\": [\n    \"N/A - No basis for questions as no resume was provided.\",\n    \"N/A\",\n    \"N/A\"\n  ]\n}"
+          }
+        ],
+        "role": "model"
+      },
+      "finishReason": "STOP",
+      "index": 0
+    }
+  ],
+  "usageMetadata": {
+    "promptTokenCount": 1299,
+    "candidatesTokenCount": 810,
+    "totalTokenCount": 3041,
+    "promptTokensDetails": [
+      {
+        "modality": "TEXT",
+        "tokenCount": 1299
+      }
+    ],
+    "thoughtsTokenCount": 932
+  },
+  "modelVersion": "gemini-2.5-flash",
+  "responseId": "-T-PaO_1Fty5mtkPz-HGkQ8"
+}

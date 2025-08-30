@@ -1,0 +1,352 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HR Talent Scout - {% block title %}{% endblock %}</title>
+
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" crossorigin="anonymous">
+    <!-- Font Awesome for icons -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <!-- Google Fonts -->
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+
+    <style>
+        /* ------------------------------
+           Your Original CSS (kept fully)
+        ------------------------------ */
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f8f9fa;
+            margin: 0;
+        }
+
+        .app-container {
+            display: flex;
+            min-height: 100vh;
+        }
+
+        /* Sidebar */
+        .app-sidebar {
+            width: 260px;
+            background: #1e293b;
+            color: white;
+            display: flex;
+            flex-direction: column;
+            position: fixed;
+            top: 0;
+            bottom: 0;
+            left: 0;
+            z-index: 1030;
+            transition: transform 0.3s ease-in-out;
+        }
+
+        .app-sidebar .sidebar-header {
+            padding: 20px;
+            text-align: center;
+        }
+
+       
+
+        .sidebar-title {
+            font-size: 1.3rem;
+            font-weight: 700;
+            color: white;
+        }
+
+        .sidebar-nav {
+            flex-grow: 1;
+        }
+
+        .sidebar-nav .nav-item {
+            display: flex;
+            align-items: center;
+            padding: 12px 20px;
+            color: #d1d5db;
+            text-decoration: none;
+            transition: all 0.2s ease;
+        }
+
+        .sidebar-nav .nav-item:hover,
+        .sidebar-nav .nav-item.active {
+            background-color: #374151;
+            color: white;
+        }
+
+        .sidebar-nav .nav-icon {
+            margin-right: 12px;
+        }
+
+        /* Header */
+        .app-header {
+            height: 65px;
+            background: #0f172a;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 20px;
+            position: fixed;
+            top: 0;
+            left: 260px;
+            right: 0;
+            z-index: 1020;
+        }
+
+        .header-icon {
+            font-size: 1.3rem;
+            color: white;
+            margin-left: 20px;
+        }
+
+        .header-right {
+            display: flex;
+            align-items: center;
+        }
+
+        /* Notification badge */
+        .notification-badge {
+            position: absolute;
+            top: 3px;
+            right: 3px;
+            background: red;
+            color: white;
+            font-size: 0.7rem;
+            padding: 2px 6px;
+            border-radius: 50%;
+        }
+
+        /* Main content */
+        .main-content-wrapper {
+            margin-left: 260px;
+            margin-top: 65px;
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .page-content {
+            flex-grow: 1;
+            padding: 20px;
+        }
+
+        /* Footer */
+        .app-footer {
+            background: #f1f5f9;
+            padding: 12px;
+            text-align: center;
+            font-size: 0.9rem;
+            color: #6b7280;
+        }
+
+        /* Mobile responsiveness */
+        @media (max-width: 768px) {
+            .app-sidebar {
+                transform: translateX(-100%);
+            }
+            .app-sidebar.show {
+                transform: translateX(0);
+            }
+            .app-header {
+                left: 0;
+            }
+            .main-content-wrapper {
+                margin-left: 0;
+            }
+            .sidebar-overlay {
+                display: none;
+            }
+            .sidebar-overlay.show {
+                display: block;
+                position: fixed;
+                top: 0;
+                left: 0;
+                right: 0;
+                bottom: 0;
+                background: rgba(0,0,0,0.5);
+                z-index: 1025;
+            }
+        }
+
+        /* Modal message styling */
+        .modal-body .alert {
+            border: none;
+            box-shadow: none;
+            padding: 0.75rem 1rem;
+            margin: 0.5rem 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <!-- Sidebar -->
+        <aside class="app-sidebar" >
+            <div class="sidebar-header" style="margin-top: 50px;">
+                <img src="https://placehold.co/45x45/007bff/ffffff?text=AI" alt="Logo" class="sidebar-logo" style="width: 100px; height: 100px;">
+            </div>
+            <!-- <br> -->
+            <div class="sidebar-header" style="font-size: 25px;">
+                <span class="sidebar-title">AI Talent Finder</span>
+            </div>
+            <br>
+            <nav class="sidebar-nav">
+                <a href="{% url 'dashboard' %}" class="nav-item {% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}">
+                    <i class="fas fa-chart-line nav-icon"></i>
+                    <span class="nav-text">Dashboard</span>
+                </a>
+                <a href="{% url 'resume_analysis' %}" class="nav-item {% if request.resolver_match.url_name == 'resume_analysis' %}active{% endif %}">
+                    <i class="fas fa-search nav-icon"></i>
+                    <span class="nav-text">Manual Analysis</span>
+                </a>
+                <!-- <a href="{% url 'initiate_call_interview' %}" class="nav-item {% if request.resolver_match.url_name == 'initiate_call_interview' %}active{% endif %}">
+                    <i class="fas fa-phone-alt nav-icon"></i>
+                    <span class="nav-text">Initiate Call Interview</span>
+                </a> -->
+                <a href="{% url 'interviews' %}" class="nav-item {% if request.resolver_match.url_name == 'interviews' %}active{% endif %}">
+                    <i class="fas fa-headset nav-icon"></i>
+                    <span class="nav-text">Interview Status</span>
+                </a>
+                <a href="{% url 'records' %}" class="nav-item {% if request.resolver_match.url_name == 'records' %}active{% endif %}">
+                    <i class="fas fa-users nav-icon"></i>
+                    <span class="nav-text">All Candidate's Data</span>
+                </a>
+               
+                <a href="{% url 'show_unread_emails' %}" class="nav-item {% if request.resolver_match.url_name == 'show_unread_emails' %}active{% endif %}">
+                    <i class="fas fa-envelope-open-text nav-icon"></i>
+                    <span class="nav-text">All Applications</span>
+                </a>
+                <a href="{% url 'all_job_descriptions' %}" class="nav-item {% if request.resolver_match.url_name == 'all_job_descriptions' %}active{% endif %}">
+                    <i class="fas fa-envelope-open-text nav-icon"></i>
+                    <span class="nav-text">All Job Descriptions</span>
+                </a>
+                 <a href="{% url 'top_recommendations' %}" class="nav-item {% if request.resolver_match.url_name == 'top_recommendations' %}active{% endif %}">
+                    <i class="fas fa-medal nav-icon"></i>
+                    <span class="nav-text">Top Recommendations</span>
+                </a>
+                <a href="" class="nav-item {% if request.resolver_match.url_name == 'ai_assistant' %}active{% endif %}">
+                    <i class="fas fa-robot nav-icon"></i>
+                    <span class="nav-text">AI Assistant</span>
+                </a>
+                {% if user.is_authenticated %}
+                    {% if user.role == 'admin' or user.role == 'superadmin' %}
+                        <a href="{% url 'admin_dashboard' %}" class="nav-item {% if request.resolver_match.url_name == 'admin_dashboard' %}active{% endif %}">
+                            <i class="fas fa-user-shield nav-icon"></i>
+                            <span class="nav-text">Admin Panel</span>
+                        </a>
+                    {% endif %}
+                    {% if user.role == 'superadmin' %}
+                        <a href="{% url 'superadmin_dashboard' %}" class="nav-item {% if request.resolver_match.url_name == 'superadmin_dashboard' %}active{% endif %}">
+                            <i class="fas fa-crown nav-icon"></i>
+                            <span class="nav-text">Superadmin Panel</span>
+                        </a>
+                    {% endif %}
+                {% endif %}
+            </nav>
+        </aside>
+
+        <!-- Main Wrapper -->
+        <div class="main-content-wrapper">
+            <!-- Header -->
+            <header class="app-header">
+                <div class="header-left">
+                    <button class="menu-toggle d-md-none" aria-label="Toggle navigation">
+                        <i class="fas fa-bars"></i>
+                    </button>
+                    <a href="{% url 'home' %}" class="header-logo-mobile d-md-none d-flex align-items-center justify-content-center">
+                        <img src="https://placehold.co/40x40/007bff/ffffff?text=AI" alt="Logo">
+                    </a>
+                </div>
+                <div class="header-right">
+                    {% if user.is_authenticated %}
+                        <span class="text-white me-2 d-none d-md-block"><b style="font-size: 22px;">Hello, {{ user.username }}</b></span>
+                        <a href="#" class="header-icon-link notification-icon-wrapper">
+                            <i class="fas fa-bell header-icon"></i>
+                            <span class="notification-badge">3</span>
+                        </a>
+                        <a href="{% url 'signout' %}" class="header-icon-link" title="Sign Out">
+                            <i class="fas fa-sign-out-alt header-icon"></i>
+                        </a>
+                    {% else %}
+                        <a href="{% url 'signin' %}" class="btn btn-outline-light me-2">Sign In</a>
+                        <a href="{% url 'signup' %}" class="btn btn-light">Sign Up</a>
+                    {% endif %}
+                </div>
+            </header>
+
+            <!-- ✅ Modal for Django Messages -->
+            <div class="modal fade" id="messageModal" tabindex="-1" aria-labelledby="messageModalLabel" aria-hidden="true">
+              <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content text-center">
+                  <div class="modal-header">
+                    <h5 class="modal-title" id="messageModalLabel">Notification</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                  </div>
+                  <div class="modal-body">
+                      {% if messages %}
+                          {% for message in messages %}
+                              <p class="alert alert-{{ message.tags }} m-0">{{ message }}</p>
+                          {% endfor %}
+                      {% endif %}
+                  </div>
+                  <div class="modal-footer">
+                    <button type="button" class="btn btn-primary" data-bs-dismiss="modal">OK</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Content -->
+            <main class="page-content">
+                {% block content %}
+                <h1>Welcome to HR Talent Scout!</h1>
+                {% endblock %}
+            </main>
+
+            <!-- Footer -->
+            <footer class="app-footer">
+                <div class="footer-content">
+                    &copy; 2024 HR Talent Scout. All rights reserved.
+                    <span class="footer-separator">|</span>
+                    <a href="#" class="footer-link" target="_blank">Privacy Policy</a>
+                    <span class="footer-separator">|</span>
+                    <a href="#" class="footer-link" target="_blank">Terms of Service</a>
+                </div>
+            </footer>
+        </div>
+    </div>
+
+    <!-- Overlay for mobile -->
+    <div class="sidebar-overlay d-md-none"></div>
+
+    <!-- Bootstrap Bundle -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
+    {% block extra_js %}{% endblock %}
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            // Sidebar toggle
+            const menuToggle = document.querySelector('.menu-toggle');
+            const sidebar = document.querySelector('.app-sidebar');
+            const sidebarOverlay = document.querySelector('.sidebar-overlay');
+
+            function toggleSidebar() {
+                sidebar.classList.toggle('show');
+                sidebarOverlay.classList.toggle('show');
+            }
+
+            if (menuToggle) menuToggle.addEventListener('click', toggleSidebar);
+            if (sidebarOverlay) sidebarOverlay.addEventListener('click', toggleSidebar);
+
+            // ✅ Auto-show modal if messages exist
+            {% if messages %}
+                var messageModal = new bootstrap.Modal(document.getElementById('messageModal'));
+                messageModal.show();
+            {% endif %}
+        });
+    </script>
+</body>
+</html>
