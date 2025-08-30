@@ -33,7 +33,7 @@
         }
 
         .container-main {
-            max-width: 1200px;
+            max-width: 1500px;
             margin: 2rem auto;
             padding: 0 1rem;
         }
@@ -269,8 +269,8 @@
             <div class="dashboard-sidebar">
                 <h3 class="section-title">Candidate Summary</h3>
                 <div class="text-center">
-                    <p class="h5 mb-0 text-muted">{{ analysis_result.full_name|default:"Candidate" }}</p>
-                    <p class="small mb-3 text-secondary">{{ analysis_result.current_company_name }}</p>
+                    <p class="h5 mb-0 text-muted"><b>{{ analysis_result.full_name|default:"Candidate" }}</b></p>
+                    <p class="small mb-3 text-secondary"><b>{{ analysis_result.current_company_name }}</b></p>
                     <div class="score-circle">
                         <span>{{ analysis_result.aggregate_score }}<span style="font-size: 1rem;">%</span></span>
                     </div>

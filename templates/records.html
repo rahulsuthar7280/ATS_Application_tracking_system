@@ -4,16 +4,17 @@
 
 {% block content %}
     <div class="container-fluid py-4">
-        <h1 class="page-heading">Candidate Records</h1>
+        <div class="d-flex align-items-center mb-4">
+            <h1 class="page-heading mb-0"><i class="fas fa-users me-2"></i>Candidate Records</h1>
+        </div>
 
         {% if candidates %}
-            <div class="card card-filters shadow-sm mb-4">
-                <div class="card-body">
+            <div class="card p-4 shadow-sm main-card">
+                <div class="card-header border-0 bg-white">
+                    <h5 class="card-title filter-section-title mb-3"><i class="fas fa-filter me-2"></i>Filter Records</h5>
                     <div class="row g-3 align-items-center">
-                        <div class="col-md-auto">
-                            <h6 class="filter-label mb-0">Filter by Decision:</h6>
-                        </div>
-                        <div class="col-md-2">
+                        <div class="col-md-3">
+                            <label for="decision-filter" class="form-label filter-label">Decision</label>
                             <select id="decision-filter" class="form-select form-select-sm">
                                 <option value="">All Decisions</option>
                                 <option value="shortlisted">Shortlisted</option>
@@ -22,11 +23,8 @@
                                 <option value="Interview Scheduled">Interview Scheduled</option>
                             </select>
                         </div>
-
-                        <div class="col-md-auto">
-                            <h6 class="filter-label mb-0">Job Role:</h6>
-                        </div>
-                        <div class="col-md-2">
+                        <div class="col-md-3">
+                            <label for="job-role-filter" class="form-label filter-label">Job Role</label>
                             <select id="job-role-filter" class="form-select form-select-sm">
                                 <option value="">All Roles</option>
                                 {% for role in job_roles %}
@@ -34,49 +32,44 @@
                                 {% endfor %}
                             </select>
                         </div>
-
-                        <div class="col-md-auto">
-                            <h6 class="filter-label mb-0">Experience:</h6>
-                        </div>
-                        <div class="col-md-2">
+                        <div class="col-md-3">
+                            <label for="min-exp" class="form-label filter-label">Experience (Years)</label>
                             <div class="input-group input-group-sm">
-                                <input type="number" id="min-exp" class="form-control" placeholder="Min">
+                                <input type="number" id="min-exp" class="form-control" placeholder="Min" min="0">
                                 <span class="input-group-text">-</span>
-                                <input type="number" id="max-exp" class="form-control" placeholder="Max">
+                                <input type="number" id="max-exp" class="form-control" placeholder="Max" min="0">
                             </div>
                         </div>
-
-                        <div class="col-md-auto">
-                            <h6 class="filter-label mb-0">Search:</h6>
-                        </div>
-                        <div class="col-md-2">
-                            <input type="text" id="custom-search-input" class="form-control form-control-sm" placeholder="Search records...">
+                        <div class="col-md-3">
+                            <label for="custom-search-input" class="form-label filter-label">Search All Records</label>
+                            <div class="input-group input-group-sm">
+                                <input type="text" id="custom-search-input" class="form-control" placeholder="Search by name, role, etc.">
+                                <span class="input-group-text"><i class="fas fa-search"></i></span>
+                            </div>
                         </div>
                     </div>
                 </div>
-            </div>
 
-            <div class="card p-4 shadow-sm">
+                <hr class="my-4">
+
                 <div class="table-responsive">
                     <table id="candidateRecordsTable" class="table table-striped table-hover w-100">
                         <thead>
                             <tr>
-                                <th>S.No.</th>
                                 <th>Name</th>
                                 <th>Job Role</th>
-                                <th>Overall Exp.</th>
-                                <th>AI Rec.</th>
+                                <th>Experience</th>
+                                <th>AI Recommendation</th>
                                 <th>Suggested Salary</th>
                                 <th>Final Decision</th>
                                 <th>Final Salary</th>
-                                <th>Resume Url</th>
+                                <th>Resume</th>
                                 <th>Actions</th>
                             </tr>
                         </thead>
                         <tbody>
                             {% for candidate in candidates %}
                                 <tr>
-                                    <td>{{ forloop.counter }}</td>
                                     <td>{{ candidate.full_name }}</td>
                                     <td>{{ candidate.job_role }}</td>
                                     <td>{{ candidate.overall_experience }}</td>
@@ -84,8 +77,9 @@
                                         <span class="badge 
                                             {% if candidate.hiring_recommendation == 'Hire' or candidate.hiring_recommendation == 'Strong Hire' %}bg-success
                                             {% elif candidate.hiring_recommendation == 'Reject' %}bg-danger
-                                            {% else %}bg-warning{% endif %}
-                                        ">{{ candidate.hiring_recommendation }}</span>
+                                            {% else %}bg-warning{% endif %}">
+                                            {{ candidate.hiring_recommendation }}
+                                        </span>
                                     </td>
                                     <td>₹{{ candidate.suggested_salary_range }}</td>
                                     <td>
@@ -95,11 +89,16 @@
                                             {% elif candidate.final_decision == 'Not Selected' %}bg-secondary
                                             {% elif candidate.final_decision == 'Interview Scheduled' %}bg-primary
                                             {% elif candidate.final_decision == 'shortlisted' %}bg-info
-                                            {% else %}bg-secondary{% endif %}
-                                        ">{{ candidate.final_decision|default:"Pending" }}</span>
+                                            {% else %}bg-secondary{% endif %}">
+                                            {{ candidate.final_decision|default:"Pending" }}
+                                        </span>
                                     </td>
                                     <td>₹{{ candidate.final_salary|floatformat:2|default:"N/A" }}</td>
-                                    <td><a href="{{ candidate.resume_file_path }}" target="_blank" class="btn btn-outline-primary btn-sm">View</a></td>
+                                    <td>
+                                        <a href="{{ candidate.resume_file_path }}" target="_blank" class="btn btn-outline-dark btn-sm" title="View Resume">
+                                            <i class="fas fa-file-alt"></i>
+                                        </a>
+                                    </td>
                                     <td>
                                         <a href="{% url 'candidate_profile' candidate.id %}" class="btn btn-info btn-sm" title="View Details">
                                             <i class="fas fa-eye"></i>
@@ -112,10 +111,13 @@
                 </div>
             </div>
         {% else %}
-            <div class="text-center card p-5 mt-5 shadow-sm">
+            <div class="text-center card p-5 mt-5 shadow-sm empty-state">
+                <i class="fas fa-search-minus fa-3x mb-3 text-muted"></i>
                 <h3 class="text-muted">No candidate records found.</h3>
                 <p>Start by analyzing a resume to add a new candidate to your records.</p>
-                <a href="{% url 'resume_analysis' %}" class="btn btn-info mt-3 w-auto mx-auto">Go to Resume Analysis</a>
+                <a href="{% url 'resume_analysis' %}" class="btn btn-primary mt-3 w-auto mx-auto">
+                    <i class="fas fa-upload me-2"></i>Go to Resume Analysis
+                </a>
             </div>
         {% endif %}
     </div>
@@ -124,82 +126,122 @@
 {% block extra_head %}
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
 <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/2.0.8/css/dataTables.dataTables.min.css"/>
+<link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/2.0.8/css/dataTables.bootstrap5.min.css">
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
-    /* General body and heading styles */
+    :root {
+        --primary-color: #007bff;
+        --secondary-color: #6c757d;
+        --success-color: #28a745;
+        --danger-color: #dc3545;
+        --warning-color: #ffc107;
+        --info-color: #17a2b8;
+        --light-color: #f8f9fa;
+        --dark-color: #343a40;
+        --bg-light: #f0f2f5;
+        --text-color: #495057;
+        --card-bg: #ffffff;
+        --shadow-sm: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+    }
+
     body {
-        font-family: 'Inter', 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-        background-color: #f0f2f5;
-        color: #343a40;
+        font-family: 'Poppins', 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+        background-color: var(--bg-light);
+        color: var(--text-color);
     }
     .page-heading {
         font-size: 2.2rem;
-        color: #212529;
-        margin-bottom: 2rem;
-        font-weight: 700;
-        text-align: center;
-    }
-
-    /* Filter Card & Layout */
-    .card-filters {
-        background-color: #ffffff;
-        border: 1px solid #e9ecef;
-        border-radius: 0.5rem;
-        box-shadow: 0 4px 6px rgba(0,0,0,.05);
-    }
-    .filter-label {
-        font-size: 1rem;
         font-weight: 600;
-        color: #495057;
-        white-space: nowrap;
+        color: var(--dark-color);
     }
-    .filter-buttons .btn {
-        margin-right: 0.5rem;
-        margin-bottom: 0.5rem;
-        font-weight: 500;
-        padding: 0.375rem 0.75rem;
-        white-space: nowrap;
-    }
-    
-    /* Input Group Styling */
-    .input-group-sm > .form-control, 
-    .input-group-sm > .form-select {
-        height: calc(1.8125rem + 2px);
-        padding: 0.25rem 0.5rem;
-        font-size: 0.875rem;
-    }
-
-    /* DataTables & Table Styles */
-    .card.p-4 {
-        padding: 1.5rem !important;
-        background-color: #ffffff;
-        border-radius: 0.5rem;
+    .main-card {
+        border-radius: 1rem;
         box-shadow: 0 0.5rem 1rem rgba(0,0,0,.15);
     }
-    #candidateRecordsTable {
-        width: 100% !important;
-        margin-top: 0;
+    .filter-section-title {
+        font-weight: 600;
+        color: var(--dark-color);
     }
-
-    /* Badge styles */
+    .filter-label {
+        font-weight: 500;
+        color: var(--secondary-color);
+        font-size: 0.9rem;
+        margin-bottom: 0.25rem;
+    }
+    .form-control, .form-select {
+        border-radius: 0.5rem;
+        border: 1px solid #ced4da;
+    }
+    .input-group-text {
+        background-color: var(--light-color);
+        border: 1px solid #ced4da;
+        border-left: none;
+        color: var(--secondary-color);
+    }
+    .table-responsive {
+        padding-top: 1rem;
+    }
+    #candidateRecordsTable thead th {
+        font-weight: 600;
+        color: var(--dark-color);
+        border-bottom: 2px solid #e9ecef;
+    }
+    #candidateRecordsTable tbody tr:hover {
+        background-color: #e9ecef;
+    }
     .badge {
-        padding: 0.4em 0.8em;
+        padding: 0.4em 0.9em;
         font-size: 85%;
         border-radius: 50rem;
         font-weight: 600;
         text-transform: capitalize;
     }
-    .badge.bg-success { background-color: #28a745 !important; }
-    .badge.bg-danger { background-color: #dc3545 !important; }
-    .badge.bg-warning { background-color: #ffc107 !important; color: #333; }
-    .badge.bg-primary { background-color: #007bff !important; }
-    .badge.bg-secondary { background-color: #6c757d !important; }
-    .badge.bg-info { background-color: #17a2b8 !important; }
+    .badge.bg-success { background-color: var(--success-color) !important; }
+    .badge.bg-danger { background-color: var(--danger-color) !important; }
+    .badge.bg-warning { background-color: #ffc93c !important; color: #333; }
+    .badge.bg-primary { background-color: var(--primary-color) !important; }
+    .badge.bg-secondary { background-color: var(--secondary-color) !important; }
+    .badge.bg-info { background-color: var(--info-color) !important; }
+
+    .empty-state {
+        border-radius: 1rem;
+        border: 2px dashed #e9ecef;
+        background-color: #fafafa;
+    }
+    .empty-state h3 {
+        font-weight: 600;
+    }
+    .empty-state .btn-primary {
+        background-color: var(--primary-color);
+        border-color: var(--primary-color);
+        transition: all 0.2s ease-in-out;
+    }
+    .empty-state .btn-primary:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 6px rgba(0,0,0,.1);
+    }
+
+    /* --- Pagination specific styles --- */
+    .dataTables_wrapper .dataTables_paginate .paginate_button.page-item {
+        margin: 0 2px;
+    }
+
+    .dataTables_wrapper .dataTables_paginate .paginate_button.page-item .page-link {
+        border-radius: 0.5rem;
+    }
+
+    .dataTables_wrapper .dataTables_paginate .paginate_button.page-item.active .page-link {
+        background-color: #007bff; /* Use your primary color */
+        border-color: #007bff;
+        color: #fff;
+    }
 </style>
 {% endblock %}
 
 {% block extra_js %}
 <script src="https://code.jquery.com/jquery-3.7.1.min.js" crossorigin="anonymous"></script>
 <script type="text/javascript" src="https://cdn.datatables.net/2.0.8/js/dataTables.min.js"></script>
+<script type="text/javascript" src="https://cdn.datatables.net/2.0.8/js/dataTables.bootstrap5.min.js"></script>
 
 <script>
     $(document).ready(function() {
@@ -213,12 +255,12 @@
                 "lengthMenu": "Show _MENU_ entries"
             },
             "columnDefs": [
-                { "orderable": false, "targets": [8, 9] },
-                { "searchable": false, "targets": [8, 9] }
+                { "orderable": false, "targets": [7, 8] },
+                { "searchable": false, "targets": [7, 8] }
             ],
             layout: {
                 topStart: '',
-                topEnd: '', // No search bar here
+                topEnd: '',
                 bottomStart: 'info',
                 bottomEnd: 'paging'
             }
@@ -234,7 +276,7 @@
             function(settings, data, dataIndex) {
                 var min = parseInt($('#min-exp').val(), 10);
                 var max = parseInt($('#max-exp').val(), 10);
-                var experience = parseFloat(data[3].split(' ')[0]) || 0;
+                var experience = parseFloat(data[2]) || 0;
 
                 if ((isNaN(min) && isNaN(max)) ||
                     (isNaN(min) && experience <= max) ||
@@ -249,13 +291,13 @@
         // Event listener for Decision dropdown
         $('#decision-filter').on('change', function() {
             var filterValue = $(this).val();
-            table.column(6).search(filterValue === '' ? '' : '^' + filterValue + '$', true, false).draw();
+            table.column(5).search(filterValue === '' ? '' : '^' + filterValue + '$', true, false).draw();
         });
 
         // Event listener for Job Role dropdown
         $('#job-role-filter').on('change', function() {
             var filterValue = $(this).val();
-            table.column(2).search(filterValue === '' ? '' : '^' + filterValue + '$', true, false).draw();
+            table.column(1).search(filterValue === '' ? '' : '^' + filterValue + '$', true, false).draw();
         });
 
         // Event listeners for experience range inputs
@@ -265,3 +307,8 @@
     });
 </script>
 {% endblock %}
+
+This code includes the DataTables Bootstrap 5 integration files, which will automatically style the pagination to match the Bootstrap design. The small custom CSS snippet for pagination further refines the button appearance, making them look even better.
+
+[Datatable in Bootstrap 5 with HTML, CSS and JS](https://www.youtube.com/watch?v=FMpA3bRqTHk) is a helpful video that shows how to add and use DataTables with Bootstrap 5.
+http://googleusercontent.com/youtube_content/0
