@@ -28,7 +28,7 @@ DEBUG = True
 
 ALLOWED_HOSTS = ["*", "application-tracking-system-3haf.onrender.com"]
 CSRF_TRUSTED_ORIGINS = [
-    "application-tracking-system-3haf.onrender.com"
+    "https://application-tracking-system-3haf.onrender.com"
 ]
 
 # Application definition
