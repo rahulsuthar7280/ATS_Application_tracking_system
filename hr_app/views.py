@@ -11,7 +11,7 @@ import fitz  # PyMuPDF for PDF
 import os
 import re
 import pytz
-import win32com.client
+# import win32com.client
 from urllib.parse import urljoin
 import spacy
 from django.conf import settings
