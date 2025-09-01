@@ -10,7 +10,6 @@ import docx2txt
 import fitz  # PyMuPDF for PDF
 import os
 import re
-import pythoncom
 import pytz
 import win32com.client
 from urllib.parse import urljoin
@@ -20,7 +19,7 @@ from django.shortcuts import render
 # import win32com.client
 import pythoncom
 from django.shortcuts import render
-# import pythoncom
+
 from collections import defaultdict
 from datetime import datetime, timedelta
 import os
