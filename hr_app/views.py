@@ -5,6 +5,7 @@ from datetime import datetime
 import logging
 from venv import logger
 #import google.generativeai as genai
+import google.genai as genai
 import phonenumbers# myhrproject/hr_app/views.py
 import docx2txt
 # import fitz  # PyMuPDF for PDF
