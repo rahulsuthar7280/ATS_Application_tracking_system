@@ -199,7 +199,7 @@
                 </a>
                 <a href="{% url 'resume_analysis' %}" class="nav-item {% if request.resolver_match.url_name == 'resume_analysis' %}active{% endif %}">
                     <i class="fas fa-search nav-icon"></i>
-                    <span class="nav-text">Manual Analysis</span>
+                    <span class="nav-text">Manual Resume Analysis</span>
                 </a>
                 <!-- <a href="{% url 'initiate_call_interview' %}" class="nav-item {% if request.resolver_match.url_name == 'initiate_call_interview' %}active{% endif %}">
                     <i class="fas fa-phone-alt nav-icon"></i>
@@ -216,7 +216,7 @@
                
                 <a href="{% url 'show_unread_emails' %}" class="nav-item {% if request.resolver_match.url_name == 'show_unread_emails' %}active{% endif %}">
                     <i class="fas fa-envelope-open-text nav-icon"></i>
-                    <span class="nav-text">All Applications</span>
+                    <span class="nav-text">All Incoming Applications</span>
                 </a>
                 <a href="{% url 'all_job_descriptions' %}" class="nav-item {% if request.resolver_match.url_name == 'all_job_descriptions' %}active{% endif %}">
                     <i class="fas fa-envelope-open-text nav-icon"></i>

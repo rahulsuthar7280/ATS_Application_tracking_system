@@ -18,7 +18,7 @@ urlpatterns = [
     # Existing URLs (ensure they are protected with @login_required in views.py)
     path('', views.home, name='home'), # Redirects to dashboard now
     path('resume-analysis/', views.resume_analysis_view, name='resume_analysis'),
-    path('basic-resume-analysis/', views.basic_resume_analysis_view, name='basic_resume_analysis'),
+    path('basic_resume_analysis/', views.basic_resume_analysis_view, name='basic_resume_analysis'),
     path('advance_resume_analysis/', views.advance_resume_analysis_view, name='advance_resume_analysis'),
     path('initiate_call_interview/', views.initiate_call_interview, name='initiate_call_interview'),
     path('candidate_profile/', views.candidate_profile, name='candidate_profile'),
@@ -40,6 +40,8 @@ urlpatterns = [
     # NEW: URL for showing upcoming applications/mails
     # path('applications/', views.show_unread_emails, name='show_applications'),
     path("applications/", views.show_unread_emails, name="show_unread_emails"),
+    path('update_application_data/', views.update_application_data, name='update_application_data'),
+
     # NEW: URL for processing ATS options
     path('process_ats/<str:email_id>/<str:ats_type>/', views.process_ats_option, name='process_ats_option'),
 
@@ -66,6 +68,7 @@ urlpatterns = [
     
     # path('results/<uuid:email_id>/<str:analysis_type>/', views.analysis_page, name='analysis_page_no_jd'),
     # path('results/<uuid:email_id>/<str:analysis_type>/<uuid:job_description_id>/', views.analysis_page, name='analysis_page_with_jd'),
+    path('calendar_scheduler/', views.calendar_scheduler, name='calendar_scheduler'),
 
 ]
 

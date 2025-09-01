@@ -1,0 +1,521 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interview Scheduler</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+        body {
+            font-family: 'Inter', sans-serif;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+            background: linear-gradient(135deg, #eef2ff 0%, #a5b4fc 100%);
+            min-height: 100vh;
+            overflow-y: auto;
+        }
+        .dashboard-container {
+            background-color: #ffffff;
+            border-radius: 2rem;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+        }
+        .calendar-grid {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 0.75rem;
+        }
+        .date-cell {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 5rem;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s ease-in-out;
+            font-weight: 500;
+            border-radius: 1rem;
+            position: relative;
+            background-color: #f1f5f9;
+            color: #475569;
+        }
+        .date-cell:not(.disabled):hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            background-color: #e2e8f0;
+        }
+        .date-cell.active {
+            box-shadow: 0 0 0 4px #6366f1;
+            transform: scale(1.05);
+            font-weight: 700;
+            background-color: #6366f1;
+            color: #ffffff;
+        }
+        .date-cell.active .date-number {
+            color: #ffffff;
+        }
+        .date-cell.has-appointment {
+            background-color: #fecaca;
+            color: #b91c1c;
+        }
+        .date-cell.has-appointment:hover {
+            background-color: #fca5a5;
+        }
+        .day-header {
+            font-weight: 700;
+            color: #4b5563;
+            text-align: center;
+            padding-bottom: 0.75rem;
+        }
+        .appointment-badge {
+            position: absolute;
+            bottom: 0.25rem;
+            right: 0.25rem;
+            width: 0.6rem;
+            height: 0.6rem;
+            background-color: #ef4444;
+            border-radius: 50%;
+        }
+        .appointment-item:hover {
+            transform: scale(1.02);
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+        .main-button {
+            background-image: linear-gradient(to right, #6366f1, #8b5cf6);
+            transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+            border: none;
+        }
+        .main-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 10px -2px rgba(99, 102, 241, 0.5);
+        }
+        .main-button:disabled {
+            background-image: none;
+            background-color: #d1d5db;
+            color: #9ca3af;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+    </style>
+</head>
+<body class="flex items-center justify-center min-h-screen p-4 sm:p-8">
+
+<div id="loading-spinner" class="absolute inset-0 flex items-center justify-center bg-gray-200/80 z-50 transition-opacity duration-300 hidden">
+  <div class="animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-indigo-500"></div>
+</div>
+
+<div class="w-full max-w-5xl mx-auto h-full dashboard-container p-6 sm:p-10 flex flex-col lg:flex-row gap-8 lg:gap-16">
+
+    <!-- Left Panel: Calendar View -->
+    <div class="flex flex-col flex-1">
+        <div id="user-id-display" class="text-xs text-slate-400 mb-4 text-right"></div>
+        
+        <div id="error-alert" class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-xl relative mb-6 hidden" role="alert">
+            <strong class="font-bold">Error!</strong>
+            <span class="block sm:inline" id="error-message"></span>
+            <span class="absolute top-0 bottom-0 right-0 px-4 py-3 cursor-pointer" id="close-error">
+                <svg class="fill-current h-6 w-6 text-red-500" role="button" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><title>Close</title><path d="M14.348 14.849a1.2 1.2 0 0 1-1.697 0L10 11.314l-2.651 2.651a1.2 1.2 0 1 1-1.697-1.697l2.651-2.651-2.651-2.651a1.2 1.2 0 0 1 1.697-1.697l2.651 2.651 2.651-2.651a1.2 1.2 0 0 1 1.697 1.697l-2.651 2.651 2.651 2.651a1.2 1.2 0 0 1 0 1.697z"/></svg>
+            </span>
+        </div>
+
+        <div class="flex justify-between items-center mb-6">
+            <button id="prev-month" class="p-2 rounded-full hover:bg-slate-200 transition-colors">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-slate-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+                </svg>
+            </button>
+            <h2 id="current-month-year" class="text-3xl sm:text-4xl font-extrabold text-slate-800 tracking-wide"></h2>
+            <button id="next-month" class="p-2 rounded-full hover:bg-slate-200 transition-colors">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-slate-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                </svg>
+            </button>
+        </div>
+
+        <div id="calendar-body" class="calendar-grid">
+            <div class="day-header">Sun</div>
+            <div class="day-header">Mon</div>
+            <div class="day-header">Tue</div>
+            <div class="day-header">Wed</div>
+            <div class="day-header">Thu</div>
+            <div class="day-header">Fri</div>
+            <div class="day-header">Sat</div>
+        </div>
+    </div>
+
+    <!-- Right Panel: Appointments & Scheduler -->
+    <div id="right-panel" class="flex flex-col flex-1 pt-6 lg:pt-0 border-t lg:border-t-0 lg:border-l border-slate-200 lg:pl-16">
+        <div id="panel-content">
+            <h3 class="text-xl font-bold text-slate-800 mb-4">Interview Schedules</h3>
+            <p class="text-slate-500 mb-6">Select a date on the calendar to see details and schedule new interviews.</p>
+        </div>
+    </div>
+</div>
+
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+    import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+    import { getFirestore, doc, getDoc, addDoc, onSnapshot, collection, query } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+    import { setLogLevel } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+    setLogLevel('Debug');
+
+    const firebaseConfig = JSON.parse(typeof __firebase_config !== 'undefined' ? __firebase_config : '{}');
+    const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+
+    let app, auth, db, userId;
+    let appointments = [];
+    let currentMonth = new Date().getMonth();
+    let currentYear = new Date().getFullYear();
+    let selectedDate = null;
+
+    const calendarBody = document.getElementById('calendar-body');
+    const prevMonthBtn = document.getElementById('prev-month');
+    const nextMonthBtn = document.getElementById('next-month');
+    const currentMonthYearEl = document.getElementById('current-month-year');
+    const userIdDisplayEl = document.getElementById('user-id-display');
+    const loadingSpinner = document.getElementById('loading-spinner');
+    const errorMessageEl = document.getElementById('error-message');
+    const errorAlert = document.getElementById('error-alert');
+    const closeErrorBtn = document.getElementById('close-error');
+    const rightPanel = document.getElementById('right-panel');
+    const panelContent = document.getElementById('panel-content');
+
+    const DUMMY_DATA = [
+        { date: '2025-08-05', time: '10:00 AM', interviewer: 'John Smith', candidate: 'Jane Doe', type: 'Technical', notes: 'Discussed project architecture.', userId: 'user_dummy_1' },
+        { date: '2025-08-12', time: '02:00 PM', interviewer: 'Emily White', candidate: 'Michael Chen', type: 'Behavioral', notes: 'Culture fit interview.', userId: 'user_dummy_2' },
+        { date: '2025-08-20', time: '11:00 AM', interviewer: 'David Lee', candidate: 'Sarah Johnson', type: 'System Design', notes: 'Design a scalable e-commerce platform.', userId: 'user_dummy_3' },
+        { date: '2025-09-03', time: '09:00 AM', interviewer: 'Alex Kim', candidate: 'Chris Evans', type: 'Technical', notes: 'Follow-up on previous coding challenge.', userId: 'user_dummy_4' },
+        { date: '2025-09-10', time: '01:00 PM', interviewer: 'Maria Rodriguez', candidate: 'Olivia Brown', type: 'Behavioral', notes: 'Team collaboration and problem-solving skills.', userId: 'user_dummy_5' },
+    ];
+
+    function showError(message) {
+        errorMessageEl.textContent = message;
+        errorAlert.classList.remove('hidden');
+    }
+
+    closeErrorBtn.onclick = () => {
+        errorAlert.classList.add('hidden');
+    };
+
+    function renderCalendar() {
+        if (!db && appointments.length === 0) {
+            console.warn("Using dummy data as Firestore is not available.");
+            appointments = DUMMY_DATA;
+        }
+
+        updateHeader();
+        calendarBody.innerHTML = '';
+        const dayHeaders = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+        dayHeaders.forEach(day => {
+            const header = document.createElement('div');
+            header.textContent = day;
+            header.className = 'day-header';
+            calendarBody.appendChild(header);
+        });
+
+        const firstDayOfMonth = new Date(currentYear, currentMonth, 1).getDay();
+        const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
+
+        for (let i = 0; i < firstDayOfMonth; i++) {
+            const emptyCell = document.createElement('div');
+            emptyCell.className = 'date-cell opacity-20 disabled cursor-not-allowed';
+            calendarBody.appendChild(emptyCell);
+        }
+
+        for (let day = 1; day <= daysInMonth; day++) {
+            const dateCell = document.createElement('div');
+            const dateString = `${currentYear}-${String(currentMonth + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+            const appointmentsForDay = appointments.filter(app => app.date === dateString);
+
+            dateCell.textContent = day;
+            dateCell.className = `date-cell transition-colors duration-200`;
+            dateCell.dataset.date = dateString;
+
+            if (selectedDate === dateString) {
+                dateCell.classList.add('active');
+            } else if (appointmentsForDay.length > 0) {
+                dateCell.classList.add('has-appointment');
+                const badge = document.createElement('span');
+                badge.className = 'appointment-badge';
+                dateCell.appendChild(badge);
+            }
+
+            dateCell.onclick = () => {
+                if (dateCell.classList.contains('disabled')) return;
+                selectedDate = dateString;
+                document.querySelectorAll('.date-cell').forEach(cell => {
+                    cell.classList.remove('active');
+                });
+                dateCell.classList.add('active');
+                renderRightPanel();
+            };
+
+            calendarBody.appendChild(dateCell);
+        }
+    }
+
+    function updateHeader() {
+        const date = new Date(currentYear, currentMonth);
+        const options = { year: 'numeric', month: 'long' };
+        currentMonthYearEl.textContent = date.toLocaleDateString('en-US', options);
+    }
+
+    function renderRightPanel() {
+        if (!selectedDate) {
+            panelContent.innerHTML = `
+                <h3 class="text-xl font-bold text-slate-800 mb-4">Interview Schedules</h3>
+                <p class="text-slate-500 mb-6">Select a date on the calendar to see details and schedule new interviews.</p>
+            `;
+            return;
+        }
+
+        const appointmentsForDay = appointments.filter(app => app.date === selectedDate);
+        let panelHTML = `
+            <h3 class="text-xl sm:text-2xl font-bold text-slate-800 mb-4">
+                Schedules for <span class="text-indigo-600">${selectedDate}</span>
+            </h3>
+        `;
+
+        if (appointmentsForDay.length > 0) {
+            panelHTML += `
+                <div class="mb-6">
+                    <h4 class="text-lg font-semibold text-slate-700 mb-2">Scheduled Interviews:</h4>
+                    <ul class="space-y-3">
+                        ${appointmentsForDay.map(app => `
+                            <li class="p-4 appointment-item bg-slate-100 rounded-xl shadow-sm transition-transform hover:scale-[1.02]">
+                                <div class="flex items-center gap-2 text-slate-800 font-bold mb-1">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-indigo-500" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clip-rule="evenodd" /></svg>
+                                    <span>${app.time}</span>
+                                </div>
+                                <div class="flex items-center gap-2 text-slate-600 mb-1">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-indigo-500" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd" /></svg>
+                                    <span>Interviewer: ${app.interviewer || 'N/A'}</span>
+                                </div>
+                                <div class="flex items-center gap-2 text-slate-600 mb-1">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-indigo-500" viewBox="0 0 20 20" fill="currentColor"><path d="M13 6a3 3 0 11-6 0 3 3 0 016 0zm-1.5 6a5.5 5.5 0 000-11zm-5.5 6a5.5 5.5 0 015.5-5.5V12a5.5 5.5 0 01-5.5 5.5z" /></svg>
+                                    <span>Candidate: ${app.candidate || 'N/A'}</span>
+                                </div>
+                                <div class="flex items-center gap-2 text-slate-600">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-indigo-500" viewBox="0 0 20 20" fill="currentColor"><path d="M17.414 2.586a2 2 0 00-2.828 0L7 10.172V13h2.828l7.586-7.586a2 2 0 000-2.828z" /><path fill-rule="evenodd" d="M2 6a2 2 0 012-2h4a1 1 0 010 2H4v10h10v-4a1 1 0 112 0v4a2 2 0 01-2 2H4a2 2 0 01-2-2V6z" clip-rule="evenodd" /></svg>
+                                    <span>Type: ${app.type || 'N/A'}</span>
+                                </div>
+                            </li>
+                        `).join('')}
+                    </ul>
+                </div>
+            `;
+        } else {
+            panelHTML += `
+                <p class="text-slate-500 mb-4 italic">No interviews scheduled yet. Be the first to book a slot!</p>
+            `;
+        }
+
+        const bookedTimes = appointmentsForDay.map(app => app.time);
+        const timeSlots = ['9:00 AM', '10:00 AM', '11:00 AM', '1:00 PM', '2:00 PM', '3:00 PM'];
+        
+        panelHTML += `
+            <div class="mt-8 p-6 bg-indigo-50 rounded-xl shadow-inner">
+                <h4 class="text-lg font-semibold text-slate-700 mb-3">Schedule a New Interview:</h4>
+                <div class="space-y-4">
+                    <div>
+                        <label for="interviewer-name" class="block text-sm font-medium text-slate-700">Interviewer Name</label>
+                        <input type="text" id="interviewer-name" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 px-3 py-2">
+                    </div>
+                    <div>
+                        <label for="candidate-name" class="block text-sm font-medium text-slate-700">Candidate Name</label>
+                        <input type="text" id="candidate-name" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 px-3 py-2">
+                    </div>
+                    <div>
+                        <label for="interview-type" class="block text-sm font-medium text-slate-700">Interview Type</label>
+                        <input type="text" id="interview-type" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 px-3 py-2">
+                    </div>
+                    <div>
+                        <label for="notes" class="block text-sm font-medium text-slate-700">Notes</label>
+                        <textarea id="notes" rows="3" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 px-3 py-2"></textarea>
+                    </div>
+                </div>
+                
+                <h4 class="text-lg font-semibold text-slate-700 mt-6 mb-3">Available Time Slots:</h4>
+                <div class="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                    ${timeSlots.map(time => {
+                        const isBooked = bookedTimes.includes(time);
+                        const buttonClasses = isBooked 
+                            ? 'bg-red-500 text-white cursor-not-allowed opacity-50' 
+                            : 'bg-indigo-100 text-indigo-700 hover:bg-indigo-200 cursor-pointer';
+                        return `
+                            <button
+                                data-time="${time}"
+                                ${isBooked ? 'disabled' : ''}
+                                class="px-4 py-2 rounded-lg font-medium transition-colors ${buttonClasses}">
+                                ${time}
+                            </button>
+                        `;
+                    }).join('')}
+                </div>
+                <button id="schedule-appointment" class="w-full mt-6 px-6 py-3 text-white rounded-lg font-bold main-button disabled:opacity-50 disabled:cursor-not-allowed">
+                    Schedule Interview
+                </button>
+            </div>
+        `;
+
+        panelContent.innerHTML = panelHTML;
+        
+        const scheduleBtn = document.getElementById('schedule-appointment');
+        const interviewerInput = document.getElementById('interviewer-name');
+        const candidateInput = document.getElementById('candidate-name');
+        const typeInput = document.getElementById('interview-type');
+        const notesInput = document.getElementById('notes');
+
+        let selectedTime = null;
+        scheduleBtn.disabled = true;
+
+        document.querySelectorAll('[data-time]').forEach(button => {
+            if (!button.disabled) {
+                button.onclick = () => {
+                    selectedTime = button.dataset.time;
+                    document.querySelectorAll('[data-time]').forEach(btn => btn.classList.remove('bg-indigo-600', 'text-white'));
+                    button.classList.add('bg-indigo-600', 'text-white');
+                    scheduleBtn.disabled = false;
+                };
+            }
+        });
+
+        scheduleBtn.onclick = async () => {
+            if (!selectedDate || !selectedTime) {
+                console.error("Date or time not selected.");
+                return;
+            }
+
+            try {
+                if (db) {
+                    const schedulesRef = collection(db, `artifacts/${appId}/public/data/interview_schedules`);
+                    const newAppointment = {
+                        date: selectedDate,
+                        time: selectedTime,
+                        interviewer: interviewerInput.value,
+                        candidate: candidateInput.value,
+                        type: typeInput.value,
+                        notes: notesInput.value,
+                        userId: userId,
+                        timestamp: new Date()
+                    };
+                    await addDoc(schedulesRef, newAppointment);
+                } else {
+                    appointments.push({ 
+                        date: selectedDate, 
+                        time: selectedTime, 
+                        interviewer: interviewerInput.value,
+                        candidate: candidateInput.value,
+                        type: typeInput.value,
+                        notes: notesInput.value,
+                        userId: userId 
+                    });
+                }
+                
+                const successMsg = document.createElement('div');
+                successMsg.className = 'mt-6 p-4 bg-green-100 text-green-700 border border-green-200 rounded-lg text-center font-medium animate-fade-in-down';
+                successMsg.textContent = `Interview scheduled successfully for ${selectedDate} at ${selectedTime}!`;
+                panelContent.appendChild(successMsg);
+
+                setTimeout(() => {
+                    renderCalendar();
+                    renderRightPanel();
+                }, 1000);
+            } catch (e) {
+                console.error("Error adding document: ", e);
+                showError("Failed to schedule appointment. Please try again.");
+            }
+        };
+    }
+
+    window.onload = async function() {
+        loadingSpinner.classList.remove('hidden');
+
+        // Initialize with today's date
+        const today = new Date();
+        currentMonth = today.getMonth();
+        currentYear = today.getFullYear();
+        selectedDate = `${currentYear}-${String(currentMonth + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+
+        try {
+            app = initializeApp(firebaseConfig);
+            auth = getAuth(app);
+            db = getFirestore(app);
+
+            onAuthStateChanged(auth, async (user) => {
+                if (user) {
+                    userId = user.uid;
+                    userIdDisplayEl.textContent = `User ID: ${userId}`;
+                    
+                    const appointmentsRef = collection(db, `artifacts/${appId}/public/data/interview_schedules`);
+                    const q = query(appointmentsRef);
+
+                    onSnapshot(q, (querySnapshot) => {
+                        appointments = [];
+                        querySnapshot.forEach((doc) => {
+                            appointments.push(doc.data());
+                        });
+                        renderCalendar();
+                        if (selectedDate) {
+                            renderRightPanel();
+                        }
+                        loadingSpinner.classList.add('hidden');
+                    }, (error) => {
+                        console.error("Error fetching appointments:", error);
+                        showError("Failed to load appointments. Using dummy data instead.");
+                        appointments = DUMMY_DATA;
+                        renderCalendar();
+                        if (selectedDate) {
+                            renderRightPanel();
+                        }
+                        loadingSpinner.classList.add('hidden');
+                    });
+                } else {
+                    try {
+                        if (typeof __initial_auth_token !== 'undefined') {
+                            await signInWithCustomToken(auth, __initial_auth_token);
+                        } else {
+                            await signInAnonymously(auth);
+                        }
+                    } catch (error) {
+                        console.error("Firebase Auth error:", error);
+                        showError("Authentication failed. Please refresh the page.");
+                        appointments = DUMMY_DATA;
+                        renderCalendar();
+                    }
+                }
+            });
+        } catch (error) {
+            console.error("Firebase initialization or auth failed:", error);
+            showError("Failed to connect to the database. Please check your network connection. Using dummy data.");
+            appointments = DUMMY_DATA;
+            renderCalendar();
+        } finally {
+            loadingSpinner.classList.add('hidden');
+        }
+    };
+    
+    prevMonthBtn.onclick = () => {
+        currentMonth--;
+        if (currentMonth < 0) {
+            currentMonth = 11;
+            currentYear--;
+        }
+        renderCalendar();
+    };
+
+    nextMonthBtn.onclick = () => {
+        currentMonth++;
+        if (currentMonth > 11) {
+            currentMonth = 0;
+            currentYear++;
+        }
+        renderCalendar();
+    };
+</script>
+
+</body>
+</html>

@@ -201,7 +201,7 @@ class CandidateAnalysis(models.Model):
     final_decision = models.CharField(
         max_length=20,
         choices=DECISION_CHOICES,
-        default='shortlisted',
+        default='Pending',
         blank=True,
         null=True
     )
@@ -212,6 +212,18 @@ class CandidateAnalysis(models.Model):
         blank=True,
         null=True
     )
+    ANALYSIS_TYPES = (
+        ('Basic', 'Basic ATS Analysis'),
+        ('Advance', 'Advanced ATS Analysis'),
+    )
+    analysis_type = models.CharField(
+        max_length=10, 
+        choices=ANALYSIS_TYPES, 
+        default='Basic', 
+        help_text="Type of resume analysis (Basic or Advanced)."
+    )
+
+
 
     def __str__(self):
         return self.full_name
@@ -237,7 +249,8 @@ class Application(models.Model):
     email_address = models.EmailField(max_length=255, blank=True, null=True, help_text="Email address found in the resume.")
     subject = models.CharField(max_length=500, blank=True, null=True)
     resume_url = models.URLField(max_length=1000, blank=True, null=True, unique=True, help_text="URL to the downloaded resume file.")
-
+    remark = models.CharField(max_length=500, blank=True, null=True) # New field
+    job_role = models.CharField(max_length=255, blank=True, null=True) # New field
     # Timestamps for tracking when the record was created/updated
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)

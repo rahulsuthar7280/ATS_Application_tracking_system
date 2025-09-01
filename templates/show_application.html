@@ -18,6 +18,8 @@
             <div class="btn-group me-3" role="group" aria-label="Application filters">
                 <button id="allApplicationsBtn" type="button" class="btn btn-outline-primary active">All</button>
                 <button id="todaysApplicationsBtn" type="button" class="btn btn-outline-primary">Today</button>
+                <button id="basicAtsBtnFilter" type="button" class="btn btn-outline-primary">Basic ATS</button>
+                <button id="advancedAtsBtnFilter" type="button" class="btn btn-outline-primary">Advanced ATS</button>
             </div>
             <button id="exportCsvBtn" class="btn btn-success export-btn"><i class="fas fa-file-csv me-2"></i>Export</button>
         </div>
@@ -37,12 +39,13 @@
                         <th scope="col" class="email-col">Email</th>
                         <th scope="col" class="resume-col text-center">Resume</th>
                         <th scope="col" class="jd-col">Job Description</th>
+                        <th scope="col" class="remark-col">Remark</th>
                         <th scope="col" class="action-col text-center">Action</th>
                     </tr>
                 </thead>
                 <tbody>
                     {% for email in emails %}
-                    <tr data-delivery-date="{{ email.delivery_date|date:'Y-m-d' }}">
+                    <tr data-delivery-date="{{ email.delivery_date|date:'Y-m-d' }}" data-email-id="{{ email.id }}" data-analysis-type="{{ email.candidateanalysis_set.first.analysis_type|default:'' }}">
                         <td>{{ forloop.counter }}</td>
                         <td class="candidate-name-cell text-truncate">{{ email.candidate_name }}</td>
                         <td class="text-truncate">{{ email.delivery_date|date:"Y-m-d" }}</td>
@@ -57,13 +60,19 @@
                                 <span class="text-muted">N/A</span>
                             {% endif %}
                         </td>
-                        <td>
+                        <td class="job-role-cell">
                             <select class="form-select job-description-select">
-                                <option value="" selected>Select JD</option>
+                                <option value="">Select JD</option>
                                 {% for jd in job_descriptions %}
-                                    <option value="{{ jd.id }}" data-file-url="{{ jd.file.url }}">{{ jd.title }}</option>
+                                    <option value="{{ jd.id }}" data-file-url="{{ jd.file.url }}" {% if email.job_description and email.job_description.id == jd.id %}selected{% endif %}>{{ jd.title }}</option>
                                 {% endfor %}
                             </select>
+                        </td>
+                        <td class="remark-cell">
+                            <div class="input-group">
+                                <input type="text" class="form-control remark-input" value="{{ email.remark|default:'' }}" placeholder="Add remark..." readonly>
+                                <button class="btn btn-sm btn-outline-primary save-remark-btn" type="button" style="display:none;">Save</button>
+                            </div>
                         </td>
                         <td class="text-center">
                             <button type="button" class="btn btn-sm btn-primary btn-analyze" data-bs-toggle="modal" data-bs-target="#atsOptionsModal" data-email-id="{{ email.id }}">
@@ -93,6 +102,28 @@
     {% endif %}
 </div>
 
+<div class="modal fade" id="remarkModal" tabindex="-1" aria-labelledby="remarkModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content shadow-lg rounded-3">
+            <div class="modal-header bg-primary text-white border-0 rounded-top-3">
+                <h5 class="modal-title" id="remarkModalLabel">Add/Edit Remark</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body p-4">
+                <input type="hidden" id="remarkApplicationId">
+                <div class="mb-3">
+                    <label for="remarkTextArea" class="form-label">Remark:</label>
+                    <textarea class="form-control" id="remarkTextArea" rows="5"></textarea>
+                </div>
+            </div>
+            <div class="modal-footer justify-content-center border-0 bg-light-subtle rounded-bottom-3">
+                <button type="button" class="btn btn-secondary universal-btn" data-bs-dismiss="modal">Close</button>
+                <button type="button" id="saveRemarkBtn" class="btn btn-primary universal-btn">Save</button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <div class="modal fade" id="atsOptionsModal" tabindex="-1" aria-labelledby="atsOptionsModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content shadow-lg rounded-3">
@@ -103,14 +134,14 @@
             <div class="modal-body p-4 text-center">
                 <p class="text-muted fw-light">Select the type of ATS analysis to perform:</p>
                 <div id="atsOptionsButtons" class="d-flex flex-column align-items-center mt-4">
-                <a href="#" id="basicAtsBtn" class="btn btn-outline-primary btn-lg w-75 mb-3" data-dismiss="modal">
-                    <span class="spinner-border spinner-border-sm me-2 d-none" role="status" aria-hidden="true"></span>
-                    <span class="button-text">Basic</span>
-                </a>
-                <a href="#" id="premiumAtsBtn" class="btn btn-primary btn-lg w-75" data-dismiss="modal">
-                    <span class="spinner-border spinner-border-sm me-2 d-none" role="status" aria-hidden="true"></span>
-                    <span class="button-text">Advanced</span>
-                </a>
+                    <a href="#" id="basicAtsBtn" class="btn btn-outline-primary btn-lg w-75 mb-3" data-dismiss="modal">
+                        <span class="spinner-border spinner-border-sm me-2 d-none" role="status" aria-hidden="true"></span>
+                        <span class="button-text">Basic</span>
+                    </a>
+                    <a href="#" id="premiumAtsBtn" class="btn btn-primary btn-lg w-75" data-dismiss="modal">
+                        <span class="spinner-border spinner-border-sm me-2 d-none" role="status" aria-hidden="true"></span>
+                        <span class="button-text">Advanced</span>
+                    </a>
                 </div>
             </div>
             <div class="modal-footer justify-content-center border-0 bg-light-subtle rounded-bottom-3">
@@ -229,6 +260,7 @@
     .email-col { width: 15%; }
     .resume-col { width: 7%; }
     .jd-col { width: 10%; }
+    .remark-col { width: 15%; }
     .action-col { width: 10%; }
     
     .table-responsive {
@@ -306,7 +338,7 @@
                     displayRows(currentPage);
                     $('.page-item').removeClass('active');
                     li.addClass('active');
-                    window.scrollTo({ top: 0, behavior: 'smooth' }); // Scroll to top
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
                 });
                 li.append(a);
                 paginationControls.append(li);
@@ -322,6 +354,8 @@
         function filterAndPaginate() {
             const filter = $('#searchInput').val().toLowerCase();
             const isToday = $('#todaysApplicationsBtn').hasClass('active');
+            const isBasicAts = $('#basicAtsBtnFilter').hasClass('active');
+            const isAdvancedAts = $('#advancedAtsBtnFilter').hasClass('active');
             const todayDate = new Date().toISOString().slice(0, 10);
 
             let hasVisibleRows = false;
@@ -329,10 +363,19 @@
                 const row = $(this);
                 const text = row.text().toLowerCase();
                 const deliveryDate = row.data('delivery-date');
+                const analysisType = row.data('analysis-type');
                 const dateMatch = isToday ? (deliveryDate === todayDate) : true;
                 const textMatch = text.includes(filter);
 
-                if (textMatch && dateMatch) {
+                let typeMatch = true;
+                if (isBasicAts) {
+                    typeMatch = analysisType === 'Basic';
+                } else if (isAdvancedAts) {
+                    typeMatch = analysisType === 'Advance';
+                }
+                
+                // Show the row if all filter conditions are met
+                if (textMatch && dateMatch && typeMatch) {
                     row.show();
                     hasVisibleRows = true;
                 } else {
@@ -342,6 +385,8 @@
 
             if (hasVisibleRows) {
                 $('#noApplicationsMessage').hide();
+                // Reset to first page after filtering
+                currentPage = 1;
                 displayRows(currentPage);
                 setupPagination();
             } else {
@@ -349,6 +394,120 @@
                 paginationControls.empty();
             }
         }
+
+        // Handle opening the modal on click of the readonly input
+        $('#incomingApplicationsTable').on('click', '.remark-input', function() {
+            const applicationId = $(this).closest('tr').data('email-id');
+            const currentRemark = $(this).val();
+            
+            $('#remarkApplicationId').val(applicationId);
+            $('#remarkTextArea').val(currentRemark);
+            
+            // Manually show the modal
+            const remarkModal = new bootstrap.Modal(document.getElementById('remarkModal'));
+            remarkModal.show();
+        });
+
+        // Function to get CSRF token from cookies
+        function getCookie(name) {
+            let cookieValue = null;
+            if (document.cookie && document.cookie !== '') {
+                const cookies = document.cookie.split(';');
+                for (let i = 0; i < cookies.length; i++) {
+                    const cookie = cookies[i].trim();
+                    if (cookie.startsWith(name + '=')) {
+                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                        break;
+                    }
+                }
+            }
+            return cookieValue;
+        }
+
+        // Event listener for the "Save" button inside the modal
+        $('#saveRemarkBtn').on('click', function(e) {
+            e.preventDefault();
+            const applicationId = $('#remarkApplicationId').val();
+            const remark = $('#remarkTextArea').val();
+            const $row = $(`tr[data-email-id="${applicationId}"]`);
+            const jobDescriptionId = $row.find('.job-description-select').val();
+
+            if (!remark && !jobDescriptionId) {
+                alert('Please enter a remark or select a job description.');
+                return;
+            }
+
+            const $button = $(this);
+            $button.prop('disabled', true).text('Saving...');
+
+            $.ajax({
+                url: '/update_application_data/',
+                type: 'POST',
+                contentType: 'application/json',
+                headers: {
+                    'X-CSRFToken': getCookie('csrftoken')
+                },
+                data: JSON.stringify({
+                    application_id: applicationId,
+                    remark: remark,
+                    job_description_id: jobDescriptionId
+                }),
+                success: function(response) {
+                    if (response.success) {
+                        $row.find('.remark-input').val(remark);
+                        $button.text('Saved!');
+                        
+                        setTimeout(() => {
+                            const remarkModal = bootstrap.Modal.getInstance(document.getElementById('remarkModal'));
+                            if (remarkModal) {
+                                remarkModal.hide();
+                            }
+                            $button.text('Save').prop('disabled', false);
+                        }, 1000);
+                    } else {
+                        alert('Error saving data: ' + response.message);
+                        $button.text('Save').prop('disabled', false);
+                    }
+                },
+                error: function(xhr, status, error) {
+                    console.error("AJAX Error:", status, error);
+                    alert('An error occurred. Please try again.');
+                    $button.text('Save').prop('disabled', false);
+                }
+            });
+        });
+
+        // Event listener for select change to automatically update the Job Description
+        $('#incomingApplicationsTable').on('change', '.job-description-select', function() {
+            const $select = $(this);
+            const applicationId = $select.closest('tr').data('email-id');
+            const jobDescriptionId = $select.val();
+            const remark = $select.closest('tr').find('.remark-input').val();
+
+            $.ajax({
+                url: '/update_application_data/',
+                type: 'POST',
+                contentType: 'application/json',
+                headers: {
+                    'X-CSRFToken': getCookie('csrftoken')
+                },
+                data: JSON.stringify({
+                    application_id: applicationId,
+                    remark: remark,
+                    job_description_id: jobDescriptionId
+                }),
+                success: function(response) {
+                    if (response.success) {
+                        console.log("Job Description updated successfully.");
+                    } else {
+                        alert('Error updating Job Description: ' + response.message);
+                    }
+                },
+                error: function() {
+                    alert('An error occurred while updating the Job Description. Please try again.');
+                }
+            });
+        });
 
         // Event listeners for search and filters
         $('#searchInput').on('keyup', function() {
@@ -368,20 +527,30 @@
             filterAndPaginate();
         });
 
-        // Event listener for the "Analyze" button to set up modal links
+        $('#basicAtsBtnFilter').on('click', function() {
+            $(this).addClass('active').siblings().removeClass('active');
+            currentPage = 1;
+            filterAndPaginate();
+        });
+        
+        $('#advancedAtsBtnFilter').on('click', function() {
+            $(this).addClass('active').siblings().removeClass('active');
+            currentPage = 1;
+            filterAndPaginate();
+        });
+
         let currentEmailId;
         $('#incomingApplicationsTable').on('click', '.btn-analyze', function() {
             currentEmailId = $(this).data('email-id');
         });
 
-        // Event listener for the "Advanced" button in the modal
         $('#premiumAtsBtn').on('click', function(e) {
             e.preventDefault();
-            const $currentRow = $(`[data-email-id="${currentEmailId}"]`).closest('tr');
+            const $currentRow = $(`[data-email-id="${currentEmailId}"]`);
             const selectedJdId = $currentRow.find('.job-description-select').val();
 
             if (!selectedJdId) {
-                alert("Please select a job description before proceeding.");
+                alert("Please select a job description before proceeding with advanced analysis.");
                 return;
             }
 
@@ -392,24 +561,27 @@
             $button.find('.button-text').text('Loading...');
             $button.find('.spinner-border').removeClass('d-none');
             
-            setTimeout(() => {
-                window.location.href = url;
-            }, 500);
+            window.location.href = url;
         });
 
-        // Event listener for the "Basic" button in the modal
         $('#basicAtsBtn').on('click', function(e) {
             e.preventDefault();
-            const url = `/basic_resume_analysis/?application_id=${currentEmailId}`;
+            const $currentRow = $(`[data-email-id="${currentEmailId}"]`);
+            const selectedJdId = $currentRow.find('.job-description-select').val();
+
+            if (!selectedJdId) {
+                alert("Please select a job description before proceeding with basic analysis.");
+                return;
+            }
+
+            const url = `/basic_resume_analysis/?application_id=${currentEmailId}&job_description_id=${selectedJdId}`;
             
             const $button = $(this);
             $button.prop('disabled', true);
             $button.find('.button-text').text('Loading...');
             $button.find('.spinner-border').removeClass('d-none');
             
-            setTimeout(() => {
-                window.location.href = url;
-            }, 500);
+            window.location.href = url;
         });
 
         // Initial display of rows

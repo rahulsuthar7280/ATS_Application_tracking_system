@@ -6,23 +6,20 @@
 <style>
     /* A more vibrant, professional color palette */
     :root {
-
-        --primary-color: #6a11cb;
-        --sidebar-blue: #004d99; /* A deep, rich blue */
-        --accent-blue: #007bff; /* A bright, standard blue */
+        --primary-main: #6a11cb; /* A deep purple */
+        --primary-gradient: linear-gradient(45deg, #6a11cb 0%, #2575fc 100%); /* Purple to blue gradient */
 
         --text-dark-main: #212529; /* A classic dark text */
         --text-muted: #6c757d;
         --text-light: #f8f9fa;
-        --text-white-75: #ffffff;
 
-        --background-page: #f8f9fa; /* A very light gray */
+        --background-page: #f0f2f5; /* A very light, soft gray */
         --card-bg: #ffffff;
         --border-color: #e9ecef;
 
-        /* Subtle Shadows */
-        --shadow-sm: 0 1px 3px rgba(0, 0, 0, .1);
-        --shadow-md: 0 4px 6px rgba(0, 0, 0, .1);
+        /* Enhanced Shadows */
+        --shadow-sm: 0 2px 4px rgba(0, 0, 0, .08);
+        --shadow-md: 0 8px 16px rgba(0, 0, 0, .15);
 
         /* More saturated status colors */
         --success-main: #28a745;
@@ -35,12 +32,13 @@
         --info-light: #d1ecf1;
 
         /* Chart Colors - A vibrant, distinct set */
-        --chart-color-1: #4e73df; /* Vivid Blue */
-        --chart-color-2: #1cc88a; /* Vibrant Green */
-        --chart-color-3: #36b9cc; /* Teal */
-        --chart-color-4: #f6c23e; /* Gold */
-        --chart-color-5: #e74a3b; /* Red */
-        --chart-color-6: #6f42c1; /* Purple */
+        --chart-color-1: #36a2eb; /* Blue */
+        --chart-color-2: #ff6384; /* Red */
+        --chart-color-3: #4bc0c0; /* Teal */
+        --chart-color-4: #ff9f40; /* Orange */
+        --chart-color-5: #9966ff; /* Purple */
+        --chart-color-6: #ffcd56; /* Yellow */
+        --chart-color-7: #c9cbcf; /* Gray */
     }
 
     html, body {
@@ -66,20 +64,20 @@
     }
 
     .dashboard-gradient-bg {
-        background: linear-gradient(135deg, var(--accent-blue) 0%, #20c997 100%);
+        background: var(--primary-gradient);
     }
 
     /* Card Styling */
     .card {
         border: 1px solid var(--border-color);
-        border-radius: 0.75rem;
+        border-radius: 1rem;
         background-color: var(--card-bg);
-        transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+        transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         box-shadow: var(--shadow-sm); /* Default subtle shadow */
     }
 
     .card:hover {
-        transform: translateY(-3px);
+        transform: translateY(-5px);
         box-shadow: var(--shadow-md);
     }
 
@@ -88,21 +86,29 @@
         padding: 1.5rem;
     }
 
-    /* Metric Icon Circles */
+    /* Metric Icon Circles with Gradient */
     .metric-icon-circle {
-        width: 50px;
-        height: 50px;
+        width: 60px;
+        height: 60px;
         border-radius: 50%;
         display: flex;
         align-items: center;
         justify-content: center;
-        font-size: 1.5rem;
-        transition: background-color 0.3s ease;
+        font-size: 1.75rem;
+        color: var(--text-white-75);
+        background: var(--primary-gradient);
+        transition: transform 0.3s ease-in-out;
     }
     
     .card:hover .metric-icon-circle {
-        background-color: rgba(255, 255, 255, 0.7);
+        transform: scale(1.1);
     }
+
+    /* Status-specific metric card icons */
+    .metric-icon-circle.bg-success-light { background: linear-gradient(45deg, #28a745, #20c997); }
+    .metric-icon-circle.bg-info-light { background: linear-gradient(45deg, #17a2b8, #00bfff); }
+    .metric-icon-circle.bg-warning-light { background: linear-gradient(45deg, #ffc107, #ff9f40); }
+    .metric-icon-circle.bg-danger-light { background: linear-gradient(45deg, #dc3545, #e83e8c); }
 
     /* Chart Card Specifics */
     .dashboard-chart-card .card-header {
@@ -112,27 +118,56 @@
         border-top: 1px solid var(--border-color);
     }
 
-    .list-group-item.border-bottom-light {
-        border-bottom: 1px solid var(--border-color) !important;
-    }
-
     /* Progress Bar */
     .progress {
+        height: 10px;
         background-color: var(--border-color);
+        border-radius: 5px;
     }
     .progress-bar {
-        background-color: var(--accent-blue);
+        background-color: var(--primary-main);
     }
 
-    /* Text Colors */
+    /* Table Styling */
+    .table-responsive {
+        border-radius: 1rem;
+        overflow: hidden;
+    }
+
+    .table {
+        border-collapse: separate;
+        border-spacing: 0 0.75rem;
+    }
+    
+    .table th {
+        border: none;
+        padding-bottom: 0.5rem;
+        font-weight: 600;
+        color: var(--text-muted);
+    }
+    
+    .table td {
+        background-color: var(--background-page);
+        border: none;
+        padding: 1rem 1.5rem;
+        vertical-align: middle;
+        border-radius: 0.75rem;
+        transition: background-color 0.2s ease;
+    }
+    
+    .table tbody tr:hover td {
+        background-color: #e2e6ea;
+    }
+
+    /* Text Colors & Utility Classes */
     .text-dark-main { color: var(--text-dark-main) !important; }
     .text-muted-dark { color: var(--text-muted) !important; }
-    .text-primary-main { color: var(--accent-blue) !important; }
+    .text-primary-main { color: var(--primary-main) !important; }
     .text-success-main { color: var(--success-main) !important; }
     .text-warning-main { color: var(--warning-main) !important; }
     .text-danger-main { color: var(--danger-main) !important; }
     .text-info-main { color: var(--info-main) !important; }
-    .text-white-75 { color: var(--text-white-75) !important; }
+    .text-white-75 { color: #fff !important; }
 
     /* Background Colors */
     .bg-success-light { background-color: var(--success-light) !important; }
@@ -145,114 +180,64 @@
         .page-title {
             font-size: 1.5rem;
         }
-        .lead.text-muted {
-            font-size: 1rem;
-        }
     }
 </style>
-
-<div class="full-width-header dashboard-gradient-bg">
-    <div class="container-fluid py-4 px-md-5">
-        <h1 class="text-white" style="font-size: 37px; font-family:Cambria, Cochin, Georgia, Times, 'Times New Roman', serif;">
-            <strong>Smart Talent Finder for HR: Streamlined Dashboard for Quick Insights</strong></h1>
-        <p class="lead text-white-75 mb-0">Smart Talent Finder is an intelligent HR dashboard designed to simplify and accelerate the recruitment process. It offers a clean, centralized interface where HR professionals can gain quick insights into candidate profiles, resume scores, AI-based job matching, and interview readiness.</p>
-    </div>
-</div>
 
 <div class="container-fluid dashboard-container py-5">
     <div class="row row-cols-1 row-cols-md-2 row-cols-lg-4 g-4 mb-5">
         <div class="col">
-            <div class="card h-100 dashboard-metric-card border-0 rounded-3">
-                <div class="card-body p-4">
-                    <div class="d-flex align-items-center mb-3">
-                        <div class="metric-icon-circle bg-success-light text-success-main me-3">
-                            <i class="bi bi-people-fill"></i>
-                        </div>
-                        <div>
-                            <h3 class="card-title fw-bold mb-0 text-dark-main">{{ total_candidates|default:1200 }}</h3>
-                            <p class="text-muted-dark mb-0">Total Candidates</p>
-                        </div>
+            <div class="card h-100 dashboard-metric-card border-0 rounded-4">
+                <div class="card-body p-4 d-flex align-items-center">
+                    <div class="metric-icon-circle bg-success-light me-4">
+                        <i class="bi bi-people-fill"></i>
                     </div>
-                    <p class="metric-change text-success-main mt-2 mb-0">+{{ total_candidates_change|default:55 }}% than last week</p>
+                    <div class="flex-grow-1">
+                        <h3 class="card-title fw-bold mb-1 text-dark-main">{{ total_candidates|default:1200 }}</h3>
+                        <p class="text-muted-dark mb-0">Total Candidates</p>
+                        <p class="metric-change text-success-main small mt-2 mb-0 fw-semibold">+{{ total_candidates_change|default:55 }}% than last week</p>
+                    </div>
                 </div>
             </div>
         </div>
         <div class="col">
-            <div class="card h-100 dashboard-metric-card border-0 rounded-3">
-                <div class="card-body p-4">
-                    <div class="d-flex align-items-center mb-3">
-                        <div class="metric-icon-circle bg-info-light text-info-main me-3">
-                            <i class="bi bi-check-circle-fill"></i>
-                        </div>
-                        <div>
-                            <h3 class="card-title fw-bold mb-0 text-dark-main">{{ completed_calls|default:850 }}</h3>
-                            <p class="text-muted-dark mb-0">Completed Interviews</p>
-                        </div>
+            <div class="card h-100 dashboard-metric-card border-0 rounded-4">
+                <div class="card-body p-4 d-flex align-items-center">
+                    <div class="metric-icon-circle bg-info-light me-4">
+                        <i class="bi bi-check-circle-fill"></i>
                     </div>
-                    <p class="metric-change text-info-main mt-2 mb-0">+{{ completed_calls_change|default:3 }}% than last week</p>
+                    <div class="flex-grow-1">
+                        <h3 class="card-title fw-bold mb-1 text-dark-main">{{ completed_calls|default:850 }}</h3>
+                        <p class="text-muted-dark mb-0">Completed Interviews</p>
+                        <p class="metric-change text-info-main small mt-2 mb-0 fw-semibold">+{{ completed_calls_change|default:3 }}% than last week</p>
+                    </div>
                 </div>
             </div>
         </div>
         <div class="col">
-            <div class="card h-100 dashboard-metric-card border-0 rounded-3">
-                <div class="card-body p-4">
-                    <div class="d-flex align-items-center mb-3">
-                        <div class="metric-icon-circle bg-warning-light text-warning-main me-3">
-                            <i class="bi bi-hourglass-split"></i>
-                        </div>
-                        <div>
-                            <h3 class="card-title fw-bold mb-0 text-dark-main">{{ in_progress_calls|default:300 }}</h3>
-                            <p class="text-muted-dark mb-0">Interviews In Progress</p>
-                        </div>
+            <div class="card h-100 dashboard-metric-card border-0 rounded-4">
+                <div class="card-body p-4 d-flex align-items-center">
+                    <div class="metric-icon-circle bg-warning-light me-4">
+                        <i class="bi bi-hourglass-split"></i>
                     </div>
-                    <p class="metric-change text-danger-main mt-2 mb-0">-{{ in_progress_calls_change|default:2 }}% than last week</p>
+                    <div class="flex-grow-1">
+                        <h3 class="card-title fw-bold mb-1 text-dark-main">{{ in_progress_calls|default:300 }}</h3>
+                        <p class="text-muted-dark mb-0">Interviews In Progress</p>
+                        <p class="metric-change text-danger-main small mt-2 mb-0 fw-semibold">-{{ in_progress_calls_change|default:2 }}% than last week</p>
+                    </div>
                 </div>
             </div>
         </div>
         <div class="col">
-            <div class="card h-100 dashboard-metric-card border-0 rounded-3">
-                <div class="card-body p-4">
-                    <div class="d-flex align-items-center mb-3">
-                        <div class="metric-icon-circle bg-danger-light text-danger-main me-3">
-                            <i class="bi bi-x-circle-fill"></i>
-                        </div>
-                        <div>
-                            <h3 class="card-title fw-bold mb-0 text-dark-main">{{ failed_calls|default:70 }}</h3>
-                            <p class="text-muted-dark mb-0">Failed Interviews</p>
-                        </div>
+            <div class="card h-100 dashboard-metric-card border-0 rounded-4">
+                <div class="card-body p-4 d-flex align-items-center">
+                    <div class="metric-icon-circle bg-danger-light me-4">
+                        <i class="bi bi-x-circle-fill"></i>
                     </div>
-                    <p class="metric-change text-danger-main mt-2 mb-0">+{{ failed_calls_change|default:5 }}% than yesterday</p>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <div class="row g-4 mb-5">
-        <div class="col-12 col-md-6">
-            <div class="card h-100 dashboard-chart-card border-0 rounded-3">
-                <div class="card-header bg-white border-0 pb-0 pt-4 px-4">
-                    <h5 class="card-title fw-bold mb-0 text-dark-main">Recruiting Financials</h5>
-                    <p class="text-muted-dark small mb-0">Cost vs. Revenue Impact</p>
-                </div>
-                <div class="card-body p-4">
-                    <canvas id="revenueChart"></canvas>
-                </div>
-                <div class="card-footer bg-white border-0 pt-0 px-4 pb-4">
-                    <p class="text-muted-dark small mb-0"><i class="bi bi-currency-dollar me-1"></i> Based on cost-per-hire and total revenue generated</p>
-                </div>
-            </div>
-        </div>
-        <div class="col-12 col-md-6">
-            <div class="card h-100 dashboard-chart-card border-0 rounded-3">
-                <div class="card-body p-4 text-center d-flex flex-column justify-content-center">
-                    <i class="bi bi-graph-up-arrow display-4 text-primary-main mb-3"></i>
-                    <h5 class="card-title fw-bold mb-1 text-dark-main">Overall Financial Health</h5>
-                    <p class="text-muted-dark mb-2">Cost per hire: <span class="fw-bold text-success-main">{{ cost_per_hire|default:"$1,500" }}</span></p>
-                    <p class="text-muted-dark mb-2">Total Revenue Impact: <span class="fw-bold text-info-main">{{ total_revenue_impact|default:"$2.5M" }}</span></p>
-                    <div class="progress" style="height: 10px;">
-                        <div class="progress-bar bg-success-main" role="progressbar" style="width: 85%" aria-valuenow="85" aria-valuemin="0" aria-valuemax="100"></div>
+                    <div class="flex-grow-1">
+                        <h3 class="card-title fw-bold mb-1 text-dark-main">{{ failed_calls|default:70 }}</h3>
+                        <p class="text-muted-dark mb-0">Failed Interviews</p>
+                        <p class="metric-change text-danger-main small mt-2 mb-0 fw-semibold">+{{ failed_calls_change|default:5 }}% than yesterday</p>
                     </div>
-                    <p class="metric-change text-success-main mt-3 mb-0">ROI on Hiring: {{ roi_on_hiring|default:"85%" }}</p>
                 </div>
             </div>
         </div>
@@ -260,7 +245,7 @@
 
     <div class="row g-4 mb-5">
         <div class="col-12 col-lg-6">
-            <div class="card h-100 dashboard-chart-card border-0 rounded-3">
+            <div class="card h-100 dashboard-chart-card border-0 rounded-4">
                 <div class="card-header bg-white border-0 pb-0 pt-4 px-4">
                     <h5 class="card-title fw-bold mb-0 text-dark-main">Recruiting Funnel</h5>
                     <p class="text-muted-dark small mb-0">Conversion rates at each stage</p>
@@ -274,12 +259,12 @@
             </div>
         </div>
         <div class="col-12 col-lg-6">
-            <div class="card h-100 dashboard-chart-card border-0 rounded-3">
+            <div class="card h-100 dashboard-chart-card border-0 rounded-4">
                 <div class="card-header bg-white border-0 pb-0 pt-4 px-4">
                     <h5 class="card-title fw-bold mb-0 text-dark-main">Candidates by Source</h5>
                     <p class="text-muted-dark small mb-0">Most effective recruiting channels</p>
                 </div>
-                <div class="card-body p-4">
+                <div class="card-body p-4 d-flex justify-content-center align-items-center">
                     <canvas id="recruitmentSourceChart"></canvas>
                 </div>
                 <div class="card-footer bg-white border-0 pt-0 px-4 pb-4">
@@ -289,9 +274,40 @@
         </div>
     </div>
 
+    <div class="row g-4 mb-5">
+        <div class="col-12 col-lg-6">
+            <div class="card h-100 dashboard-chart-card border-0 rounded-4">
+                <div class="card-header bg-white border-0 pb-0 pt-4 px-4">
+                    <h5 class="card-title fw-bold mb-0 text-dark-main">Recruiting Financials</h5>
+                    <p class="text-muted-dark small mb-0">Cost vs. Revenue Impact</p>
+                </div>
+                <div class="card-body p-4">
+                    <canvas id="revenueChart"></canvas>
+                </div>
+                <div class="card-footer bg-white border-0 pt-0 px-4 pb-4">
+                    <p class="text-muted-dark small mb-0"><i class="bi bi-currency-dollar me-1"></i> Based on cost-per-hire and total revenue generated</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-12 col-lg-6">
+            <div class="card h-100 dashboard-chart-card border-0 rounded-4">
+                <div class="card-body p-4 text-center d-flex flex-column justify-content-center">
+                    <i class="bi bi-graph-up-arrow display-4 text-primary-main mb-3"></i>
+                    <h5 class="card-title fw-bold mb-1 text-dark-main">Overall Financial Health</h5>
+                    <p class="text-muted-dark mb-2">Cost per hire: <span class="fw-bold text-danger-main">{{ cost_per_hire|default:"$1,500" }}</span></p>
+                    <p class="text-muted-dark mb-2">Total Revenue Impact: <span class="fw-bold text-success-main">{{ total_revenue_impact|default:"$2.5M" }}</span></p>
+                    <div class="progress" style="height: 10px;">
+                        <div class="progress-bar" role="progressbar" style="width: 85%" aria-valuenow="85" aria-valuemin="0" aria-valuemax="100"></div>
+                    </div>
+                    <p class="metric-change text-primary-main small mt-3 mb-0">ROI on Hiring: {{ roi_on_hiring|default:"85%" }}</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <div class="row g-4">
         <div class="col-12 col-lg-6">
-            <div class="card h-100 dashboard-chart-card border-0 rounded-3">
+            <div class="card h-100 dashboard-chart-card border-0 rounded-4">
                 <div class="card-header bg-white border-0 pb-0 pt-4 px-4">
                     <h5 class="card-title fw-bold mb-0 text-dark-main">Open Positions</h5>
                     <p class="text-muted-dark small mb-0">Current vacancies and progress</p>
@@ -303,34 +319,34 @@
                                 <tr>
                                     <th scope="col">Job Title</th>
                                     <th scope="col">Department</th>
-                                    <th scope="col">Applicants</th>
-                                    <th scope="col">Status</th>
+                                    <th scope="col" class="text-center">Applicants</th>
+                                    <th scope="col" class="text-center">Status</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 <tr>
                                     <td>Senior Software Engineer</td>
                                     <td>Engineering</td>
-                                    <td>150</td>
-                                    <td><span class="badge bg-warning-light text-warning-main">Interviewing</span></td>
+                                    <td class="text-center">150</td>
+                                    <td class="text-center"><span class="badge bg-warning-light text-warning-main">Interviewing</span></td>
                                 </tr>
                                 <tr>
                                     <td>Data Scientist</td>
                                     <td>Data & Analytics</td>
-                                    <td>85</td>
-                                    <td><span class="badge bg-success-light text-success-main">Hiring</span></td>
+                                    <td class="text-center">85</td>
+                                    <td class="text-center"><span class="badge bg-success-light text-success-main">Hiring</span></td>
                                 </tr>
                                 <tr>
                                     <td>UX/UI Designer</td>
                                     <td>Product</td>
-                                    <td>110</td>
-                                    <td><span class="badge bg-info-light text-info-main">Screening</span></td>
+                                    <td class="text-center">110</td>
+                                    <td class="text-center"><span class="badge bg-info-light text-info-main">Screening</span></td>
                                 </tr>
                                 <tr>
                                     <td>HR Manager</td>
                                     <td>Human Resources</td>
-                                    <td>45</td>
-                                    <td><span class="badge bg-warning-light text-warning-main">Interviewing</span></td>
+                                    <td class="text-center">45</td>
+                                    <td class="text-center"><span class="badge bg-warning-light text-warning-main">Interviewing</span></td>
                                 </tr>
                             </tbody>
                         </table>
@@ -339,14 +355,14 @@
             </div>
         </div>
         <div class="col-12 col-lg-6">
-            <div class="card h-100 dashboard-chart-card border-0 rounded-3">
+            <div class="card h-100 dashboard-chart-card border-0 rounded-4">
                 <div class="card-header bg-white border-0 pb-0 pt-4 px-4">
                     <h5 class="card-title fw-bold mb-0 text-dark-main">Recent Activity</h5>
                     <p class="text-muted-dark small mb-0">Timeline of latest actions</p>
                 </div>
                 <div class="card-body p-4">
                     <div class="list-group list-group-flush">
-                        <div class="list-group-item d-flex align-items-start border-bottom-light py-3 px-0">
+                        <div class="list-group-item d-flex align-items-start border-bottom py-3 px-0">
                             <i class="bi bi-person-plus-fill fs-5 text-success-main me-3"></i>
                             <div class="flex-grow-1">
                                 <p class="mb-1 fw-bold text-dark-main">New Hire: Jane Doe</p>
@@ -354,7 +370,7 @@
                             </div>
                             <span class="text-muted-dark small text-nowrap ms-auto">2 min ago</span>
                         </div>
-                        <div class="list-group-item d-flex align-items-start border-bottom-light py-3 px-0">
+                        <div class="list-group-item d-flex align-items-start border-bottom py-3 px-0">
                             <i class="bi bi-calendar-check-fill fs-5 text-info-main me-3"></i>
                             <div class="flex-grow-1">
                                 <p class="mb-1 fw-bold text-dark-main">Interview Scheduled</p>
@@ -362,7 +378,7 @@
                             </div>
                             <span class="text-muted-dark small text-nowrap ms-auto">1 hour ago</span>
                         </div>
-                        <div class="list-group-item d-flex align-items-start border-bottom-light py-3 px-0">
+                        <div class="list-group-item d-flex align-items-start border-bottom py-3 px-0">
                             <i class="bi bi-file-earmark-text-fill fs-5 text-primary-main me-3"></i>
                             <div class="flex-grow-1">
                                 <p class="mb-1 fw-bold text-dark-main">New Application</p>
@@ -392,23 +408,18 @@
             return getComputedStyle(document.documentElement).getPropertyValue(name).trim();
         }
 
-        const accentBlue = getCssVar('--accent-blue');
-        const successMain = getCssVar('--success-main');
-        const warningMain = getCssVar('--warning-main');
-        const dangerMain = getCssVar('--danger-main');
-        const infoMain = getCssVar('--info-main');
-        const textMuted = getCssVar('--text-muted');
         const textDarkMain = getCssVar('--text-dark-main');
+        const textMuted = getCssVar('--text-muted');
         const borderColor = getCssVar('--border-color');
         
-        // A new, more vibrant set of chart colors
         const chartColors = [
             getCssVar('--chart-color-1'),
             getCssVar('--chart-color-2'),
             getCssVar('--chart-color-3'),
             getCssVar('--chart-color-4'),
             getCssVar('--chart-color-5'),
-            getCssVar('--chart-color-6')
+            getCssVar('--chart-color-6'),
+            getCssVar('--chart-color-7')
         ];
 
         function getDummyChartData(chartType) {
@@ -425,18 +436,24 @@
                             {
                                 label: 'Cost Per Hire',
                                 data: [1500, 1450, 1600, 1350, 1400],
-                                borderColor: dangerMain,
-                                backgroundColor: 'rgba(220, 53, 69, 0.2)', // Use a slightly transparent version of the main color
+                                borderColor: getCssVar('--danger-main'),
+                                backgroundColor: 'rgba(220, 53, 69, 0.2)',
                                 fill: true,
-                                tension: 0.4
+                                tension: 0.4,
+                                pointBackgroundColor: getCssVar('--danger-main'),
+                                pointRadius: 5,
+                                pointHoverRadius: 7
                             },
                             {
-                                label: 'Total Revenue Impact',
-                                data: [2.0, 2.1, 2.5, 2.4, 2.6], // In millions
-                                borderColor: successMain,
+                                label: 'Total Revenue Impact ($M)',
+                                data: [2.0, 2.1, 2.5, 2.4, 2.6],
+                                borderColor: getCssVar('--success-main'),
                                 backgroundColor: 'rgba(40, 167, 69, 0.2)',
                                 fill: true,
-                                tension: 0.4
+                                tension: 0.4,
+                                pointBackgroundColor: getCssVar('--success-main'),
+                                pointRadius: 5,
+                                pointHoverRadius: 7
                             }
                         ]
                     };
@@ -450,6 +467,36 @@
             }
         }
 
+        const commonOptions = {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    labels: { color: textMuted }
+                },
+                tooltip: {
+                    backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                    titleColor: '#fff',
+                    bodyColor: '#fff',
+                    borderColor: '#4d4d4d',
+                    borderWidth: 1,
+                    cornerRadius: 8
+                }
+            },
+            scales: {
+                y: {
+                    grid: { color: borderColor },
+                    ticks: { color: textMuted },
+                    border: { display: false }
+                },
+                x: {
+                    grid: { display: false },
+                    ticks: { color: textMuted },
+                    border: { display: false }
+                }
+            }
+        };
+
         // Chart 1: Recruiting Funnel
         const recruitingFunnelCtx = document.getElementById('recruitingFunnelChart');
         if (recruitingFunnelCtx) {
@@ -461,24 +508,25 @@
                     datasets: [{
                         label: 'Candidates',
                         data: finalFunnelData.data,
-                        backgroundColor: chartColors.slice(0, finalFunnelData.labels.length).map(color => color + 'b3'), // Add some transparency
+                        backgroundColor: chartColors.slice(0, finalFunnelData.labels.length).map(color => color + 'b3'),
                         borderColor: chartColors.slice(0, finalFunnelData.labels.length),
-                        borderWidth: 1
+                        borderWidth: 1,
+                        borderRadius: 8
                     }]
                 },
                 options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
+                    ...commonOptions,
+                    plugins: {
+                        ...commonOptions.plugins,
+                        legend: { display: false }
+                    },
                     scales: {
                         y: {
-                            beginAtZero: true,
-                            grid: { color: borderColor }
+                            ...commonOptions.scales.y,
+                            beginAtZero: true
                         },
-                        x: {
-                            grid: { display: false }
-                        }
-                    },
-                    plugins: { legend: { display: false } }
+                        x: commonOptions.scales.x
+                    }
                 }
             });
         }
@@ -491,29 +539,10 @@
                 type: 'line',
                 data: finalRevenueData,
                 options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    scales: {
-                        y: {
-                            beginAtZero: true,
-                            title: {
-                                display: true,
-                                text: 'Amount (in millions for Revenue)',
-                                color: textMuted
-                            },
-                            grid: { color: borderColor }
-                        },
-                        x: {
-                            grid: { display: false }
-                        }
-                    },
+                    ...commonOptions,
                     plugins: {
-                        legend: {
-                            position: 'top',
-                            labels: {
-                                color: textDarkMain
-                            }
-                        }
+                        ...commonOptions.plugins,
+                        legend: { position: 'top', labels: { color: textDarkMain } }
                     }
                 }
             });
@@ -531,17 +560,40 @@
                         label: 'Candidates by Source',
                         data: finalSourceData.data,
                         backgroundColor: chartColors.slice(0, finalSourceData.labels.length),
-                        hoverOffset: 4
+                        hoverOffset: 8,
+                        spacing: 4,
+                        borderWidth: 0
                     }]
                 },
                 options: {
                     responsive: true,
                     maintainAspectRatio: false,
+                    cutout: '70%',
                     plugins: {
                         legend: {
                             position: 'right',
+                            align: 'center',
                             labels: {
-                                color: textDarkMain
+                                color: textDarkMain,
+                                boxWidth: 12,
+                                padding: 20
+                            }
+                        },
+                        tooltip: {
+                            ...commonOptions.plugins.tooltip,
+                            callbacks: {
+                                label: function(context) {
+                                    let label = context.label || '';
+                                    if (label) {
+                                        label += ': ';
+                                    }
+                                    if (context.parsed !== null) {
+                                        const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                                        const percentage = ((context.parsed / total) * 100).toFixed(1);
+                                        label += percentage + '%';
+                                    }
+                                    return label;
+                                }
                             }
                         }
                     }
