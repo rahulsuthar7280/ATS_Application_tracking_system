@@ -115,4 +115,4 @@ google-genai==1.7.0
 google-generativeai
 frontend
 tools
-pythoncom
+pywin32
