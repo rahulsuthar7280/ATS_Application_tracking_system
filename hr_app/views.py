@@ -7,7 +7,7 @@ from venv import logger
 #import google.generativeai as genai
 import phonenumbers# myhrproject/hr_app/views.py
 import docx2txt
-import fitz  # PyMuPDF for PDF
+# import fitz  # PyMuPDF for PDF
 import os
 import re
 import pythoncom
