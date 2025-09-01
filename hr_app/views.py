@@ -17,7 +17,7 @@ import spacy
 from django.conf import settings
 from django.shortcuts import render
 # import win32com.client
-import pythoncom
+# import pythoncom
 from django.shortcuts import render
 
 from collections import defaultdict
