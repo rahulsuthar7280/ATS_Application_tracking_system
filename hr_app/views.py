@@ -37,6 +37,8 @@ import google.api_core.exceptions
 from .forms import ResumeUploadForm, FinalDecisionForm, PhoneNumberForm, CustomUserCreationForm, CustomAuthenticationForm
 from .models import Application, CandidateAnalysis, JobDescriptionDocument
 from .services import llm_call
+from hr_app import services
+from django.core.files.uploadedfile import SimpleUploadedFile
 # import win32com.client
 # import pythoncom
 
@@ -1908,11 +1910,11 @@ def create_job_description(request):
             if benefits: description_text_content += f"\nBenefits:\n{benefits}\n"
 
             # Create a unique filename for the text content
-            file_name = f"{title.replace(' ', '_').lower()}_{JobDescriptionDocument.objects.count() + 1}_generated.txt"
+            file_name = f"{title.replace(' ', '_').lower()}_{JobDescriptionDocument.objects.count() + 1}_generated.pdf"
             
             # Save the text content to a file in the default storage
             file_path = default_storage.save(f'job_descriptions/{file_name}', ContentFile(description_text_content.encode()))
-
+            file_name = os.path.basename(file_path)
             # Create a JobDescriptionDocument instance with all fields
             JobDescriptionDocument.objects.create(
                 title=title,
@@ -1926,7 +1928,7 @@ def create_job_description(request):
                 preferred_skills=preferred_skills,
                 education_experience=education_experience,
                 benefits=benefits,
-                file=file_path # Assign the path to the file field
+                file=file_name # Assign the path to the file field
             )
             messages.success(request, 'Job description created successfully!')
             return redirect('all_job_descriptions')
