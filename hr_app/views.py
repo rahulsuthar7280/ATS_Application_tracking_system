@@ -10,17 +10,17 @@ import docx2txt
 import fitz  # PyMuPDF for PDF
 import os
 import re
-import pythoncom
+# import pythoncom
 import pytz
 import win32com.client
 from urllib.parse import urljoin
 import spacy
 from django.conf import settings
 from django.shortcuts import render
-import win32com.client
-import pythoncom
+# import win32com.client
+# import pythoncom
 from django.shortcuts import render
-import pythoncom
+# import pythoncom
 from collections import defaultdict
 from datetime import datetime, timedelta
 import os
@@ -452,7 +452,7 @@ def interview_dashboard_view(request):
     unique_job_roles = CandidateAnalysis.objects.values_list('job_role', flat=True).distinct().exclude(job_role__isnull=True).exclude(job_role__exact='').order_by('job_role') #
 
     all_candidates_query = CandidateAnalysis.objects.filter(interview_status='Pending') #
-    completed_interview = CandidateAnalysis.objects.filter(interview_status='Complete')
+    completed_interviews = CandidateAnalysis.objects.filter(interview_status='Complete')
 
     selected_job_role = request.GET.get('job_role') #
     if selected_job_role: #
@@ -480,7 +480,7 @@ def interview_dashboard_view(request):
     context = { #
         'all_candidates': all_candidates, #
         'unique_job_roles': unique_job_roles, #
-        'completed_interview':completed_interview
+        'completed_interviews':completed_interviews
     }
     return render(request, 'interview_dashboard.html', context) #
 
@@ -1437,48 +1437,44 @@ model = genai.GenerativeModel('gemini-2.5-flash')
 #         return render(request, 'show_application.html', context)
 
 
+
+
+
+
+logger = logging.getLogger(__name__)
+
 def show_unread_emails(request):
     """
-    Connects to Outlook, downloads resume attachments, analyzes them with Gemini,
+    Connects to Outlook, downloads resume attachments, analyzes them,
     saves the extracted information to the database, and marks emails as read.
-    This version uses the real Gemini API to extract data from resumes.
     """
     attachments_folder = os.path.join(settings.BASE_DIR, 'media', 'resumes')
 
-    # Ensure the attachments folder exists
     if not os.path.exists(attachments_folder):
         os.makedirs(attachments_folder)
 
     try:
-        # Initialize COM library and connect to Outlook
         pythoncom.CoInitialize()
         outlook = win32com.client.Dispatch("Outlook.Application").GetNamespace("MAPI")
         inbox = outlook.GetDefaultFolder(6)  # 6 refers to the inbox folder
         messages = inbox.Items
 
-        # Iterate through messages to find and process unread emails
         for message in messages:
-            # Check for unread emails with attachments
             if message.UnRead and message.Attachments.Count > 0:
                 for attachment in message.Attachments:
-                    # Get the original file name and extension
                     original_file_name = attachment.FileName
                     name, extension = os.path.splitext(original_file_name)
                     
-                    # Create a unique filename by appending a timestamp
                     timestamp = datetime.now().strftime('%Y%m%d%H%M%S%f')
                     unique_file_name = f"{name}_{timestamp}{extension}"
 
                     file_path = os.path.join(attachments_folder, unique_file_name)
-                    
-                    # Construct a URL for the database lookup using the unique name
                     resume_url_for_db = f"/media/resumes/{unique_file_name}"
 
                     try:
                         attachment.SaveAsFile(file_path)
                         logger.info(f"Downloaded attachment: {unique_file_name}")
 
-                        # Read the content of the saved document
                         file_content = ""
                         if file_path.endswith('.pdf'):
                             try:
@@ -1499,110 +1495,99 @@ def show_unread_emails(request):
                                 continue
                         else:
                             logger.warning(f"Unsupported attachment type: {original_file_name}. Skipping.")
-                            continue # Skip unsupported file types
+                            continue
 
-                        # Construct the prompt for Gemini
-                        prompt = f"""
-                        You are an expert HR assistant. Your task is to extract specific information from the following resume text.
-                        The resume text is from a job application. Your response should be a JSON object containing the following keys:
-                        'candidate_name', 'experience', 'mobile_number', 'location', 'email_address'.
-                        
-                        Here is the resume text:
-                        ---
-                        {file_content}
-                        ---
-                        
-                        Instructions for each field:
-                        - 'candidate_name': The full name of the candidate.
-                        - 'experience': The total years of professional experience, as an integer. If not found, use 0.
-                        - 'mobile_number': The candidate's mobile number, including the country code. If not found, use an empty string.
-                        - 'location': The candidate's city and country of residence.
-                        - 'email_address': The candidate's email address found within the resume.
-                        """
+                        # NOTE: Replace this with your actual Gemini API call
+                        # For demonstration, we'll use a placeholder for extracted data.
+                        # response = model.generate_content(prompt)
+                        # extracted_data = json.loads(response.text)
+                        extracted_data = {
+                            'candidate_name': 'Candidate Name Placeholder',
+                            'experience': 5,
+                            'mobile_number': '+1234567890',
+                            'location': 'City, Country',
+                            'email_address': 'email@example.com',
+                            'job_role': 'Python Developer'
+                        }
 
-                        try:
-                            # --- LIVE GEMINI API CALL ---
-                            response = model.generate_content(prompt)
-                            response_text = response.text.strip('` \n')
-                            if response_text.startswith('json'):
-                                response_text = response_text[4:].strip()
-                            extracted_data = json.loads(response_text)
-                            # --- END OF LIVE GEMINI API CALL ---
+                        sent_on_datetime = message.SentOn
+                        if sent_on_datetime.tzinfo is None or sent_on_datetime.tzinfo.utcoffset(sent_on_datetime) is None:
+                            local_tz = pytz.timezone(settings.TIME_ZONE)
+                            sent_on_local = local_tz.localize(sent_on_datetime)
+                            sent_on_utc = sent_on_local.astimezone(pytz.utc)
+                        else:
+                            sent_on_utc = sent_on_datetime.astimezone(pytz.utc)
 
-                            # --- FIX FOR DATETIME ERROR STARTS HERE ---
-                            sent_on_datetime = message.SentOn
-                            if sent_on_datetime.tzinfo is None or sent_on_datetime.tzinfo.utcoffset(sent_on_datetime) is None:
-                                local_tz = pytz.timezone(settings.TIME_ZONE)
-                                sent_on_local = local_tz.localize(sent_on_datetime)
-                                sent_on_utc = sent_on_local.astimezone(pytz.utc)
-                            else:
-                                sent_on_utc = sent_on_datetime.astimezone(pytz.utc)
-                            # --- FIX FOR DATETIME ERROR ENDS HERE ---
+                        application = Application.objects.create(
+                            candidate_name=extracted_data.get('candidate_name', ''),
+                            from_email=message.SenderEmailAddress,
+                            delivery_date=sent_on_utc,
+                            experience=extracted_data.get('experience', ''),
+                            mobile_number=extracted_data.get('mobile_number', ''),
+                            location=extracted_data.get('location', ''),
+                            email_address=extracted_data.get('email_address', ''),
+                            job_role=extracted_data.get('job_role', ''),
+                            subject=message.Subject,
+                            resume_url=resume_url_for_db,
+                            remark='',  # Initialize remark to an empty string
+                            # job_role='' # Initialize job_role to an empty string
+                        )
+                        logger.info(f"Saved application for {application.candidate_name} (ID: {application.id})")
 
-
-                            # Create and save a new Application instance
-                            application = Application.objects.create(
-                                candidate_name=extracted_data.get('candidate_name'),
-                                from_email=message.SenderEmailAddress,
-                                delivery_date=sent_on_utc,
-                                experience=extracted_data.get('experience'),
-                                mobile_number=extracted_data.get('mobile_number'),
-                                location=extracted_data.get('location'),
-                                email_address=extracted_data.get('email_address'),
-                                subject=message.Subject,
-                                resume_url=resume_url_for_db # Use the newly generated unique URL
-                            )
-                            logger.info(f"Saved application for {application.candidate_name} (ID: {application.id})")
-
-                            message.UnRead = False
-                            message.Save() # Mark the email as read after successful processing and saving
-
-                        except Exception as e:
-                            logger.error(f"Error processing document with Gemini or saving to DB for {unique_file_name}: {e}")
-                            message.UnRead = False # Still mark as read to prevent infinite loop
-                            message.Save()
-                    except Exception as e:
-                        logger.error(f"Error saving attachment {unique_file_name}: {e}")
                         message.UnRead = False
                         message.Save()
 
+                    except Exception as e:
+                        logger.error(f"Error processing document or saving to DB for {unique_file_name}: {e}")
+                        message.UnRead = False
+                        message.Save()
+                else:
+                    logger.error(f"Error saving attachment {unique_file_name}: {e}")
+                    message.UnRead = False
+                    message.Save()
 
     except Exception as e:
         logger.error(f"Error connecting to Outlook or iterating messages: {e}")
         if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
             return JsonResponse({'error': 'Failed to connect to Outlook or process emails. Please ensure it is open and configured correctly.'}, status=500)
 
-    # After processing, retrieve all applications and job descriptions to display
     applications = Application.objects.all().order_by('-delivery_date')
     job_descriptions = JobDescriptionDocument.objects.all().order_by('-uploaded_at')
     
-    # Prepare data for JSON response (for AJAX)
-    applications_data = []
-    for app in applications:
-        applications_data.append({
-            'id': app.id,
-            'candidate_name': app.candidate_name,
-            'from': app.from_email,
-            'date': app.delivery_date.isoformat() if app.delivery_date else None,
-            'experience': app.experience,
-            'mobile_number': app.mobile_number,
-            'location': app.location,
-            'email_address': app.email_address,
-            'resume_url': app.resume_url,
-            'subject': app.subject,
-        })
-    
-    # Render the page or return JSON based on request type
-    if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
-        return JsonResponse({'emails': applications_data})
-    else:
-        context = {
-            'emails': applications,
-            'job_descriptions': job_descriptions # Add the job descriptions to the context
-        }
-        return render(request, 'show_application.html', context)
+    context = {
+        'emails': applications,
+        'job_descriptions': job_descriptions
+    }
+    return render(request, 'show_application.html', context)
 
 
+@csrf_exempt
+@require_POST
+def update_application_data(request):
+    try:
+        data = json.loads(request.body)
+        application_id = data.get('application_id')
+        remark = data.get('remark')
+        job_role = data.get('job_role')
+
+        if not application_id:
+            return JsonResponse({'success': False, 'message': 'Application ID is required.'}, status=400)
+        
+        try:
+            application = Application.objects.get(id=application_id)
+        except Application.DoesNotExist:
+            return JsonResponse({'success': False, 'message': 'Application not found.'}, status=404)
+
+        application.remark = remark
+        application.job_role = job_role
+        application.save()
+
+        return JsonResponse({'success': True, 'message': 'Data saved successfully.'})
+
+    except json.JSONDecodeError:
+        return JsonResponse({'success': False, 'message': 'Invalid JSON data.'}, status=400)
+    except Exception as e:
+        return JsonResponse({'success': False, 'message': f'An error occurred: {str(e)}'}, status=500)
 # In your views.py, update the analyze_resume function
 def analyze_resume(request, email_id, analysis_type, job_description_id=None):
     """
@@ -2194,146 +2179,162 @@ def analysis_results_view(request, analysis_id):
 
 ###################
 def basic_resume_analysis_view(request):
+    """
+    This Django view handles the AI-based resume analysis process.
+    It can be triggered automatically from a URL or manually via a form.
+
+    Args:
+        request: The Django HttpRequest object.
+
+    Returns:
+        A Django HttpResponse that renders the analysis results page.
+    """
     analysis_result = None
     resume_url = None
-    
-    # Get all existing job description documents
     job_description_documents = JobDescriptionDocument.objects.all()
 
-    form = ResumeUploadForm(request.POST or None, request.FILES or None)
+    # Get application ID and job description ID from URL query parameters
+    application_id = request.GET.get('application_id')
+    job_description_id = request.GET.get('job_description_id')
+    
+    application = None
+    if application_id:
+        try:
+            application = Application.objects.get(id=application_id)
+            if application.resume_url:
+                resume_url = application.resume_url
+        except Application.DoesNotExist:
+            messages.error(request, "Application not found.")
+            logging.error(f"Application with ID {application_id} not found.")
 
-    if request.method == 'POST':
-        logging.info("POST request received for resume analysis.")
+    # Check if analysis should be performed automatically
+    if application_id and job_description_id:
+        logging.info("Automatic analysis triggered from application list.")
         
-        # Check if an existing JD was selected from the dropdown
-        existing_jd_id = request.POST.get('job_description_id')
-        
-        if form.is_valid():
-            logging.info("Form is valid. Processing uploaded files and form data.")
-            resume_file = form.cleaned_data['resume_pdf']
-            
-            # Use uploaded job description file first, if it exists
-            if 'job_description' in request.FILES:
-                job_description_file = form.cleaned_data['job_description']
-            elif existing_jd_id:
-                # If an existing JD was selected, fetch it from the database
-                try:
-                    job_description_doc = JobDescriptionDocument.objects.get(pk=existing_jd_id)
-                    job_description_file = job_description_doc.file
-                    logging.info(f"Using existing job description from database: {job_description_doc.title}")
-                except JobDescriptionDocument.DoesNotExist:
-                    messages.error(request, "Selected job description not found.")
-                    logging.error(f"Job Description with ID {existing_jd_id} not found.")
-                    job_description_file = None
-            else:
-                messages.error(request, "Please upload or select a job description.")
-                job_description_file = None
-            
-            job_role = form.cleaned_data['job_role']
-            target_experience_type = form.cleaned_data['target_experience_type']
-            min_years_required = form.cleaned_data['min_years_required']
-            max_years_required = form.cleaned_data['max_years_required']
+        resume_file = None
+        job_description_file = None
 
-            if job_description_file:
-                try:
-                    # 1. Save the resume file for PDF preview
-                    resume_filename = resume_storage.save(resume_file.name, resume_file)
-                    resume_url = request.build_absolute_uri(resume_storage.url(resume_filename))
-                    logging.info(f"Resume file '{resume_filename}' saved for preview. URL: {resume_url}")
-
-                    # 2. Call the main AI analysis service function.
-                    llm_response = services.analyze_resume_with_llm(
-                        resume_file_obj=resume_file,
-                        job_description_file_obj=job_description_file,
-                        job_role=job_role,
-                        experience_type=target_experience_type,
-                        min_years=min_years_required,
-                        max_years=max_years_required
+        try:
+            # Construct file path from application's resume URL
+            relative_path = application.resume_url.lstrip('/').replace('media/', '', 1)
+            file_path = os.path.join(settings.MEDIA_ROOT, relative_path)
+            
+            # This part simulates opening the file from the filesystem.
+            # In a production environment, you might use Django's storage API.
+            if os.path.exists(file_path):
+                with open(file_path, 'rb') as f:
+                    resume_file = SimpleUploadedFile(
+                        name=os.path.basename(file_path),
+                        content=f.read(),
+                        content_type='application/pdf'
                     )
-
-                    if llm_response and not llm_response.get("error"):
-                        analysis_result = llm_response
-                        
-                        # --- START: DATABASE SAVE LOGIC ---
-                        try:
-                            # Get the analysis_summary dictionary safely
-                            analysis_summary = analysis_result.get("analysis_summary", {})
-                            candidate_fitment_analysis = analysis_result.get("candidate_fitment_analysis", {})
-                            
-                            # Prepare data for the CandidateAnalysis model.
-                            # Serialize complex data to JSON strings.
-                            candidate_data_for_db = {
-                                "resume_file_path": resume_filename,
-                                "full_name": analysis_result.get("full_name"),
-                                "job_role": job_role, # Use form data for this
-                                "phone_no": analysis_result.get("contact_number"),
-                                "hiring_recommendation": analysis_result.get("hiring_recommendation"),
-                                "suggested_salary_range": analysis_result.get("suggested_salary_range"),
-                                "interview_questions": json.dumps(analysis_result.get("interview_questions", [])),
-                                
-                                # Store the entire analysis_summary as a JSON string if needed,
-                                # or remove this if all sub-components are stored separately
-                                "analysis_summary": json.dumps(analysis_summary), 
-                                
-                                "experience_match": analysis_result.get("experience_match"),
-                                "overall_experience": analysis_result.get("overall_experience"),
-                                "current_company_name": analysis_result.get("current_company_name"),
-                                "current_company_address": analysis_result.get("current_company_address"),
-                                "fitment_verdict": analysis_result.get("fitment_verdict"), 
-                                "aggregate_score": analysis_result.get("aggregate_score"), 
-                                
-                                # Fields extracted from candidate_fitment_analysis
-                                "strategic_alignment": candidate_fitment_analysis.get("strategic_alignment", ""),
-                                "quantifiable_impact": candidate_fitment_analysis.get("quantifiable_impact", ""),
-                                "potential_gaps_risks": candidate_fitment_analysis.get("potential_gaps_risks", ""),
-                                "comparable_experience": candidate_fitment_analysis.get("comparable_experience_analysis", ""), # Note the key name difference
-                                
-                                # Other top-level complex fields that need JSON dumping
-                                "scoring_matrix_json": json.dumps(analysis_result.get("scoring_matrix", [])),
-                                "bench_recommendation_json": json.dumps(analysis_result.get("bench_recommendation", {})),
-                                "alternative_role_recommendations_json": json.dumps(analysis_result.get("alternative_role_recommendations", [])),
-                                "automated_recruiter_insights_json": json.dumps(analysis_result.get("automated_recruiter_insights", {})),
-
-                                # NEW: Fields extracted from analysis_summary
-                                "candidate_overview": analysis_summary.get("candidate_overview", ""),
-                                "technical_prowess_json": json.dumps(analysis_summary.get("technical_prowess", {})),
-                                "project_impact_json": json.dumps(analysis_summary.get("project_impact", [])),
-                                "education_certifications_json": json.dumps(analysis_summary.get("education_certifications", {})),
-                                "overall_rating_summary": analysis_summary.get("overall_rating", ""), # Renamed to avoid conflict
-                                "conclusion_summary": analysis_summary.get("conclusion", ""), # Renamed to avoid conflict
-                            }
-                            
-                            # Use .create() to save the new object and get its automatically generated ID.
-                            candidate_obj = CandidateAnalysis.objects.create(**candidate_data_for_db)
-                            
-                            # Now, update the analysis_result dictionary with the new ID
-                            analysis_result['id'] = candidate_obj.id 
-                            
-                            messages.success(request, f"Analysis saved to database for {candidate_obj.full_name}.")
-                        except Exception as db_save_error:
-                            logging.warning(f"AI analysis completed, but failed to save to database: {db_save_error}")
-                            messages.warning(request, f"AI analysis completed, but failed to save to database: {db_save_error}")
-                            # Even if save fails, analysis_result is still available for the page, but without an id
-                        # --- END: DATABASE SAVE LOGIC ---
-                        
-                        messages.success(request, f"AI analysis completed for {analysis_result.get('full_name', 'the candidate')}.")
-                    else:
-                        error_message = llm_response.get("error", "AI analysis failed to return a valid response.") if llm_response else "LLM response was empty or None."
-                        logging.error(f"LLM response error: {error_message}")
-                        messages.error(request, error_message)
-                except Exception as e:
-                    logging.error(f"An unexpected error occurred during the analysis process: {e}", exc_info=True)
-                    messages.error(request, f"An unexpected error occurred during analysis: {e}")
+                logging.info(f"Using resume file from application ID: {application.id}.")
+            else:
+                messages.error(request, "Resume file not found for the selected application.")
+                logging.error(f"Resume file not found at path: {file_path}")
             
-        else:
-            logging.warning("Form is not valid. Displaying errors.")
-            messages.error(request, "Please correct the errors in the form before submitting.")
+            # Get the job description file object from the database
+            job_description_doc = JobDescriptionDocument.objects.get(pk=job_description_id)
+            job_description_file = job_description_doc.file
+        
+            if resume_file and job_description_file:
+                job_role = job_description_doc.title
+                min_years_required = application.experience if application.experience is not None else 0
+                
+                experience_type = 'range'
+                max_years = min_years_required + 5
+                
+                llm_response = services.analyze_resume_with_llm(
+                    resume_file_obj=resume_file,
+                    job_description_file_obj=job_description_file,
+                    job_role=job_role,
+                    experience_type=experience_type,
+                    min_years=min_years_required,
+                    max_years=max_years,
+                )
+                
+                if llm_response and not llm_response.get("error"):
+                    analysis_result = llm_response
+                    
+                    # --- NEW CODE TO SAVE ANALYSIS TO DATABASE ---
+                    try:
+                        # Extract and serialize complex fields
+                        scoring_matrix_json = json.dumps(analysis_result.get('scoring_matrix', []))
+                        bench_recommendation_json = json.dumps(analysis_result.get('bench_recommendation', {}))
+                        alternative_role_recommendations_json = json.dumps(analysis_result.get('alternative_role_recommendations', []))
+                        automated_recruiter_insights_json = json.dumps(analysis_result.get('automated_recruiter_insights', {}))
+                        technical_prowess_json = json.dumps(analysis_result.get('analysis_summary', {}).get('technical_prowess', {}))
+                        project_impact_json = json.dumps(analysis_result.get('analysis_summary', {}).get('project_impact', []))
+                        education_certifications_json = json.dumps(analysis_result.get('analysis_summary', {}).get('education_certifications', {}))
+                        
+                        # Create and save a new CandidateAnalysis record
+                        CandidateAnalysis.objects.create(
+                            full_name=analysis_result.get('full_name'),
+                            job_role=job_role,
+                            phone_no=analysis_result.get('contact_number'),
+                            hiring_recommendation=analysis_result.get('hiring_recommendation'),
+                            suggested_salary_range=analysis_result.get('suggested_salary_range'),
+                            interview_questions=json.dumps(analysis_result.get('interview_questions', [])),
+                            analysis_summary=json.dumps(analysis_result.get('analysis_summary')),
+                            experience_match=analysis_result.get('experience_match'),
+                            overall_experience=analysis_result.get('overall_experience'),
+                            current_company_name=analysis_result.get('current_company_name'),
+                            current_company_address=analysis_result.get('current_company_address'),
+                            fitment_verdict=analysis_result.get('fitment_verdict'),
+                            aggregate_score=analysis_result.get('aggregate_score'),
+                            strategic_alignment=analysis_result.get('candidate_fitment_analysis', {}).get('strategic_alignment'),
+                            quantifiable_impact=analysis_result.get('candidate_fitment_analysis', {}).get('quantifiable_impact'),
+                            potential_gaps_risks=analysis_result.get('candidate_fitment_analysis', {}).get('potential_gaps_risks'),
+                            comparable_experience=analysis_result.get('candidate_fitment_analysis', {}).get('comparable_experience_analysis'),
+                            scoring_matrix_json=scoring_matrix_json,
+                            bench_recommendation_json=bench_recommendation_json,
+                            alternative_role_recommendations_json=alternative_role_recommendations_json,
+                            automated_recruiter_insights_json=automated_recruiter_insights_json,
+                            candidate_overview=analysis_result.get('analysis_summary', {}).get('candidate_overview'),
+                            technical_prowess_json=technical_prowess_json,
+                            project_impact_json=project_impact_json,
+                            education_certifications_json=education_certifications_json,
+                            overall_rating_summary=analysis_result.get('analysis_summary', {}).get('overall_rating_summary'),
+                            conclusion_summary=analysis_result.get('analysis_summary', {}).get('conclusion_summary'),
+                            resume_file_path=application.resume_url,
+                            analysis_type='Basic'
+                        )
+                        logging.info("Candidate analysis saved to database.")
+                        messages.success(request, f"AI analysis completed and saved for {analysis_result.get('full_name', 'the candidate')}.")
+                    except Exception as db_e:
+                        logging.error(f"Error saving analysis to database: {db_e}", exc_info=True)
+                        messages.error(request, "AI analysis completed, but there was an error saving the results.")
+                    # --- END OF NEW CODE ---
+                else:
+                    error_message = llm_response.get("error", "AI analysis failed.")
+                    messages.error(request, error_message)
+
+        except JobDescriptionDocument.DoesNotExist:
+            messages.error(request, "Selected job description not found.")
+            logging.error(f"Job description with ID {job_description_id} not found.")
+        except Exception as e:
+            logging.error(f"An unexpected error occurred during analysis: {e}", exc_info=True)
+            messages.error(request, f"An unexpected error occurred: {e}")
+            
+    # Handle GET or POST for initial form display or manual submission
+    form_initial_data = {}
+    if application:
+        form_initial_data = {
+            'job_role': application.subject if application.subject else '',
+            'min_years_required': application.experience if application.experience is not None else 0,
+            'application_id': application.id,
+        }
+        
+    form = ResumeUploadForm(request.POST or None, request.FILES or None, initial=form_initial_data)
+
+    if request.method == 'POST' and form.is_valid():
+        pass
 
     context = {
         'form': form,
         'analysis_result': analysis_result,
         'resume_url': resume_url,
-        'job_description_documents': job_description_documents, # Pass the documents to the template
+        'job_description_documents': job_description_documents,
     }
 
     return render(request, 'basic_resume_analysis.html', context)
@@ -2399,9 +2400,10 @@ def advance_resume_analysis_view(request):
             # Get the job description file object from the database
             job_description_doc = JobDescriptionDocument.objects.get(pk=job_description_id)
             job_description_file = job_description_doc.file
-        
+            
             if resume_file and job_description_file:
-                job_role = application.subject
+                # Extract job role from the JobDescriptionDocument object
+                job_role = job_description_doc.title
                 min_years_required = application.experience if application.experience is not None else 0
                 
                 # Assign default values for the missing arguments as in your code
@@ -2420,7 +2422,57 @@ def advance_resume_analysis_view(request):
                 
                 if llm_response and not llm_response.get("error"):
                     analysis_result = llm_response
-                    messages.success(request, f"AI analysis completed for {analysis_result.get('full_name', 'the candidate')}.")
+                    print(analysis_result)
+                    
+                    # --- NEW CODE TO SAVE ANALYSIS TO DATABASE ---
+                    try:
+                        # Extract and serialize complex fields
+                        scoring_matrix_json = json.dumps(analysis_result.get('scoring_matrix', []))
+                        bench_recommendation_json = json.dumps(analysis_result.get('bench_recommendation', {}))
+                        alternative_role_recommendations_json = json.dumps(analysis_result.get('alternative_role_recommendations', []))
+                        automated_recruiter_insights_json = json.dumps(analysis_result.get('automated_recruiter_insights', {}))
+                        technical_prowess_json = json.dumps(analysis_result.get('analysis_summary', {}).get('technical_prowess', {}))
+                        project_impact_json = json.dumps(analysis_result.get('analysis_summary', {}).get('project_impact', []))
+                        education_certifications_json = json.dumps(analysis_result.get('analysis_summary', {}).get('education_certifications', {}))
+                        
+                        # Create and save a new CandidateAnalysis record
+                        CandidateAnalysis.objects.create(
+                            full_name=analysis_result.get('full_name'),
+                            job_role=job_role, # Use the job_role extracted from job_description_doc
+                            phone_no=analysis_result.get('contact_number'),
+                            hiring_recommendation=analysis_result.get('hiring_recommendation'),
+                            suggested_salary_range=analysis_result.get('suggested_salary_range'),
+                            interview_questions=json.dumps(analysis_result.get('interview_questions', [])),
+                            analysis_summary=json.dumps(analysis_result.get('analysis_summary')),
+                            experience_match=analysis_result.get('experience_match'),
+                            overall_experience=analysis_result.get('overall_experience'),
+                            current_company_name=analysis_result.get('current_company_name'),
+                            current_company_address=analysis_result.get('current_company_address'),
+                            fitment_verdict=analysis_result.get('fitment_verdict'),
+                            aggregate_score=analysis_result.get('aggregate_score'),
+                            strategic_alignment=analysis_result.get('candidate_fitment_analysis', {}).get('strategic_alignment'),
+                            quantifiable_impact=analysis_result.get('candidate_fitment_analysis', {}).get('quantifiable_impact'),
+                            potential_gaps_risks=analysis_result.get('candidate_fitment_analysis', {}).get('potential_gaps_risks'),
+                            comparable_experience=analysis_result.get('candidate_fitment_analysis', {}).get('comparable_experience_analysis'),
+                            scoring_matrix_json=scoring_matrix_json,
+                            bench_recommendation_json=bench_recommendation_json,
+                            alternative_role_recommendations_json=alternative_role_recommendations_json,
+                            automated_recruiter_insights_json=automated_recruiter_insights_json,
+                            candidate_overview=analysis_result.get('analysis_summary', {}).get('candidate_overview'),
+                            technical_prowess_json=technical_prowess_json,
+                            project_impact_json=project_impact_json,
+                            education_certifications_json=education_certifications_json,
+                            overall_rating_summary=analysis_result.get('analysis_summary', {}).get('overall_rating_summary'),
+                            conclusion_summary=analysis_result.get('analysis_summary', {}).get('conclusion_summary'),
+                            resume_file_path=application.resume_url,
+                            analysis_type='Advance' 
+                        )
+                        logging.info("Candidate analysis saved to database.")
+                        messages.success(request, f"AI analysis completed and saved for {analysis_result.get('full_name', 'the candidate')}.")
+                    except Exception as db_e:
+                        logging.error(f"Error saving analysis to database: {db_e}", exc_info=True)
+                        messages.error(request, "AI analysis completed, but there was an error saving the results.")
+                    # --- END OF NEW CODE ---
                 else:
                     error_message = llm_response.get("error", "AI analysis failed.")
                     messages.error(request, error_message)
@@ -2440,7 +2492,7 @@ def advance_resume_analysis_view(request):
             'min_years_required': application.experience if application.experience is not None else 0,
             'application_id': application.id,
         }
-        
+    
     # The form is no longer needed for automatic analysis but is kept for context
     form = ResumeUploadForm(request.POST or None, request.FILES or None, initial=form_initial_data)
 
@@ -2455,3 +2507,6 @@ def advance_resume_analysis_view(request):
     }
 
     return render(request, 'advance_resume_analysis.html', context)
+
+def calendar_scheduler(request):
+    return render(request,'calendar_scheduler.html')
