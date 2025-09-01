@@ -1,4 +1,5 @@
 google-generativeai==0.8.5
+google-ai-generativelanguage==0.6.15
 acres==0.5.0
 annotated-types==0.7.0
 anyio==4.10.0
@@ -43,7 +44,7 @@ jsonpatch==1.33
 jsonpointer==3.0.0
 langchain==0.3.26
 langchain-core==0.3.75
-langchain-google-genai==2.1.10
+langchain-google-genai==2.1.9
 langchain-text-splitters==0.3.10
 langcodes==3.5.0
 langsmith==0.4.21
