@@ -1,58 +1,44 @@
+# Django core imports
 from django.http import HttpResponse, JsonResponse, HttpResponseBadRequest
-from django.core.files.storage import default_storage
-from django.views.decorators.csrf import csrf_protect
-from datetime import datetime 
-import logging
-from venv import logger
-import google.generativeai as genai
-import phonenumbers# myhrproject/hr_app/views.py
-import docx2txt
-import fitz  # PyMuPDF for PDF
-import os
-import re
-# import pythoncom
-import pytz
-import win32com.client
-from urllib.parse import urljoin
-import spacy
-from django.conf import settings
-from django.shortcuts import render
-# import win32com.client
-# import pythoncom
-from django.shortcuts import render
-# import pythoncom
-from collections import defaultdict
-from datetime import datetime, timedelta
-import os
-import json
-import random
-from django.shortcuts import render, redirect, get_object_or_404
-from django.conf import settings
-from django.core.files.storage import FileSystemStorage
-from django.contrib import messages
-from django.urls import reverse
-from django.http import JsonResponse
-import requests
-from .forms import ResumeUploadForm, FinalDecisionForm, PhoneNumberForm # Your existing forms
-from .models import Application, CandidateAnalysis, JobDescriptionDocument # Your existing model
-from . import services # Import your services.py
-from django.template.defaulttags import register # To use custom filter in template
-from django.db.models import Q, Case, When, IntegerField # Corrected: Import Case, When, IntegerField
-import re
-# Get a logger instance for navigation tracking
-import logging
-navigation_logger = logging.getLogger('hr_app_navigation') #
+from django.views.decorators.csrf import csrf_protect, csrf_exempt
 from django.views.decorators.http import require_POST
+from django.core.files.storage import default_storage, FileSystemStorage
 from django.core.files.base import ContentFile
-# Import for authentication
+from django.shortcuts import render, redirect, get_object_or_404
+from django.urls import reverse
+from django.contrib import messages
+from django.conf import settings
 from django.contrib.auth import login, logout, authenticate
 from django.contrib.auth.decorators import login_required, user_passes_test
-from .forms import CustomUserCreationForm, CustomAuthenticationForm # Import your new forms
-import google.api_core.exceptions # Import for more specific API error handling
-import google # <--- ADDED THIS LINE
-# --- Authentication Views ---
+from django.template.defaulttags import register
+from django.db.models import Q, Case, When, IntegerField
+import google.generativeai as genai
+# Standard libraries
+import os
+import re
+import json
+import random
+import logging
+import pytz
+from datetime import datetime, timedelta
+from collections import defaultdict
+from urllib.parse import urljoin
+
+# Third-party libraries
+import requests
+import spacy
+import docx2txt           # For Word documents
+import fitz               # For PDFs (PyMuPDF)
+import phonenumbers       # For phone number parsing
+import google             # Required for genai
+import google.api_core.exceptions
+
+# Local imports
+from .forms import ResumeUploadForm, FinalDecisionForm, PhoneNumberForm, CustomUserCreationForm, CustomAuthenticationForm
+from .models import Application, CandidateAnalysis, JobDescriptionDocument
 from .services import llm_call
-from django.core.files.uploadedfile import SimpleUploadedFile
+# import win32com.client
+# import pythoncom
 
 # Assuming these are already defined correctly
 resume_storage = FileSystemStorage(location='media/resumes')
