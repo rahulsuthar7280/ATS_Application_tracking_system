@@ -10,7 +10,7 @@ import docx2txt
 # import fitz  # PyMuPDF for PDF
 import os
 import re
-import pythoncom
+# import pythoncom
 import pytz
 import win32com.client
 from urllib.parse import urljoin
