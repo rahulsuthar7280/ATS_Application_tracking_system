@@ -67,7 +67,7 @@ pathlib==1.0.1
 phonenumbers==9.0.13
 preshed==3.0.10
 proto-plus==1.26.1
-protobuf==5.29.5
+protobuf==4.24.4
 prov==2.1.1
 puremagic==1.30
 pyasn1==0.6.1
