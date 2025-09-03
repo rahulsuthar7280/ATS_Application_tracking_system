@@ -191,7 +191,7 @@
             <div class="sidebar-header" style="font-size: 25px;">
                 <span class="sidebar-title">AI Talent Finder</span>
             </div>
-            <br>
+            <!-- <br> -->
             <nav class="sidebar-nav">
                 <a href="{% url 'dashboard' %}" class="nav-item {% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}">
                     <i class="fas fa-chart-line nav-icon"></i>
@@ -225,6 +225,10 @@
                  <a href="{% url 'top_recommendations' %}" class="nav-item {% if request.resolver_match.url_name == 'top_recommendations' %}active{% endif %}">
                     <i class="fas fa-medal nav-icon"></i>
                     <span class="nav-text">Top Recommendations</span>
+                </a>
+                 <a href="{% url 'send_job_description' %}" class="nav-item {% if request.resolver_match.url_name == 'top_recommendations' %}active{% endif %}">
+                    <i class="fas fa-medal nav-icon"></i>
+                    <span class="nav-text">Send Email</span>
                 </a>
                 <a href="" class="nav-item {% if request.resolver_match.url_name == 'ai_assistant' %}active{% endif %}">
                     <i class="fas fa-robot nav-icon"></i>

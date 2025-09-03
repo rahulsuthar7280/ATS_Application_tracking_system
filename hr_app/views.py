@@ -33,6 +33,8 @@ import phonenumbers       # For phone number parsing
 import google             # Required for genai
 import google.api_core.exceptions
 
+import logging
+navigation_logger = logging.getLogger('hr_app_navigation') #
 # Local imports
 from .forms import ResumeUploadForm, FinalDecisionForm, PhoneNumberForm, CustomUserCreationForm, CustomAuthenticationForm
 from .models import Application, CandidateAnalysis, JobDescriptionDocument
@@ -41,6 +43,13 @@ from hr_app import services
 from django.core.files.uploadedfile import SimpleUploadedFile
 # import win32com.client
 # import pythoncom
+
+from django.shortcuts import render, redirect
+from django.urls import reverse
+from django.http import HttpResponse
+from django.core.mail import send_mail
+from django.contrib import messages
+# from .models import JobDescription # Assuming you have this model defined in models.py
 
 # Assuming these are already defined correctly
 resume_storage = FileSystemStorage(location='media/resumes')
@@ -2498,3 +2507,56 @@ def advance_resume_analysis_view(request):
 
 def calendar_scheduler(request):
     return render(request,'calendar_scheduler.html')
+
+
+def send_job_description(request):
+    """
+    View to display the form for sending a job description and to handle the form submission.
+    """
+    if request.method == 'POST':
+        # Retrieve form data
+        job_description_id = request.POST.get('job_description_id')
+        recipient_email = request.POST.get('recipient_email')
+        email_body = request.POST.get('email_body')
+
+        try:
+            # Retrieve the selected job description from the database
+            job_description = JobDescriptionDocument.objects.get(pk=job_description_id)
+            
+            # Construct the email subject and message
+            email_subject = f"Job Opportunity: {job_description.title}"
+            full_email_body = f"{email_body}\n\nJob Description:\n\n---\n{job_description.description}"
+
+            # NOTE: For this to work in a real-world application, you must configure
+            # your email settings in settings.py. The following code is a
+            # placeholder for the actual email sending process.
+
+            # Attempt to send the email
+            send_mail(
+                subject=email_subject,
+                message=full_email_body,
+                from_email='rahulsuthar7280@gmail.com',  # Replace with your sender email
+                recipient_list=[recipient_email],
+                fail_silently=False,
+            )
+
+            # Add a success message to be displayed on the page
+            messages.success(request, f"Successfully sent the job description to {recipient_email}.")
+            
+        except JobDescriptionDocument.DoesNotExist:
+            messages.error(request, "The selected job description does not exist.")
+        except Exception as e:
+            messages.error(request, f"An error occurred while sending the email: {e}")
+
+        # Redirect back to the same page to show the success/error message
+        return redirect(reverse('send_job_description'))
+    
+    # If the request is a GET, render the form page
+    else:
+        # Fetch all available job descriptions from the database
+        job_descriptions = JobDescriptionDocument.objects.all()
+        
+        context = {
+            'job_descriptions': job_descriptions,
+        }
+        return render(request, 'send_job_description.html', context)

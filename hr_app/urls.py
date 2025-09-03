@@ -45,6 +45,7 @@ urlpatterns = [
     # NEW: URL for processing ATS options
     path('process_ats/<str:email_id>/<str:ats_type>/', views.process_ats_option, name='process_ats_option'),
 
+    path('send_job_description/', views.send_job_description, name='send_job_description'),
 
     # path('job-descriptions/', views.all_job_descriptions, name='all_job_descriptions'),
     # path('delete-jd/<int:jd_id>/', views.delete_jd, name='delete_jd'),

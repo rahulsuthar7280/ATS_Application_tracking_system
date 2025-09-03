@@ -1,0 +1,210 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Send Job Description{% endblock %}
+{% block page_heading %}Send Job Description via Email{% endblock %}
+
+{% block content %}
+
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
+<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" rel="stylesheet">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap">
+
+<style>
+:root {
+--primary-color: #007bff; /* Blue /
+--secondary-color: #6c757d; / Gray /
+--background-color: #f8f9fa; / Light Gray /
+--card-bg-color: #ffffff; / White /
+--border-color: #e0e0e0; / Light Gray Border /
+--shadow-color: rgba(0, 0, 0, 0.08); / Soft Shadow /
+--text-color-primary: #343a40; / Dark Gray /
+--text-color-secondary: #6c757d; / Gray */
+}
+
+body {
+    font-family: &#39;Inter&#39;, sans-serif;
+    background-color: var(--background-color);
+    color: var(--text-color-primary);
+}
+
+.container-main {
+    padding-top: 2rem;
+    padding-bottom: 2rem;
+}
+
+.content-section-card {
+    background-color: var(--card-bg-color);
+    border-radius: 12px;
+    padding: 2.5rem;
+    box-shadow: 0 4px 15px var(--shadow-color);
+    border: 1px solid var(--border-color);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.content-section-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.12);
+}
+
+.section-title {
+    font-weight: 700;
+    color: var(--primary-color);
+    margin-bottom: 0.5rem;
+}
+
+.form-group-custom {
+    margin-bottom: 1.5rem;
+}
+
+.form-control-custom, .form-select-custom {
+    width: 100%;
+    border-radius: 8px;
+    border: 1px solid var(--border-color);
+    padding: 0.75rem 1rem;
+    transition: border-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+.form-control-custom:focus, .form-select-custom:focus {
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 0.25rem rgba(0, 123, 255, 0.25);
+    outline: none;
+}
+
+.form-control-custom.textarea {
+    min-height: 200px;
+}
+
+.btn-primary {
+    background-color: var(--primary-color);
+    border-color: var(--primary-color);
+    padding: 0.75rem 2rem;
+    font-weight: 600;
+    border-radius: 8px;
+    transition: background-color 0.3s ease;
+}
+
+.btn-primary:hover {
+    background-color: #0056b3;
+    border-color: #0056b3;
+}
+
+.form-label-icon {
+    display: flex;
+    align-items: center;
+    font-weight: 600;
+    color: var(--text-color-primary);
+    margin-bottom: 0.5rem;
+}
+
+.form-label-icon i {
+    margin-right: 0.5rem;
+    color: var(--primary-color);
+}
+
+</style>
+
+<div class="container-fluid container-main">
+<div class="row justify-content-center">
+<div class="col-12 col-lg-10">
+<div class="content-section-card">
+<h2 class="section-title mb-1">Send Job Description</h2>
+<p class="section-description mb-4">
+Select a job description and compose an email to send.
+</p>
+
+            {% if messages %}
+                <div class="mb-4">
+                    {% for message in messages %}
+                        <div class="alert {% if message.tags %}alert-{{ message.tags }}{% endif %} alert-dismissible fade show" role="alert">
+                            {{ message }}
+                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+
+            <form method="post" action="{% url 'send_job_description' %}">
+                {% csrf_token %}
+                <div class="row g-4">
+                    <!-- Left Column for Select and Email -->
+                    <div class="col-12 col-md-6 d-flex flex-column">
+                        <div class="form-group-custom">
+                            <label for="id_job_description" class="form-label-icon"><i class="fas fa-briefcase"></i> Select Job Description</label>
+                            <select class="form-select-custom" id="id_job_description" name="job_description_id" required>
+                                <option value="">-- Select an existing job description --</option>
+                                {% for jd in job_descriptions %}
+                                    <option value="{{ jd.id }}" data-job-title="{{ jd.title }}">{{ jd.title }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        
+                        <div class="form-group-custom">
+                            <label for="id_email_to" class="form-label-icon"><i class="fas fa-envelope"></i> Recipient Email Address</label>
+                            <input type="email" class="form-control-custom" id="id_email_to" name="recipient_email" placeholder="e.g., candidate@example.com" required>
+                        </div>
+                    </div>
+
+                    <!-- Right Column for Email Body -->
+                    <div class="col-12 col-md-6 d-flex flex-column">
+                        <div class="form-group-custom h-100 d-flex flex-column">
+                            <label for="id_email_body" class="form-label-icon"><i class="fas fa-pencil-alt"></i> Email Body</label>
+                            <textarea class="form-control-custom textarea flex-grow-1" id="id_email_body" name="email_body" rows="10" required>
+
+Hi [Candidate Name],
+
+I hope this email finds you well.
+
+I am writing to you today to share a job description for the [Job Role] position. I believe your skills and experience align perfectly with what we are looking for.
+
+Please find the full job description attached for your review. Feel free to reach out if you have any questions.
+
+Best regards,
+
+[Your Name]
+</textarea>
+</div>
+</div>
+</div>
+
+                <div class="d-grid mt-4">
+                    <button type="submit" class="btn btn-primary"><i class="fas fa-paper-plane me-2"></i> Send Email</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+const jobDescriptionSelect = document.getElementById('id_job_description');
+const emailBodyTextarea = document.getElementById('id_email_body');
+
+    jobDescriptionSelect.addEventListener(&#39;change&#39;, function() {
+        const selectedOption = this.options[this.selectedIndex];
+        const jobTitle = selectedOption.getAttribute(&#39;data-job-title&#39;);
+        
+        if (jobTitle) {
+            const newEmailBody = `Hi [Candidate Name],
+
+I hope this email finds you well.
+
+I am writing to you today to share a job description for the ${jobTitle} position. I believe your skills and experience align perfectly with what we are looking for.
+
+Please find the full job description attached for your review. Feel free to reach out if you have any questions.
+
+Best regards,
+
+[Your Name]
+`;
+emailBodyTextarea.value = newEmailBody;
+}
+});
+});
+</script>
+
+{% endblock %}

@@ -4,134 +4,405 @@
 {% block page_heading %}AI Agent-Based Resume Screening and Evaluation{% endblock %}
 
 {% block content %}
-<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" xintegrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
 <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" rel="stylesheet">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap">
 <link rel="stylesheet" href="../static/css/style_ats.css">
 
+<style>
+    /* Custom CSS to improve layout and design */
 
+    :root {
+        --primary-color: #007bff; /* Blue */
+        --secondary-color: #6c757d; /* Gray */
+        --background-color: #f8f9fa; /* Light Gray */
+        --card-bg-color: #ffffff; /* White */
+        --border-color: #e0e0e0; /* Light Gray Border */
+        --shadow-color: rgba(0, 0, 0, 0.08); /* Soft Shadow */
+        --text-color-primary: #343a40; /* Dark Gray */
+        --text-color-secondary: #6c757d; /* Gray */
+    }
+
+    body {
+        font-family: 'Inter', sans-serif;
+        background-color: var(--background-color);
+        color: var(--text-color-primary);
+    }
+
+    .container-main {
+        max-width: 1400px;
+        padding-top: 2rem;
+        padding-bottom: 2rem;
+    }
+
+    .content-section-card {
+        background-color: var(--card-bg-color);
+        border-radius: 12px;
+        padding: 2.5rem;
+        box-shadow: 0 4px 15px var(--shadow-color);
+        border: 1px solid var(--border-color);
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+
+    .content-section-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.12);
+    }
+
+    .section-title {
+        font-weight: 700;
+        color: var(--primary-color);
+        margin-bottom: 0.5rem;
+    }
+
+    .section-description {
+        color: var(--text-color-secondary);
+        font-size: 0.95rem;
+    }
+
+    .nav-pills .nav-link {
+        font-weight: 600;
+        color: var(--text-color-secondary);
+        border-radius: 8px;
+        transition: background-color 0.3s ease, color 0.3s ease;
+    }
+
+    .nav-pills .nav-link.active,
+    .nav-pills .nav-link:hover {
+        background-color: var(--primary-color);
+        color: #fff;
+    }
+
+    .btn-file-upload {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 1rem 1.5rem;
+        border: 2px dashed var(--border-color);
+        border-radius: 8px;
+        cursor: pointer;
+        transition: border-color 0.3s ease, background-color 0.3s ease;
+        color: var(--secondary-color);
+    }
+
+    .btn-file-upload:hover {
+        border-color: var(--primary-color);
+        background-color: #f0f8ff;
+    }
+
+    .form-group-floating label {
+        color: var(--text-color-secondary);
+        font-size: 0.9rem;
+    }
+
+    .form-control-custom, .form-select-custom {
+        border-radius: 8px;
+        border: 1px solid var(--border-color);
+        padding: 0.75rem 1rem;
+    }
+
+    .btn-primary {
+        background-color: var(--primary-color);
+        border-color: var(--primary-color);
+        padding: 0.75rem 2rem;
+        font-weight: 600;
+        border-radius: 8px;
+        transition: background-color 0.3s ease;
+    }
+
+    .btn-primary:hover {
+        background-color: #0056b3;
+        border-color: #0056b3;
+    }
+
+    /* Results section improvements */
+    .results-section {
+        margin-top: 3rem;
+        opacity: 0;
+        transform: translateY(20px);
+        transition: opacity 0.5s ease, transform 0.5s ease;
+    }
+
+    .results-section.show {
+        opacity: 1;
+        transform: translateY(0);
+    }
+
+    .summary-tile {
+        padding: 1.5rem;
+        background-color: #f0f2f5;
+        border-radius: 10px;
+        text-align: center;
+        transition: transform 0.3s ease;
+        border: 1px solid var(--border-color);
+    }
+
+    .summary-tile:hover {
+        transform: translateY(-3px);
+    }
+
+    .summary-tile h6 {
+        font-weight: 600;
+        color: var(--primary-color);
+    }
+
+    .summary-tile p {
+        font-size: 1.5rem;
+        font-weight: 700;
+        margin-top: 0.5rem;
+    }
+    
+    .fitment-verdict {
+        font-weight: 800;
+        font-size: 1.5rem;
+        padding: 0.5rem 1rem;
+        border-radius: 8px;
+        display: inline-block;
+        color: #fff;
+    }
+
+    .fitment-verdict.selected { background-color: #28a745; }
+    .fitment-verdict.rejected { background-color: #dc3545; }
+    .fitment-verdict.marginal { background-color: #ffc107; }
+
+    .content-box {
+        background-color: #f0f2f5;
+        border-left: 4px solid var(--primary-color);
+        padding: 1.5rem;
+        border-radius: 8px;
+        transition: transform 0.3s ease;
+    }
+    
+    .content-box:hover {
+        transform: scale(1.02);
+    }
+
+    .nav-tabs .nav-link {
+        font-weight: 600;
+        color: var(--secondary-color);
+    }
+
+    .nav-tabs .nav-link.active {
+        color: var(--primary-color);
+        border-color: var(--primary-color);
+    }
+
+    .questions-list li {
+        background-color: #f8f9fa;
+        padding: 1rem 1.5rem;
+        margin-bottom: 1rem;
+        border-radius: 8px;
+        border-left: 4px solid var(--primary-color);
+    }
+
+    /* New preloader styling */
+    #preloader {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        display: none;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        background-color: rgba(240, 242, 245, 0.95);
+        z-index: 1050;
+        transition: opacity 0.3s ease;
+        opacity: 0;
+    }
+
+    #preloader.show {
+        display: flex;
+        opacity: 1;
+    }
+
+    .spinner {
+        width: 60px;
+        height: 60px;
+        border: 4px solid var(--primary-color);
+        border-top-color: transparent;
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+        position: relative;
+    }
+
+    .spinner::before {
+        content: '';
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        width: 80px;
+        height: 80px;
+        border: 4px solid rgba(0, 123, 255, 0.3);
+        border-radius: 50%;
+        animation: pulse 1.5s ease-out infinite;
+    }
+
+    @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+    }
+
+    @keyframes pulse {
+        0% { transform: scale(0.8); opacity: 1; }
+        50% { transform: scale(1.2); opacity: 0; }
+        100% { transform: scale(0.8); opacity: 1; }
+    }
+    
+    .preloader-text {
+        color: var(--text-color-primary);
+        font-size: 1.2rem;
+        font-weight: 500;
+        margin-top: 2rem;
+        animation: fadeIn 1s ease-in-out;
+    }
+
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(10px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+</style>
 
 <div class="container container-main">
-    <!-- <h1 class="page-heading">AI Agent-Based Resume Screening and Evaluation</h1> -->
-    
-    <!-- Main Content Area: Form on left, PDF Preview on right -->
     <div class="row g-4 mb-4">
-        <!-- Input Form Section (Left Column) -->
-<div class="col-md-6">
-    <div class="content-section-card">
-        <h2 class="section-title">Candidate Details</h2>
-        <form method="post" enctype="multipart/form-data" id="resumeForm">
-            {% csrf_token %}
-            <div class="row g-4">
-                <div class="col-12">
-                    <label for="resumeInput" class="form-label">Upload Candidate Resume</label>
-                    <div class="file-input-wrapper">
-                        <input type="file" id="resumeInput" name="{{ form.resume_pdf.name }}" accept="application/pdf" required>
-                        <div class="btn-file-upload">
-                            <i class="fas fa-file-pdf"></i>
-                            <span id="resumeFileName">No file chosen</span>
-                        </div>
-                    </div>
-                </div>
+        <div class="col-md-6">
+            <div class="content-section-card h-100">
+                <h2 class="section-title mb-1">Resume & Job Analysis</h2>
+                <p class="section-description mb-4">
+                    Follow these steps to upload candidate details and get a comprehensive AI analysis.
+                </p>
 
-                <div class="col-12">
-                    <label for="jobDescriptionSource" class="form-label">Job Description Source</label>
-                    <div class="d-flex align-items-center mb-3">
-                        <div class="form-check me-4">
-                            <input class="form-check-input" type="radio" name="jdSource" id="selectJdRadio" value="select" checked>
-                            <label class="form-check-label" for="selectJdRadio">Select Existing</label>
+                <form method="post" enctype="multipart/form-data" id="resumeForm">
+                    {% csrf_token %}
+
+                    <ul class="nav nav-pills nav-fill mb-4" id="formStepsTab" role="tablist">
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link active" id="step1-tab" data-bs-toggle="pill" data-bs-target="#step1" type="button" role="tab" aria-controls="step1" aria-selected="true">
+                                <i class="fas fa-1 me-2"></i> Resume
+                            </button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="step2-tab" data-bs-toggle="pill" data-bs-target="#step2" type="button" role="tab" aria-controls="step2" aria-selected="false">
+                                <i class="fas fa-2 me-2"></i> Job Details
+                            </button>
+                        </li>
+                    </ul>
+
+                    <div class="tab-content" id="formStepsTabContent">
+                        <div class="tab-pane fade show active" id="step1" role="tabpanel" aria-labelledby="step1-tab">
+                            <h5 class="section-sub-title mb-3"><i class="fas fa-file-pdf me-2"></i> Upload Candidate Resume</h5>
+                            <div class="file-input-wrapper file-input-lg">
+                                <input type="file" id="resumeInput" name="{{ form.resume_pdf.name }}" accept="application/pdf" multiple required>
+                                <div class="btn-file-upload">
+                                    <i class="fas fa-cloud-upload-alt fa-2x"></i>
+                                    <span id="resumeFileName" class="ms-3">Click to upload a PDF resume</span>
+                                </div>
+                            </div>
+                            <div class="d-flex justify-content-end mt-4">
+                                <button class="btn btn-secondary" type="button" id="nextStepBtn">
+                                    Next Step <i class="fas fa-arrow-right ms-2"></i>
+                                </button>
+                            </div>
                         </div>
-                        <div class="form-check">
-                            <input class="form-check-input" type="radio" name="jdSource" id="uploadJdRadio" value="upload">
-                            <label class="form-check-label" for="uploadJdRadio">Upload New</label>
-                        </div>
-                    </div>
-                    <div id="selectJdSection">
-                        <div class="form-group-floating">
-                            <select class="form-select-custom" id="jobDescriptionSelect" name="job_description_id">
-                                <option value="">-- Select an Existing Job Description --</option>
-                                {% for doc in job_description_documents %}
-                                <option value="{{ doc.id }}">{{ doc.title }}</option>
-                                {% endfor %}
-                            </select>
-                            <label for="jobDescriptionSelect">Select Existing JD</label>
-                        </div>
-                    </div>
-                    <div id="uploadJdSection" style="display: none;">
-                        <div class="file-input-wrapper">
-                            <input type="file" id="jobDescriptionInput" name="{{ form.job_description.name }}" accept=".pdf,.doc,.docx,.txt">
-                            <div class="btn-file-upload">
-                                <i class="fas fa-file-word"></i>
-                                <span id="jobDescriptionFileName">No file chosen</span>
+
+                        <div class="tab-pane fade" id="step2" role="tabpanel" aria-labelledby="step2-tab">
+                            <h5 class="section-sub-title mb-3"><i class="fas fa-briefcase me-2"></i> Job Requirements</h5>
+
+                            <div class="mb-4">
+                                <label class="form-label">Job Description Source</label>
+                                <div class="btn-group w-100" role="group" aria-label="Job Description Source">
+                                    <input type="radio" class="btn-check" name="jdSource" id="selectJdRadio" value="select" autocomplete="off" checked>
+                                    <label class="btn btn-outline-primary" for="selectJdRadio">Select Existing</label>
+                                    <input type="radio" class="btn-check" name="jdSource" id="uploadJdRadio" value="upload" autocomplete="off">
+                                    <label class="btn btn-outline-primary" for="uploadJdRadio">Upload New</label>
+                                </div>
+                            </div>
+                            <div id="jdSourceFields">
+                                <div id="selectJdSection">
+                                    <div class="form-group-floating mb-4">
+                                        <select class="form-select-custom" id="jobDescriptionSelect" name="job_description_id" required>
+                                            <option value="">-- Select an Existing Job Description --</option>
+                                            {% for doc in job_description_documents %}
+                                            <option value="{{ doc.id }}">{{ doc.title }}</option>
+                                            {% endfor %}
+                                        </select>
+                                        <label for="jobDescriptionSelect">Select Existing JD</label>
+                                    </div>
+                                </div>
+                                <div id="uploadJdSection" style="display: none;">
+                                    <div class="file-input-wrapper mb-4">
+                                        <input type="file" id="jobDescriptionInput" name="{{ form.job_description.name }}" accept=".pdf,.doc,.docx,.txt">
+                                        <div class="btn-file-upload">
+                                            <i class="fas fa-file-word fa-2x"></i>
+                                            <span id="jobDescriptionFileName" class="ms-3">No file chosen</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="form-group-floating mb-4">
+                                <input type="text" class="form-control-custom" id="{{ form.job_role.id_for_label }}" name="{{ form.job_role.name }}" value="{{ form.job_role.value|default:'' }}" {% if form.job_role.field.required %}required{% endif %}>
+                                <label for="{{ form.job_role.id_for_label }}">
+                                    <i class="fas fa-tag me-2"></i> Job Role
+                                </label>
+                            </div>
+
+                            <div class="form-group-floating mb-4">
+                                <select class="form-select-custom" id="{{ form.target_experience_type.id_for_label }}" name="{{ form.target_experience_type.name }}" {% if form.target_experience_type.field.required %}required{% endif %}>
+                                    {% for value, label in form.target_experience_type.field.choices %}
+                                    <option value="{{ value }}" {% if form.target_experience_type.value == value %}selected{% endif %}>{{ label }}</option>
+                                    {% endfor %}
+                                </select>
+                                <label for="{{ form.target_experience_type.id_for_label }}">
+                                    <i class="fas fa-chart-line me-2"></i> Experience Level
+                                </label>
+                            </div>
+
+                            <div id="experience_fields" class="row g-3 px-3 w-100 mt-2" style="display: none;">
+                                <div class="col-sm-6">
+                                    <div class="form-group-floating">
+                                        <input type="number" class="form-control-custom" id="{{ form.min_years_required.id_for_label }}" name="{{ form.min_years_required.name }}" value="{{ form.min_years_required.value|default:'' }}" min="0" step="1">
+                                        <label for="{{ form.min_years_required.id_for_label }}">
+                                            <i class="fas fa-sort-numeric-up me-2"></i> Min. Years
+                                        </label>
+                                    </div>
+                                </div>
+                                <div class="col-sm-6">
+                                    <div class="form-group-floating">
+                                        <input type="number" class="form-control-custom" id="{{ form.max_years_required.id_for_label }}" name="{{ form.max_years_required.name }}" value="{{ form.max_years_required.value|default:'' }}" min="0" step="1">
+                                        <label for="{{ form.max_years_required.id_for_label }}">
+                                            <i class="fas fa-sort-numeric-down me-2"></i> Max. Years
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="d-flex justify-content-between mt-4">
+                                <button class="btn btn-secondary" type="button" id="backStepBtn">
+                                    <i class="fas fa-arrow-left me-2"></i> Back
+                                </button>
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="fas fa-magic me-2"></i> Analyse Resume
+                                </button>
                             </div>
                         </div>
                     </div>
-                </div>
-
-                <div class="col-md-6">
-                    <div class="form-group-floating">
-                        <input type="text" class="form-control-custom" id="{{ form.job_role.id_for_label }}" name="{{ form.job_role.name }}" value="{{ form.job_role.value|default:'' }}" {% if form.job_role.field.required %}required{% endif %}>
-                        <label for="{{ form.job_role.id_for_label }}">
-                            <i class="fas fa-briefcase me-2"></i> Job Role
-                        </label>
-                    </div>
-                </div>
-                <div class="col-md-6">
-                    <div class="form-group-floating">
-                        <select class="form-select-custom" id="{{ form.target_experience_type.id_for_label }}" name="{{ form.target_experience_type.name }}" {% if form.target_experience_type.field.required %}required{% endif %}>
-                            {% for value, label in form.target_experience_type.field.choices %}
-                            <option value="{{ value }}" {% if form.target_experience_type.value == value %}selected{% endif %}>{{ label }}</option>
-                            {% endfor %}
-                        </select>
-                        <label for="{{ form.target_experience_type.id_for_label }}">
-                            <i class="fas fa-chart-line me-2"></i> Experience Level
-                        </label>
-                    </div>
-                </div>
+                </form>
             </div>
-            
-            <div id="experience_fields" class="row g-3 px-3 w-100 mt-2" style="display: none;">
-                <div class="col-sm-6">
-                    <div class="form-group-floating">
-                        <input type="number" class="form-control-custom" id="{{ form.min_years_required.id_for_label }}" name="{{ form.min_years_required.name }}" value="{{ form.min_years_required.value|default:'' }}" min="0" step="1">
-                        <label for="{{ form.min_years_required.id_for_label }}">
-                            <i class="fas fa-sort-numeric-up me-2"></i> Min. Years
-                        </label>
-                    </div>
-                </div>
-                <div class="col-sm-6">
-                    <div class="form-group-floating">
-                        <input type="number" class="form-control-custom" id="{{ form.max_years_required.id_for_label }}" name="{{ form.max_years_required.name }}" value="{{ form.max_years_required.value|default:'' }}" min="0" step="1">
-                        <label for="{{ form.max_years_required.id_for_label }}">
-                            <i class="fas fa-sort-numeric-down me-2"></i> Max. Years
-                        </label>
-                    </div>
-                </div>
-            </div>
+        </div>
 
-            <div class="d-flex justify-content-end mt-4">
-                <button type="submit" class="btn btn-primary">
-                    <i class="fas fa-magic me-2"></i> Analyse Resume
-                </button>
-            </div>
-        </form>
-    </div>
-</div>
-
-        <!-- PDF Preview Section (Right Column) -->
         <div class="col-md-6">
             <div class="content-section-card pdf-preview-section h-100">
-                <!-- <h2 class="section-title">Resume Preview</h2> -->
-                <embed id="pdfEmbed"
-                    class="pdf-embed"
-                    type="application/pdf"
-                    style="display: {% if resume_url %}block{% else %}none{% endif %};"
-                    {% if resume_url %}src="{{ resume_url }}#toolbar=0&navpanes=0"{% endif %}>
+                <embed id="pdfEmbed" class="pdf-embed" type="application/pdf"
+                       style="display: {% if resume_url %}block{% else %}none{% endif %};"
+                       {% if resume_url %}src="{{ resume_url }}#toolbar=0&navpanes=0"{% endif %}>
 
                 <div class="pdf-placeholder" id="pdfPlaceholder"
-                        style="display: {% if resume_url %}none{% else %}flex{% endif %};">
-                    <i class="fas fa-file-pdf"></i>
-                    <p class="message">Upload a PDF Resume to Preview</p>
+                     style="display: {% if resume_url %}none{% else %}flex{% endif %};">
+                    <i class="fas fa-file-pdf fa-4x mb-3"></i>
+                    <p class="message" id="pdfPlaceholderMessage">Upload a PDF Resume to Preview</p>
                     <p class="sub-message">The AI analysis will begin shortly after.</p>
                     <p class="error-message" id="pdfErrorMessage" style="display: none;"></p>
                 </div>
@@ -139,10 +410,8 @@
         </div>
     </div>
 
-    <!-- Results Section (Initially hidden or shown based on analysis_result) -->
     {% if analysis_result %}
         <div class="content-section-card results-section show" data-analysis-loaded="true">
-        <!-- <div class="results-section show" data-analysis-loaded="true"> -->
             <h2 class="section-title">AI Analysis for <span class="text-primary">{{ analysis_result.full_name|default:"Candidate" }}</span></h2>
             
             <ul class="nav nav-tabs" id="analysisTabs" role="tablist">
@@ -179,7 +448,6 @@
             </ul>
 
             <div class="tab-content" id="analysisTabContent">
-                <!-- Summary Tab Pane -->
                 <div class="tab-pane fade show active" id="summary" role="tabpanel" aria-labelledby="summary-tab">
                     <div class="row g-4 mb-4">
                         <div class="col-md-3 col-sm-6">
@@ -259,7 +527,6 @@
                     </div>
                 </div>
 
-                <!-- Contact Info Tab Pane -->
                 <div class="tab-pane fade" id="contact" role="tabpanel" aria-labelledby="contact-tab">
                     <h4 class="section-title">Candidate Contact Information</h4>
                     <div class="row g-4 mb-4">
@@ -310,7 +577,6 @@
                     </div>
                 </div>
 
-                <!-- Detailed Analysis Tab Pane -->
                 <div class="tab-pane fade" id="details" role="tabpanel" aria-labelledby="details-tab">
                     <h4 class="section-title">Deep-Dive Scoring Matrix</h4>
                     <div class="table-responsive fade-in-item">
@@ -381,7 +647,6 @@
                     </div>
                 </div>
 
-                <!-- Skills & Projects Tab Pane -->
                 <div class="tab-pane fade" id="skills-projects" role="tabpanel" aria-labelledby="skills-projects-tab">
                     <h4 class="section-title">Technical Skills & Education</h4>
                     <div class="row g-4">
@@ -444,7 +709,6 @@
                     </div>
                 </div>
 
-                <!-- Recommendations Tab Pane -->
                 <div class="tab-pane fade" id="recommendations" role="tabpanel" aria-labelledby="recommendations-tab">
                     <div class="row g-4">
                         <div class="col-md-6">
@@ -474,7 +738,6 @@
                     </div>
                 </div>
 
-                <!-- Interview Questions Tab Pane -->
                 <div class="tab-pane fade" id="questions" role="tabpanel" aria-labelledby="questions-tab">
                     <h4 class="section-title">Suggested Interview Questions for <span class="text-primary">{{ analysis_result.full_name|default:"the Candidate" }}</span></h4>
                     <ul class="questions-list">
@@ -499,73 +762,64 @@
             </div>
         </div>
     {% else %}
-        <!-- <div class="content-section-card no-results-message fade-in-item">
-            <i class="fas fa-robot"></i>
-            <p>Upload a resume and job details to see AI-powered analysis here!</p>
-            <p class="text-muted">The results will appear after a successful analysis.</p>
-        </div> -->
-    {% endif %}
+        {% endif %}
 </div>
 
-<!-- Preloader HTML -->
 <div id="preloader">
-    <div class="preloader-overlay"></div>
-    <div class="preloader-content">
-        <h3 class="preloader-title">Analyzing Resume...</h3>
-        <p class="preloader-text" id="preloaderMessage">Initializing AI agents...</p>
-        <div class="progress-container">
-            <div id="progressBar" class="progress-bar" role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100">
-                <span id="progressText">0%</span>
-            </div>
-        </div>
-    </div>
+    <div class="spinner"></div>
+    <p class="preloader-text" id="preloaderMessage">Analyzing Resume...</p>
 </div>
-
-
 
 {% endblock %}
 
 {% block extra_js %}
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" xintegrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
 <script>
     document.addEventListener('DOMContentLoaded', function () {
-        const experienceTypeSelect = document.getElementById('{{ form.target_experience_type.id_for_label }}');
-        const experienceFieldsDiv = document.getElementById('experience_fields');
-        const minYearsInput = document.getElementById('{{ form.min_years_required.id_for_label }}');
-        const maxYearsDiv = document.getElementById('max_years_div');
-        const maxYearsInput = document.getElementById('{{ form.max_years_required.id_for_label }}');
+        const nextStepBtn = document.getElementById('nextStepBtn');
+        const backStepBtn = document.getElementById('backStepBtn');
+        const step1Tab = document.getElementById('step1-tab');
+        const step2Tab = document.getElementById('step2-tab');
 
-        function toggleExperienceFields() {
-            if (!experienceTypeSelect || !experienceFieldsDiv || !minYearsInput || !maxYearsDiv || !maxYearsInput) {
-                return;
-            }
-
-            const selectedValue = experienceTypeSelect.value;
-            experienceFieldsDiv.style.display = 'none';
-
-            minYearsInput.setAttribute('disabled', 'disabled');
-            minYearsInput.value = '';
-            maxYearsInput.setAttribute('disabled', 'disabled');
-            maxYearsInput.value = '';
-
-            if (selectedValue === 'Specific Range (Years)' || selectedValue === 'Minimum Years Required') {
-                experienceFieldsDiv.style.display = 'flex';
-                minYearsInput.removeAttribute('disabled');
-
-                if (selectedValue === 'Specific Range (Years)') {
-                    maxYearsDiv.style.display = 'block';
-                    maxYearsInput.removeAttribute('disabled');
-                } else {
-                    maxYearsDiv.style.display = 'none';
-                }
-            }
-            // Trigger update for floating label on change
-            updateFloatingLabel(experienceTypeSelect);
+        if (nextStepBtn) {
+            nextStepBtn.addEventListener('click', function() {
+                const step2TabInstance = new bootstrap.Tab(step2Tab);
+                step2TabInstance.show();
+            });
+        }
+        
+        if (backStepBtn) {
+            backStepBtn.addEventListener('click', function() {
+                const step1TabInstance = new bootstrap.Tab(step1Tab);
+                step1TabInstance.show();
+            });
         }
 
-        if (experienceTypeSelect) {
-            toggleExperienceFields();
-            experienceTypeSelect.addEventListener('change', toggleExperienceFields);
+        const selectJdRadio = document.getElementById('selectJdRadio');
+        const uploadJdRadio = document.getElementById('uploadJdRadio');
+        const selectJdSection = document.getElementById('selectJdSection');
+        const uploadJdSection = document.getElementById('uploadJdSection');
+        const jobDescriptionSelect = document.getElementById('jobDescriptionSelect');
+        const jobDescriptionInput = document.getElementById('jobDescriptionInput');
+
+        function toggleJdSection() {
+            if (selectJdRadio.checked) {
+                selectJdSection.style.display = 'block';
+                uploadJdSection.style.display = 'none';
+                jobDescriptionSelect.setAttribute('required', 'required'); 
+                jobDescriptionInput.removeAttribute('required');
+            } else {
+                selectJdSection.style.display = 'none';
+                uploadJdSection.style.display = 'block';
+                jobDescriptionInput.setAttribute('required', 'required');
+                jobDescriptionSelect.removeAttribute('required');
+            }
+        }
+
+        if (selectJdRadio && uploadJdRadio) {
+            selectJdRadio.addEventListener('change', toggleJdSection);
+            uploadJdRadio.addEventListener('change', toggleJdSection);
+            toggleJdSection();
         }
 
         const resumeFileInput = document.getElementById('resumeInput');
@@ -575,9 +829,10 @@
         const pdfEmbed = document.getElementById('pdfEmbed');
         const pdfPlaceholder = document.getElementById('pdfPlaceholder');
         const pdfErrorMessage = document.getElementById('pdfErrorMessage');
+        const pdfPlaceholderMessage = document.getElementById('pdfPlaceholderMessage');
 
-        // Initialize PDF viewer state
-        if (pdfEmbed && pdfEmbed.src && pdfEmbed.src !== window.location.href + '#toolbar=0&navpanes=0') { // Check if src is actually set
+
+        if (pdfEmbed && pdfEmbed.src && pdfEmbed.src !== window.location.href + '#toolbar=0&navpanes=0') {
             pdfEmbed.style.display = 'block';
             if (pdfPlaceholder) pdfPlaceholder.style.display = 'none';
         } else {
@@ -585,36 +840,55 @@
             if (pdfPlaceholder) pdfPlaceholder.style.display = 'flex';
         }
 
-        // Handle resume file input change
         if (resumeFileInput) {
             resumeFileInput.addEventListener('change', function () {
-                const file = this.files[0];
-                if (file) {
-                    resumeFileNameSpan.textContent = file.name;
-                    if (file.type === 'application/pdf') {
-                        const fileURL = URL.createObjectURL(file);
-                        pdfEmbed.src = fileURL + '#toolbar=0&navpanes=0';
-                        pdfEmbed.style.display = 'block';
-                        pdfPlaceholder.style.display = 'none';
-                        pdfErrorMessage.style.display = 'none'; // Hide error message
-                    } else {
-                        pdfEmbed.src = '';
+                const files = this.files;
+                if (files.length > 0) {
+                    if (files.length > 10) {
+                        resumeFileNameSpan.textContent = "Error: Please select a maximum of 10 files.";
+                        this.value = ''; // Clear the selected files
                         pdfEmbed.style.display = 'none';
                         pdfPlaceholder.style.display = 'flex';
-                        pdfErrorMessage.textContent = "Please upload a valid PDF file for resume preview.";
-                        pdfErrorMessage.style.display = 'block'; // Show error message
+                        pdfPlaceholderMessage.textContent = "Upload a PDF Resume to Preview";
+                        pdfErrorMessage.style.display = 'block';
+                        return;
+                    }
+
+                    if (files.length === 1) {
+                        const file = files[0];
+                        if (file.type === 'application/pdf') {
+                            resumeFileNameSpan.textContent = file.name;
+                            const fileURL = URL.createObjectURL(file);
+                            pdfEmbed.src = fileURL + '#toolbar=0&navpanes=0';
+                            pdfEmbed.style.display = 'block';
+                            pdfPlaceholder.style.display = 'none';
+                            pdfErrorMessage.style.display = 'none';
+                        } else {
+                            resumeFileNameSpan.textContent = "Invalid file type. Please upload a PDF.";
+                            pdfEmbed.src = '';
+                            pdfEmbed.style.display = 'none';
+                            pdfPlaceholder.style.display = 'flex';
+                            pdfErrorMessage.textContent = "Please upload a valid PDF file for resume preview.";
+                            pdfErrorMessage.style.display = 'block';
+                        }
+                    } else {
+                        resumeFileNameSpan.textContent = files.length + " files selected";
+                        pdfEmbed.style.display = 'none';
+                        pdfPlaceholder.style.display = 'flex';
+                        pdfPlaceholderMessage.textContent = "Preview is available for single PDF uploads only.";
+                        pdfErrorMessage.style.display = 'none';
                     }
                 } else {
-                    resumeFileNameSpan.textContent = 'No file chosen';
+                    resumeFileNameSpan.textContent = 'Click to upload a PDF resume';
                     pdfEmbed.src = '';
                     pdfEmbed.style.display = 'none';
                     pdfPlaceholder.style.display = 'flex';
+                    pdfPlaceholderMessage.textContent = "Upload a PDF Resume to Preview";
                     pdfErrorMessage.style.display = 'none';
                 }
             });
         }
 
-        // Handle job description file input change
         if (jobDescriptionFileInput) {
             jobDescriptionFileInput.addEventListener('change', function () {
                 const file = this.files[0];
@@ -626,89 +900,63 @@
             });
         }
 
+        const experienceTypeSelect = document.getElementById('{{ form.target_experience_type.id_for_label }}');
+        const experienceFieldsDiv = document.getElementById('experience_fields');
+        const minYearsInput = document.getElementById('{{ form.min_years_required.id_for_label }}');
+        const maxYearsInput = document.getElementById('{{ form.max_years_required.id_for_label }}');
 
-        // Preloader Logic
+        function toggleExperienceFields() {
+            if (!experienceTypeSelect || !experienceFieldsDiv || !minYearsInput || !maxYearsInput) {
+                return;
+            }
+            const selectedValue = experienceTypeSelect.value;
+            experienceFieldsDiv.style.display = 'none';
+            minYearsInput.setAttribute('disabled', 'disabled');
+            minYearsInput.value = '';
+            maxYearsInput.setAttribute('disabled', 'disabled');
+            maxYearsInput.value = '';
+            if (selectedValue === 'Specific Range (Years)' || selectedValue === 'Minimum Years Required') {
+                experienceFieldsDiv.style.display = 'flex';
+                minYearsInput.removeAttribute('disabled');
+                if (selectedValue === 'Specific Range (Years)') {
+                    maxYearsInput.removeAttribute('disabled');
+                }
+            }
+            updateFloatingLabel(experienceTypeSelect);
+        }
+
+        if (experienceTypeSelect) {
+            toggleExperienceFields();
+            experienceTypeSelect.addEventListener('change', toggleExperienceFields);
+        }
+
         const resumeForm = document.getElementById('resumeForm');
         const preloader = document.getElementById('preloader');
-        const progressBar = document.getElementById('progressBar');
-        const progressText = document.getElementById('progressText');
         const preloaderMessage = document.getElementById('preloaderMessage');
         const resultsSection = document.querySelector('.results-section');
 
-        const preloaderMessages = [
-            "Initializing AI agents...",
-            "Extracting key information from your resume...",
-            "Analyzing skills and experience...",
-            "Comparing with job description requirements...",
-            "Generating comprehensive fitment analysis...",
-            "Calculating strategic alignment...",
-            "Detecting potential red flags and growth indicators...",
-            "Crafting personalized interview questions...",
-            "Finalizing report for presentation..."
-        ];
-        let messageIndex = 0;
-        let messageInterval;
-
-        function startMessageCycle() {
-            messageIndex = 0;
-            preloaderMessage.textContent = preloaderMessages[messageIndex];
-            messageInterval = setInterval(() => {
-                messageIndex = (messageIndex + 1) % preloaderMessages.length;
-                preloaderMessage.textContent = preloaderMessages[messageIndex];
-            }, 2000); // Change message every 2 seconds
-        }
-
-        function stopMessageCycle() {
-            clearInterval(messageInterval);
-        }
-
         if (resumeForm) {
             resumeForm.addEventListener('submit', function(event) {
-                // Check if a PDF is selected for resume, otherwise let the form validation handle it
                 if (!resumeFileInput.files.length || resumeFileInput.files[0].type !== 'application/pdf') {
-                    // Form validation for required fields will prevent submission if resume is not selected
-                    // The custom error message for PDF type is already handled by the change listener
                     return; 
                 }
                 
-                // Prevent the form from submitting immediately
                 event.preventDefault();
                 
-                // Show the preloader with animation
                 preloader.classList.add('show');
-                startMessageCycle();
-                
-                let currentProgress = 0;
-                const form = this;
-
-                // Simulate progress
-                const progressInterval = setInterval(function() {
-                    currentProgress += 10;
-                    if (currentProgress <= 90) { 
-                        progressBar.style.width = currentProgress + '%';
-                        progressText.textContent = currentProgress + '%';
-                    } else {
-                        clearInterval(progressInterval);
-                        stopMessageCycle();
-                        // Once the simulated progress is done, submit the form
-                        form.submit(); 
-                    }
-                }, 500); // Update progress every 500ms
+                this.submit();
             });
         }
 
-        // Fade in results section on load if analysis_result exists
         if (resultsSection && resultsSection.dataset.analysisLoaded) {
             resultsSection.classList.add('show');
-            // Staggered fade-in for results section items
             const fadeInItems = document.querySelectorAll('.results-section .fade-in-item');
             fadeInItems.forEach((item, index) => {
-                item.style.animationDelay = `${index * 0.1}s`; // Stagger by 100ms
-                item.classList.add('show-animation'); /* Use the new class to trigger animation */
+                item.style.animationDelay = `${index * 0.1}s`;
+                item.classList.add('show-animation');
             });
         }
 
-        // Function to update floating label state
         function updateFloatingLabel(input) {
             const isSelectAndHasValue = input.tagName === 'SELECT' && input.value !== '';
             if (input.value || input === document.activeElement || isSelectAndHasValue) {
@@ -718,14 +966,12 @@
             }
         }
 
-        // Add 'has-value' class to form-group-floating when input is focused or has value
         document.querySelectorAll('.form-group-floating .form-control-custom, .form-group-floating .form-select-custom').forEach(input => {
             input.addEventListener('focus', () => updateFloatingLabel(input));
             input.addEventListener('blur', () => updateFloatingLabel(input));
-            input.addEventListener('change', () => updateFloatingLabel(input)); // For select elements
-            updateFloatingLabel(input); // Initial check on load
+            input.addEventListener('change', () => updateFloatingLabel(input));
+            updateFloatingLabel(input);
         });
     });
 </script>
-
 {% endblock %}
