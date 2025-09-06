@@ -368,7 +368,7 @@ class EmailConfiguration(models.Model):
     """
     user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, primary_key=True)
     email_host = models.CharField(max_length=255, help_text="SMTP server address (e.g., smtp.gmail.com)")
-    email_port = models.IntegerField(help_text="SMTP port number (e.g., 587)")
+    email_port = models.IntegerField(help_text="SMTP port number (e.g., 587)", null=True, blank=True, default=587)
     email_host_user = models.CharField(max_length=255, help_text="Email address for authentication")
     email_host_password = models.CharField(max_length=255, help_text="Password or app-specific password for the email account")
     email_use_tls = models.BooleanField(default=True, help_text="Use a TLS secure connection")
