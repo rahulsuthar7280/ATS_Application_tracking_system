@@ -101,10 +101,11 @@
 
   # myhrproject/hr_app/models.py
 
+from django.conf import settings
 from django.db import models
 import json # Import json to handle JSONField serialization/deserialization
 from django.contrib.auth.models import AbstractUser # Import AbstractUser
-
+from django.core.mail import get_connection
 # Extend Django's built-in User model
 class User(AbstractUser):
     """
@@ -277,6 +278,7 @@ class JobDescriptionDocument(models.Model):
     and job descriptions created directly via text input, with IT-specific fields.
     """
     title = models.CharField(max_length=255, help_text="A descriptive title for the job description.")
+    company_name = models.CharField(max_length=255, help_text="The name of the company posting the job.", null=True, blank=True)
     
     # New IT-specific fields
     job_level_choices = [
@@ -297,7 +299,12 @@ class JobDescriptionDocument(models.Model):
         null=True, blank=True
     )
     department = models.CharField(max_length=100, help_text="The department or team this role belongs to.", null=True, blank=True)
-    location = models.CharField(max_length=100, help_text="The primary work location (e.g., City, State, Remote).", null=True, blank=True)
+    
+    # Location fields
+    country = models.CharField(max_length=100, help_text="The country for the job location.", null=True, blank=True)
+    state = models.CharField(max_length=100, help_text="The state for the job location.", null=True, blank=True)
+    city = models.CharField(max_length=100, help_text="The city for the job location.", null=True, blank=True)
+
     employment_type_choices = [
         ('full-time', 'Full-time'),
         ('part-time', 'Part-time'),
@@ -312,6 +319,22 @@ class JobDescriptionDocument(models.Model):
         help_text="Type of employment (e.g., Full-time, Contract).",
         null=True, blank=True
     )
+
+    # Salary fields
+    salary_min = models.IntegerField(null=True, blank=True, help_text="The minimum salary for the position.")
+    salary_max = models.IntegerField(null=True, blank=True, help_text="The maximum salary for the position.")
+    salary_frequency_choices = [
+        ('hourly', 'Hourly'),
+        ('weekly', 'Weekly'),
+        ('monthly', 'Monthly'),
+        ('yearly', 'Yearly'),
+    ]
+    salary_frequency = models.CharField(
+        max_length=50,
+        choices=salary_frequency_choices,
+        help_text="The frequency of the salary payment (e.g., Yearly, Hourly).",
+        null=True, blank=True
+    )
     
     overview = models.TextField(help_text="A brief overview of the role and its purpose.", null=True, blank=True)
     responsibilities = models.TextField(help_text="Key duties and responsibilities for this role.", null=True, blank=True)
@@ -320,10 +343,13 @@ class JobDescriptionDocument(models.Model):
     education_experience = models.TextField(help_text="Required education and work experience.", null=True, blank=True)
     benefits = models.TextField(help_text="Company benefits and perks.", null=True, blank=True)
     
+    # Renamed from 'description' to 'job_description' for clarity and form compatibility
+    job_description = models.TextField(help_text="The full, detailed description of the job role.", null=True, blank=True)
+
     # Original file field, now optional
     file = models.FileField(storage=job_description_storage, 
-                            help_text="The uploaded job description file (optional if created via text).",
-                            null=True, blank=True)
+                             help_text="The uploaded job description file (optional if created via text).",
+                             null=True, blank=True)
     uploaded_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
@@ -333,3 +359,37 @@ class JobDescriptionDocument(models.Model):
         verbose_name = "Job Description Document"
         verbose_name_plural = "Job Description Documents"
         ordering = ['-uploaded_at']
+
+
+class EmailConfiguration(models.Model):
+    """
+    A model to store dynamic email configuration settings,
+    linked to a specific user.
+    """
+    user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, primary_key=True)
+    email_host = models.CharField(max_length=255, help_text="SMTP server address (e.g., smtp.gmail.com)")
+    email_port = models.IntegerField(help_text="SMTP port number (e.g., 587)")
+    email_host_user = models.CharField(max_length=255, help_text="Email address for authentication")
+    email_host_password = models.CharField(max_length=255, help_text="Password or app-specific password for the email account")
+    email_use_tls = models.BooleanField(default=True, help_text="Use a TLS secure connection")
+    email_use_ssl = models.BooleanField(default=False, help_text="Use a SSL secure connection")
+    email_from = models.CharField(max_length=255, blank=True, help_text="Sender's email address. If blank, uses the host user.")
+
+    class Meta:
+        verbose_name = "Email Configuration"
+
+    def __str__(self):
+        return f"Email Configuration for {self.user.username}"
+
+    def get_connection(self):
+        """
+        Returns a Django email connection object using the settings from this model instance.
+        """
+        return get_connection(
+            host=self.email_host,
+            port=self.email_port,
+            username=self.email_host_user,
+            password=self.email_host_password,
+            use_tls=self.email_use_tls,
+            use_ssl=self.email_use_ssl,
+        )

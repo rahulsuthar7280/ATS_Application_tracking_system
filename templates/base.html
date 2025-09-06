@@ -216,7 +216,7 @@
                
                 <a href="{% url 'show_unread_emails' %}" class="nav-item {% if request.resolver_match.url_name == 'show_unread_emails' %}active{% endif %}">
                     <i class="fas fa-envelope-open-text nav-icon"></i>
-                    <span class="nav-text">All Incoming Applications</span>
+                    <span class="nav-text">Incoming Applications</span>
                 </a>
                 <a href="{% url 'all_job_descriptions' %}" class="nav-item {% if request.resolver_match.url_name == 'all_job_descriptions' %}active{% endif %}">
                     <i class="fas fa-envelope-open-text nav-icon"></i>
@@ -228,7 +228,7 @@
                 </a>
                  <a href="{% url 'send_job_description' %}" class="nav-item {% if request.resolver_match.url_name == 'top_recommendations' %}active{% endif %}">
                     <i class="fas fa-medal nav-icon"></i>
-                    <span class="nav-text">Send Email</span>
+                    <span class="nav-text">Send Job Description</span>
                 </a>
                 <a href="" class="nav-item {% if request.resolver_match.url_name == 'ai_assistant' %}active{% endif %}">
                     <i class="fas fa-robot nav-icon"></i>

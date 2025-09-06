@@ -18,10 +18,19 @@
             <div class="btn-group me-3" role="group" aria-label="Application filters">
                 <button id="allApplicationsBtn" type="button" class="btn btn-outline-primary active">All</button>
                 <button id="todaysApplicationsBtn" type="button" class="btn btn-outline-primary">Today</button>
+            </div>
+             <div class="btn-group me-3" role="group" aria-label="Application filters">
+                <button id="gmailBtnFilter" type="button" class="btn btn-outline-primary">Gmail</button>
+                <button id="naukriBtnFilter" type="button" class="btn btn-outline-primary">Naukri</button>
+                <button id="linkedinBtnFilter" type="button" class="btn btn-outline-primary">LinkedIn</button>
+                <button id="glassdoorBtnFilter" type="button" class="btn btn-outline-primary">Glassdoor</button>
+                <button id="zohoBtnFilter" type="button" class="btn btn-outline-primary">Zoho</button>
+                <button id="indeedBtnFilter" type="button" class="btn btn-outline-primary">Indeed</button>
+            </div>
+            <div class="btn-group me-3" role="group" aria-label="Application filters">
                 <button id="basicAtsBtnFilter" type="button" class="btn btn-outline-primary">Basic ATS</button>
                 <button id="advancedAtsBtnFilter" type="button" class="btn btn-outline-primary">Advanced ATS</button>
             </div>
-            <button id="exportCsvBtn" class="btn btn-success export-btn"><i class="fas fa-file-csv me-2"></i>Export</button>
         </div>
     </div>
 
@@ -45,7 +54,7 @@
                 </thead>
                 <tbody>
                     {% for email in emails %}
-                    <tr data-delivery-date="{{ email.delivery_date|date:'Y-m-d' }}" data-email-id="{{ email.id }}" data-analysis-type="{{ email.candidateanalysis_set.first.analysis_type|default:'' }}">
+                    <tr data-delivery-date="{{ email.delivery_date|date:'Y-m-d' }}" data-email-id="{{ email.id }}" data-analysis-type="{{ email.candidateanalysis_set.first.analysis_type|default:'' }}" data-source="{{ email.source|default:'' }}">
                         <td>{{ forloop.counter }}</td>
                         <td class="candidate-name-cell text-truncate">{{ email.candidate_name }}</td>
                         <td class="text-truncate">{{ email.delivery_date|date:"Y-m-d" }}</td>
@@ -64,7 +73,7 @@
                             <select class="form-select job-description-select">
                                 <option value="">Select JD</option>
                                 {% for jd in job_descriptions %}
-                                    <option value="{{ jd.id }}" data-file-url="{{ jd.file.url }}" {% if email.job_description and email.job_description.id == jd.id %}selected{% endif %}>{{ jd.title }}</option>
+                                    <option value="{{ jd.id }}" data-file-url="" {% if email.job_description and email.job_description.id == jd.id %}selected{% endif %}>{{ jd.title }}</option>
                                 {% endfor %}
                             </select>
                         </td>
@@ -357,6 +366,23 @@
             const isBasicAts = $('#basicAtsBtnFilter').hasClass('active');
             const isAdvancedAts = $('#advancedAtsBtnFilter').hasClass('active');
             const todayDate = new Date().toISOString().slice(0, 10);
+            
+            // Determine the active platform filter
+            let activeSourceFilter = '';
+            if ($('#naukriBtnFilter').hasClass('active')) {
+                activeSourceFilter = 'Naukri';
+            } else if ($('#linkedinBtnFilter').hasClass('active')) {
+                activeSourceFilter = 'LinkedIn';
+            } else if ($('#gmailBtnFilter').hasClass('active')) {
+                activeSourceFilter = 'Gmail';
+            } else if ($('#glassdoorBtnFilter').hasClass('active')) {
+                activeSourceFilter = 'Glassdoor';
+            } else if ($('#zohoBtnFilter').hasClass('active')) {
+                activeSourceFilter = 'Zoho';
+            } else if ($('#indeedBtnFilter').hasClass('active')) {
+                activeSourceFilter = 'Indeed';
+            }
+
 
             let hasVisibleRows = false;
             rows.each(function() {
@@ -364,6 +390,7 @@
                 const text = row.text().toLowerCase();
                 const deliveryDate = row.data('delivery-date');
                 const analysisType = row.data('analysis-type');
+                const source = row.data('source');
                 const dateMatch = isToday ? (deliveryDate === todayDate) : true;
                 const textMatch = text.includes(filter);
 
@@ -374,8 +401,11 @@
                     typeMatch = analysisType === 'Advance';
                 }
                 
+                // New logic for source filter
+                const sourceMatch = (activeSourceFilter === '') ? true : (source === activeSourceFilter);
+
                 // Show the row if all filter conditions are met
-                if (textMatch && dateMatch && typeMatch) {
+                if (textMatch && dateMatch && typeMatch && sourceMatch) {
                     row.show();
                     hasVisibleRows = true;
                 } else {
@@ -538,6 +568,43 @@
             currentPage = 1;
             filterAndPaginate();
         });
+        
+        // New event listeners for the source filters
+        $('#naukriBtnFilter').on('click', function() {
+            $(this).addClass('active').siblings().removeClass('active');
+            currentPage = 1;
+            filterAndPaginate();
+        });
+        $('#gmailBtnFilter').on('click', function() {
+            $(this).addClass('active').siblings().removeClass('active');
+            currentPage = 1;
+            filterAndPaginate();
+        });
+        
+        $('#linkedinBtnFilter').on('click', function() {
+            $(this).addClass('active').siblings().removeClass('active');
+            currentPage = 1;
+            filterAndPaginate();
+        });
+        
+        $('#glassdoorBtnFilter').on('click', function() {
+            $(this).addClass('active').siblings().removeClass('active');
+            currentPage = 1;
+            filterAndPaginate();
+        });
+        
+        $('#zohoBtnFilter').on('click', function() {
+            $(this).addClass('active').siblings().removeClass('active');
+            currentPage = 1;
+            filterAndPaginate();
+        });
+        
+        $('#indeedBtnFilter').on('click', function() {
+            $(this).addClass('active').siblings().removeClass('active');
+            currentPage = 1;
+            filterAndPaginate();
+        });
+
 
         let currentEmailId;
         $('#incomingApplicationsTable').on('click', '.btn-analyze', function() {
@@ -550,7 +617,9 @@
             const selectedJdId = $currentRow.find('.job-description-select').val();
 
             if (!selectedJdId) {
-                alert("Please select a job description before proceeding with advanced analysis.");
+                // Use a custom modal or message box instead of alert
+                // For demonstration, let's use a simple console log for now
+                console.log("Please select a job description before proceeding with advanced analysis.");
                 return;
             }
 
@@ -570,7 +639,8 @@
             const selectedJdId = $currentRow.find('.job-description-select').val();
 
             if (!selectedJdId) {
-                alert("Please select a job description before proceeding with basic analysis.");
+                // Use a custom modal or message box instead of alert
+                console.log("Please select a job description before proceeding with basic analysis.");
                 return;
             }
 

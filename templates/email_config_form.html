@@ -1,0 +1,187 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Email Configuration{% endblock %}
+{% block page_heading %}Email Configuration{% endblock %}
+
+{% block content %}
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
+<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" rel="stylesheet">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap">
+
+<style>
+    :root {
+        --primary-color: #007bff; /* A classic, professional blue */
+        --secondary-color: #6c757d; /* Gray */
+        --background-color: #f8f9fa; /* A very light gray, softer than current */
+        --card-bg-color: #ffffff; /* White */
+        --border-color: #e9ecef; /* Lighter border color for a softer look */
+        --shadow-color: rgba(0, 0, 0, 0.08); /* A slightly more pronounced shadow for depth */
+        --text-color-primary: #343a40; /* Dark Gray */
+    }
+
+    body {
+        font-family: 'Montserrat', sans-serif;
+        background-color: var(--background-color);
+        color: var(--text-color-primary);
+    }
+
+    .container-layout {
+        padding-top: 3rem;
+        padding-bottom: 3rem;
+        
+    }
+
+    .form-card {
+        background-color: var(--card-bg-color);
+        border: 1px solid var(--border-color);
+        border-radius: 10px;
+        padding: 2rem;
+        margin-bottom: 2rem;
+        box-shadow: 0 4px 10px var(--shadow-color);
+    }
+
+    .form-card-title {
+        color: var(--primary-color);
+        font-weight: 600;
+        margin-bottom: 1.5rem;
+    }
+
+    .form-group-custom {
+        margin-bottom: 1.5rem;
+    }
+
+    .form-control-custom {
+        width: 100%;
+        border-radius: 8px;
+        border: 1px solid var(--border-color);
+        padding: 0.75rem 1rem;
+        background-color: #f8f9fa;
+        transition: border-color 0.3s ease, box-shadow 0.3s ease;
+    }
+
+    .form-control-custom:focus {
+        border-color: var(--primary-color);
+        box-shadow: 0 0 0 0.25rem rgba(23, 162, 184, 0.25);
+        outline: none;
+    }
+
+    .form-label-icon {
+        display: flex;
+        align-items: center;
+        font-weight: 800;
+        color: var(--text-color-primary);
+        margin-bottom: 0.5rem;
+    }
+
+    .form-label-icon i {
+        margin-right: 0.5rem;
+        color: var(--primary-color);
+    }
+
+    .btn-primary, .btn-secondary-custom {
+        padding: 0.75rem 2rem;
+        font-weight: 600;
+        border-radius: 8px;
+        transition: all 0.3s ease;
+    }
+
+    .btn-primary {
+        background-color: var(--primary-color);
+        border-color: var(--primary-color);
+    }
+
+    .btn-primary:hover {
+        background-color: #138496;
+        border-color: #138496;
+    }
+
+    .btn-secondary-custom {
+        background-color: var(--secondary-color);
+        border-color: var(--secondary-color);
+        color: white;
+    }
+
+    .btn-secondary-custom:hover {
+        background-color: #5a6268;
+        border-color: #5a6268;
+    }
+
+    .full-width-btn {
+        width: 100%;
+    }
+</style>
+
+<div class="container container-layout">
+    <h2 class="text-center section-title" style="color: var(--primary-color);">Email Configuration</h2>
+    <p class="text-center text-muted mb-5">
+        Adjust your SMTP settings for seamless email delivery.
+    </p>
+
+    {% if messages %}
+        <div class="mb-4">
+            {% for message in messages %}
+                <div class="alert {% if message.tags %}alert-{{ message.tags }}{% endif %} alert-dismissible fade show" role="alert">
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            {% endfor %}
+        </div>
+    {% endif %}
+
+    <form method="post" action="{% url 'configure_email' %}">
+        {% csrf_token %}
+        <div class="row">
+            <div class="col-12 col-md-6">
+                <div class="form-card">
+                    <h5 class="form-card-title">Server Settings</h5>
+                    <div class="form-group-custom">
+                        <label for="id_email_host" class="form-label-icon"><i class="fas fa-server"></i> SMTP Host</label>
+                        <input type="text" name="email_host" id="id_email_host" class="form-control-custom" value="{{ config.email_host|default:'' }}" placeholder="e.g., smtp.gmail.com" required>
+                    </div>
+                    <div class="form-group-custom">
+                        <label for="id_email_port" class="form-label-icon"><i class="fas fa-plug"></i> SMTP Port</label>
+                        <input type="number" name="email_port" id="id_email_port" class="form-control-custom" value="{{ config.email_port|default:'' }}" placeholder="e.g., 587" required>
+                    </div>
+                    <div class="form-group-custom">
+                        <label for="id_email_use_tls" class="form-label-icon">Security</label>
+                        <div class="form-check">
+                            <input type="checkbox" name="email_use_tls" id="id_email_use_tls" class="form-check-input" {% if config.email_use_tls %}checked{% endif %}>
+                            <label class="form-check-label" for="id_email_use_tls">Use TLS</label>
+                        </div>
+                        <div class="form-check mt-2">
+                            <input type="checkbox" name="email_use_ssl" id="id_email_use_ssl" class="form-check-input" {% if config.email_use_ssl %}checked{% endif %}>
+                            <label class="form-check-label" for="id_email_use_ssl">Use SSL</label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-12 col-md-6">
+                <div class="form-card">
+                    <h5 class="form-card-title">Authentication</h5>
+                    <div class="form-group-custom">
+                        <label for="id_email_host_user" class="form-label-icon"><i class="fas fa-user"></i> Email Username</label>
+                        <input type="text" name="email_host_user" id="id_email_host_user" class="form-control-custom" value="{{ config.email_host_user|default:'' }}" placeholder="e.g., yourname@gmail.com" required>
+                    </div>
+                    <div class="form-group-custom">
+                        <label for="id_email_host_password" class="form-label-icon"><i class="fas fa-key"></i> Email Password / App Password</label>
+                        <input type="password" name="email_host_password" id="id_email_host_password" class="form-control-custom" value="{{ config.email_host_password|default:'' }}" required>
+                    </div>
+                    <div class="form-group-custom">
+                        <label for="id_email_from" class="form-label-icon"><i class="fas fa-at"></i> "From" Email Address</label>
+                        <input type="text" name="email_from" id="id_email_from" class="form-control-custom" value="{{ config.email_from|default:'' }}" placeholder="Leave blank to use the username">
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="d-grid gap-2 col-md-6 mx-auto mt-3">
+            <button type="submit" class="btn btn-primary btn-lg"><i class="fas fa-save me-2"></i> Save Configuration</button>
+            <!-- <button type="button" class="btn btn-secondary-custom btn-lg">Back</button> -->
+        </div>
+    </form>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
+{% endblock %}

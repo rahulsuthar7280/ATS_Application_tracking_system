@@ -1,4 +1,5 @@
 # Django core imports
+from email.message import EmailMessage
 from django.http import HttpResponse, JsonResponse, HttpResponseBadRequest
 from django.views.decorators.csrf import csrf_protect, csrf_exempt
 from django.views.decorators.http import require_POST
@@ -24,6 +25,8 @@ from datetime import datetime, timedelta
 from collections import defaultdict
 from urllib.parse import urljoin
 
+
+
 # Third-party libraries
 import requests
 import spacy
@@ -34,6 +37,7 @@ import google             # Required for genai
 import google.api_core.exceptions
 
 import logging
+from hr_app.models import EmailConfiguration
 navigation_logger = logging.getLogger('hr_app_navigation') #
 # Local imports
 from .forms import ResumeUploadForm, FinalDecisionForm, PhoneNumberForm, CustomUserCreationForm, CustomAuthenticationForm
@@ -50,6 +54,20 @@ from django.http import HttpResponse
 from django.core.mail import send_mail
 from django.contrib import messages
 # from .models import JobDescription # Assuming you have this model defined in models.py
+
+
+from django.shortcuts import render, redirect, get_object_or_404, HttpResponse
+from django.contrib import messages
+from django.core.mail import EmailMessage
+from django.http import JsonResponse
+from django.views.decorators.http import require_http_methods
+from reportlab.lib.pagesizes import letter
+from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer
+from reportlab.lib.styles import getSampleStyleSheet
+from io import BytesIO
+import json
+import uuid
+
 
 # Assuming these are already defined correctly
 resume_storage = FileSystemStorage(location='media/resumes')
@@ -1892,10 +1910,16 @@ def create_job_description(request):
     """
     if request.method == 'POST':
         title = request.POST.get('title')
+        company_name = request.POST.get('company_name')
         job_level = request.POST.get('job_level')
         department = request.POST.get('department')
-        location = request.POST.get('location')
+        country = request.POST.get('country')
+        state = request.POST.get('state')
+        city = request.POST.get('city')
         employment_type = request.POST.get('employment_type')
+        salary_min = request.POST.get('salary_min')
+        salary_max = request.POST.get('salary_max')
+        salary_frequency = request.POST.get('salary_frequency')
         overview = request.POST.get('overview')
         responsibilities = request.POST.get('responsibilities')
         required_skills = request.POST.get('required_skills')
@@ -1903,14 +1927,24 @@ def create_job_description(request):
         education_experience = request.POST.get('education_experience')
         benefits = request.POST.get('benefits')
 
-        if title: # Only title is strictly required for text creation
-            # Concatenate all text fields into a single string for file storage
-            # This file will serve as a textual representation if no actual file is uploaded
+        # Handle empty salary fields by setting them to None
+        # This prevents the ValueError when saving to an IntegerField
+        salary_min = int(salary_min) if salary_min else None
+        salary_max = int(salary_max) if salary_max else None
+
+        if title:
+            # Concatenate all text fields into a single string for storage in job_description field
             description_text_content = f"Title: {title}\n"
+            if company_name: description_text_content += f"Company: {company_name}\n"
             if job_level: description_text_content += f"Job Level: {job_level.replace('_', ' ').title()}\n"
             if department: description_text_content += f"Department: {department}\n"
-            if location: description_text_content += f"Location: {location}\n"
+            if country: description_text_content += f"Location: {country}"
+            if state: description_text_content += f", {state}"
+            if city: description_text_content += f", {city}\n"
             if employment_type: description_text_content += f"Employment Type: {employment_type.replace('-', ' ').title()}\n"
+            if salary_min and salary_max: description_text_content += f"Salary: ${salary_min} - ${salary_max} ({salary_frequency})\n"
+            elif salary_min: description_text_content += f"Salary: ${salary_min} ({salary_frequency})\n"
+            elif salary_max: description_text_content += f"Salary: ${salary_max} ({salary_frequency})\n"
             if overview: description_text_content += f"\nOverview:\n{overview}\n"
             if responsibilities: description_text_content += f"\nResponsibilities:\n{responsibilities}\n"
             if required_skills: description_text_content += f"\nRequired Skills:\n{required_skills}\n"
@@ -1918,26 +1952,26 @@ def create_job_description(request):
             if education_experience: description_text_content += f"\nEducation & Experience:\n{education_experience}\n"
             if benefits: description_text_content += f"\nBenefits:\n{benefits}\n"
 
-            # Create a unique filename for the text content
-            file_name = f"{title.replace(' ', '_').lower()}_{JobDescriptionDocument.objects.count() + 1}_generated.pdf"
-            
-            # Save the text content to a file in the default storage
-            file_path = default_storage.save(f'job_descriptions/{file_name}', ContentFile(description_text_content.encode()))
-            file_name = os.path.basename(file_path)
             # Create a JobDescriptionDocument instance with all fields
             JobDescriptionDocument.objects.create(
                 title=title,
+                company_name=company_name,
                 job_level=job_level,
                 department=department,
-                location=location,
+                country=country,
+                state=state,
+                city=city,
                 employment_type=employment_type,
+                salary_min=salary_min,
+                salary_max=salary_max,
+                salary_frequency=salary_frequency,
                 overview=overview,
                 responsibilities=responsibilities,
                 required_skills=required_skills,
                 preferred_skills=preferred_skills,
                 education_experience=education_experience,
                 benefits=benefits,
-                file=file_name # Assign the path to the file field
+                job_description=description_text_content, # Store the full text content here
             )
             messages.success(request, 'Job description created successfully!')
             return redirect('all_job_descriptions')
@@ -1945,6 +1979,11 @@ def create_job_description(request):
             messages.error(request, 'Please provide at least a title for the job description.')
 
     return render(request, 'create_job_description.html')
+
+
+
+
+
 
 
 def upload_job_description(request):
@@ -2509,54 +2548,145 @@ def calendar_scheduler(request):
     return render(request,'calendar_scheduler.html')
 
 
+def send_configured_email(user, subject, message_body, recipient_list):
+    """
+    A helper function to send an email using the dynamic
+    EmailConfiguration from the database tied to a specific user.
+    """
+    try:
+        # Get or create the email configuration for the logged-in user.
+        config, created = EmailConfiguration.objects.get_or_create(user=user)
+        
+        from_email = config.email_from if config.email_from else config.email_host_user
+        
+        connection = config.get_connection()
+        email = EmailMessage(
+            subject=subject,
+            body=message_body,
+            from_email=from_email,
+            to=recipient_list,
+            connection=connection
+        )
+        
+        email.send(fail_silently=False)
+        return True
+    except EmailConfiguration.DoesNotExist:
+        print("Email configuration does not exist for this user.")
+        return False
+    except Exception as e:
+        print(f"Failed to send email: {e}")
+        return False
+
+# --- Views ---
+
+@login_required
+def configure_email(request):
+    """
+    Handles the dynamic email configuration form for the logged-in user.
+    """
+    # Get or create the email configuration for the current user.
+    config, created = EmailConfiguration.objects.get_or_create(user=request.user)
+
+    if request.method == 'POST':
+        email_host = request.POST.get('email_host')
+        email_port = request.POST.get('email_port')
+        email_host_user = request.POST.get('email_host_user')
+        email_host_password = request.POST.get('email_host_password')
+        email_use_tls = request.POST.get('email_use_tls') == 'on'
+        email_use_ssl = request.POST.get('email_use_ssl') == 'on'
+        email_from = request.POST.get('email_from')
+
+        if not email_host or not email_port or not email_host_user or not email_host_password:
+            messages.error(request, "All fields except 'From' Email Address must be filled out.")
+        elif email_use_tls and email_use_ssl:
+            messages.error(request, "You cannot use both TLS and SSL simultaneously.")
+        else:
+            try:
+                config.email_host = email_host
+                config.email_port = int(email_port)
+                config.email_host_user = email_host_user
+                config.email_host_password = email_host_password
+                config.email_use_tls = email_use_tls
+                config.email_use_ssl = email_use_ssl
+                config.email_from = email_from
+                config.save()
+                messages.success(request, "Email configuration updated successfully!")
+            except ValueError:
+                messages.error(request, "Port must be a valid number.")
+        return redirect('configure_email')
+    
+    context = {'config': config}
+    return render(request, 'email_config_form.html', context)
+
+@login_required
 def send_job_description(request):
     """
-    View to display the form for sending a job description and to handle the form submission.
+    Handles sending a job description to a candidate via email.
+    Fetches job descriptions dynamically from the database.
     """
+    job_descriptions = JobDescriptionDocument.objects.all()
+
     if request.method == 'POST':
-        # Retrieve form data
-        job_description_id = request.POST.get('job_description_id')
-        recipient_email = request.POST.get('recipient_email')
+        # Retrieve the string of multiple emails from the textarea
+        recipient_emails_string = request.POST.get('recipient_emails')
+        job_description_id = request.POST.get('job_description')
         email_body = request.POST.get('email_body')
+        
+        # Parse the string into a list of emails
+        if recipient_emails_string:
+            # Replace semicolons with commas, then split by commas, and strip whitespace
+            recipient_list = [email.strip() for email in recipient_emails_string.replace(';', ',').split(',') if email.strip()]
+        else:
+            recipient_list = []
+
+        if not recipient_list or not job_description_id or not email_body:
+            messages.error(request, "All fields are required. Please provide at least one recipient email.")
+            return render(request, 'send_job_description.html', {'job_descriptions': job_descriptions})
 
         try:
-            # Retrieve the selected job description from the database
-            job_description = JobDescriptionDocument.objects.get(pk=job_description_id)
+            job_description = get_object_or_404(JobDescriptionDocument, pk=job_description_id)
             
-            # Construct the email subject and message
-            email_subject = f"Job Opportunity: {job_description.title}"
-            full_email_body = f"{email_body}\n\nJob Description:\n\n---\n{job_description.description}"
+            # Use the URL of the stored PDF file
+            file_name = os.path.basename(job_description.file.name)
+            pdf_url = request.build_absolute_uri(f'/media/job_descriptions/{file_name}')
 
-            # NOTE: For this to work in a real-world application, you must configure
-            # your email settings in settings.py. The following code is a
-            # placeholder for the actual email sending process.
-
-            # Attempt to send the email
-            send_mail(
-                subject=email_subject,
-                message=full_email_body,
-                from_email='rahulsuthar7280@gmail.com',  # Replace with your sender email
-                recipient_list=[recipient_email],
-                fail_silently=False,
-            )
-
-            # Add a success message to be displayed on the page
-            messages.success(request, f"Successfully sent the job description to {recipient_email}.")
+            # Append the PDF link to the email body
+            updated_email_body = f"{email_body}\n\nYou can view the full job description here: {pdf_url}"
             
-        except JobDescriptionDocument.DoesNotExist:
-            messages.error(request, "The selected job description does not exist.")
+            subject = f"Job Description: {job_description.title}"
+            
+            # The send_configured_email function now receives a list of recipients
+            success = send_configured_email(request.user, subject, updated_email_body, recipient_list)
+
+            if success:
+                messages.success(request, "Email sent successfully!")
+                # return redirect('success_page') # Uncomment and modify as needed
+            else:
+                messages.error(request, "Failed to send email. Please check your configuration.")
+                return render(request, 'send_job_description.html', {'job_descriptions': job_descriptions})
+
         except Exception as e:
-            messages.error(request, f"An error occurred while sending the email: {e}")
-
-        # Redirect back to the same page to show the success/error message
-        return redirect(reverse('send_job_description'))
+            messages.error(request, f"An error occurred: {e}")
+            return render(request, 'send_job_description.html', {'job_descriptions': job_descriptions})
     
-    # If the request is a GET, render the form page
-    else:
-        # Fetch all available job descriptions from the database
-        job_descriptions = JobDescriptionDocument.objects.all()
-        
-        context = {
-            'job_descriptions': job_descriptions,
-        }
-        return render(request, 'send_job_description.html', context)
+    context = {'job_descriptions': job_descriptions}
+    return render(request, 'send_job_description.html', context)
+
+@login_required
+def success_page(request):
+    """
+    A simple success page view.
+    """
+    return HttpResponse("Email sent successfully!")
+
+@login_required
+def get_job_description_content(request, job_id):
+    """
+    Fetches job description content for a given ID.
+    This view is for the AJAX call in the frontend.
+    """
+    try:
+        job_description = get_object_or_404(JobDescriptionDocument, pk=job_id)
+        return JsonResponse({'description': job_description.description})
+    except Exception as e:
+        return JsonResponse({'error': f'Job description not found: {e}'}, status=404)
