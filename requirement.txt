@@ -117,3 +117,4 @@ frontend
 tools
 reportlab
 selenium
+webdriver-manager
