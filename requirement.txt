@@ -116,3 +116,4 @@ google-generativeai
 frontend
 tools
 reportlab
+selenium
