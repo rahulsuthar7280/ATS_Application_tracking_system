@@ -300,7 +300,7 @@
                 </a>
                 
                 {% if user.is_authenticated %}
-                    {% if user.role == 'admin' or user.role == 'superadmin' %}
+                    {% if user.role == 'admin' %}
                         <a href="{% url 'admin_dashboard' %}" class="nav-item {% if request.resolver_match.url_name == 'admin_dashboard' %}active{% endif %}">
                             <i class="fas fa-user-shield nav-icon"></i>
                             <span class="nav-text">Admin Panel</span>
