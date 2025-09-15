@@ -21,6 +21,10 @@
         --shadow-color: rgba(0, 0, 0, 0.08); /* Soft Shadow */
         --text-color-primary: #343a40; /* Dark Gray */
         --text-color-secondary: #6c757d; /* Gray */
+        --success-color: #28a745;
+        --danger-color: #dc3545;
+        --warning-color: #ffc107;
+        --info-color: #17a2b8;
     }
 
     body {
@@ -90,15 +94,39 @@
         background-color: #f0f8ff;
     }
 
+    .form-group-floating {
+        position: relative;
+    }
+
     .form-group-floating label {
+        position: absolute;
+        top: 50%;
+        left: 1rem;
+        transform: translateY(-50%);
         color: var(--text-color-secondary);
         font-size: 0.9rem;
+        transition: all 0.2s ease-in-out;
+        pointer-events: none;
+    }
+    
+    .form-group-floating .form-control-custom:focus + label,
+    .form-group-floating .form-control-custom.has-value + label,
+    .form-group-floating .form-select-custom:focus + label,
+    .form-group-floating .form-select-custom.has-value + label {
+        top: -0.5rem;
+        left: 0.5rem;
+        font-size: 0.75rem;
+        background: var(--card-bg-color);
+        padding: 0 0.5rem;
+        color: var(--primary-color);
     }
 
     .form-control-custom, .form-select-custom {
         border-radius: 8px;
         border: 1px solid var(--border-color);
         padding: 0.75rem 1rem;
+        width: 100%;
+        background-color: var(--card-bg-color);
     }
 
     .btn-primary {
@@ -114,8 +142,13 @@
         background-color: #0056b3;
         border-color: #0056b3;
     }
+    
+    .btn-outline-primary.active {
+        color: #fff !important;
+        background-color: var(--primary-color);
+        border-color: var(--primary-color);
+    }
 
-    /* Results section improvements */
     .results-section {
         margin-top: 3rem;
         opacity: 0;
@@ -161,9 +194,9 @@
         color: #fff;
     }
 
-    .fitment-verdict.selected { background-color: #28a745; }
-    .fitment-verdict.rejected { background-color: #dc3545; }
-    .fitment-verdict.marginal { background-color: #ffc107; }
+    .fitment-verdict.selected { background-color: var(--success-color); }
+    .fitment-verdict.rejected { background-color: var(--danger-color); }
+    .fitment-verdict.marginal { background-color: var(--warning-color); }
 
     .content-box {
         background-color: #f0f2f5;
@@ -184,9 +217,9 @@
 
     .nav-tabs .nav-link.active {
         color: var(--primary-color);
-        border-color: var(--primary-color);
+        border-color: var(--primary-color) var(--primary-color) #fff;
     }
-
+    
     .questions-list li {
         background-color: #f8f9fa;
         padding: 1rem 1.5rem;
@@ -194,8 +227,27 @@
         border-radius: 8px;
         border-left: 4px solid var(--primary-color);
     }
+    
+    .pdf-embed {
+        width: 100%;
+        min-height: 700px;
+        border: 1px solid var(--border-color);
+        border-radius: 8px;
+    }
+    
+    .pdf-placeholder {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        text-align: center;
+        min-height: 700px;
+        border: 1px dashed var(--border-color);
+        border-radius: 8px;
+        color: var(--text-color-secondary);
+        padding: 2rem;
+    }
 
-    /* New preloader styling */
     #preloader {
         position: fixed;
         top: 0;
@@ -224,44 +276,44 @@
         border-top-color: transparent;
         border-radius: 50%;
         animation: spin 1s linear infinite;
-        position: relative;
-    }
-
-    .spinner::before {
-        content: '';
-        position: absolute;
-        top: 50%;
-        left: 50%;
-        transform: translate(-50%, -50%);
-        width: 80px;
-        height: 80px;
-        border: 4px solid rgba(0, 123, 255, 0.3);
-        border-radius: 50%;
-        animation: pulse 1.5s ease-out infinite;
-    }
-
-    @keyframes spin {
-        0% { transform: rotate(0deg); }
-        100% { transform: rotate(360deg); }
-    }
-
-    @keyframes pulse {
-        0% { transform: scale(0.8); opacity: 1; }
-        50% { transform: scale(1.2); opacity: 0; }
-        100% { transform: scale(0.8); opacity: 1; }
     }
     
+    .preloader-progress {
+        width: 300px;
+        height: 16px;
+        background-color: #e9ecef;
+        border-radius: 8px;
+        margin-top: 2rem;
+        overflow: hidden;
+    }
+    
+    .progress-bar {
+        height: 100%;
+        background-color: var(--primary-color);
+        transition: width 0.5s ease-in-out;
+    }
+
     .preloader-text {
         color: var(--text-color-primary);
         font-size: 1.2rem;
         font-weight: 500;
-        margin-top: 2rem;
+        margin-top: 1rem;
         animation: fadeIn 1s ease-in-out;
     }
 
     @keyframes fadeIn {
         from { opacity: 0; transform: translateY(10px); }
         to { opacity: 1; transform: translateY(0); }
+    }
+    
+    @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+    }
+    
+    .error-message {
+        color: var(--danger-color);
+        margin-top: 0.5rem;
     }
 </style>
 
@@ -274,7 +326,7 @@
                     Follow these steps to upload candidate details and get a comprehensive AI analysis.
                 </p>
 
-                <form method="post" enctype="multipart/form-data" id="resumeForm">
+                <form method="post" enctype="multipart/form-data" id="resumeForm" novalidate>
                     {% csrf_token %}
 
                     <ul class="nav nav-pills nav-fill mb-4" id="formStepsTab" role="tablist">
@@ -284,7 +336,7 @@
                             </button>
                         </li>
                         <li class="nav-item" role="presentation">
-                            <button class="nav-link" id="step2-tab" data-bs-toggle="pill" data-bs-target="#step2" type="button" role="tab" aria-controls="step2" aria-selected="false">
+                            <button class="nav-link" id="step2-tab" data-bs-toggle="pill" data-bs-target="#step2" type="button" role="tab" aria-controls="step2" aria-selected="false" disabled>
                                 <i class="fas fa-2 me-2"></i> Job Details
                             </button>
                         </li>
@@ -322,7 +374,7 @@
                             <div id="jdSourceFields">
                                 <div id="selectJdSection">
                                     <div class="form-group-floating mb-4">
-                                        <select class="form-select-custom" id="jobDescriptionSelect" name="job_description_id" required>
+                                        <select class="form-select-custom" id="jobDescriptionSelect" name="job_description_id">
                                             <option value="">-- Select an Existing Job Description --</option>
                                             {% for doc in job_description_documents %}
                                             <option value="{{ doc.id }}">{{ doc.title }}</option>
@@ -343,14 +395,14 @@
                             </div>
 
                             <div class="form-group-floating mb-4">
-                                <input type="text" class="form-control-custom" id="{{ form.job_role.id_for_label }}" name="{{ form.job_role.name }}" value="{{ form.job_role.value|default:'' }}" {% if form.job_role.field.required %}required{% endif %}>
+                                <input type="text" class="form-control-custom" id="{{ form.job_role.id_for_label }}" name="{{ form.job_role.name }}" value="{{ form.job_role.value|default:'' }}" required>
                                 <label for="{{ form.job_role.id_for_label }}">
                                     <i class="fas fa-tag me-2"></i> Job Role
                                 </label>
                             </div>
 
                             <div class="form-group-floating mb-4">
-                                <select class="form-select-custom" id="{{ form.target_experience_type.id_for_label }}" name="{{ form.target_experience_type.name }}" {% if form.target_experience_type.field.required %}required{% endif %}>
+                                <select class="form-select-custom" id="{{ form.target_experience_type.id_for_label }}" name="{{ form.target_experience_type.name }}" required>
                                     {% for value, label in form.target_experience_type.field.choices %}
                                     <option value="{{ value }}" {% if form.target_experience_type.value == value %}selected{% endif %}>{{ label }}</option>
                                     {% endfor %}
@@ -363,7 +415,7 @@
                             <div id="experience_fields" class="row g-3 px-3 w-100 mt-2" style="display: none;">
                                 <div class="col-sm-6">
                                     <div class="form-group-floating">
-                                        <input type="number" class="form-control-custom" id="{{ form.min_years_required.id_for_label }}" name="{{ form.min_years_required.name }}" value="{{ form.min_years_required.value|default:'' }}" min="0" step="1">
+                                        <input type="number" class="form-control-custom" id="{{ form.min_years_required.id_for_label }}" name="{{ form.min_years_required.name }}" value="{{ form.min_years_required.value|default:'' }}" min="0" step="1" disabled>
                                         <label for="{{ form.min_years_required.id_for_label }}">
                                             <i class="fas fa-sort-numeric-up me-2"></i> Min. Years
                                         </label>
@@ -371,7 +423,7 @@
                                 </div>
                                 <div class="col-sm-6">
                                     <div class="form-group-floating">
-                                        <input type="number" class="form-control-custom" id="{{ form.max_years_required.id_for_label }}" name="{{ form.max_years_required.name }}" value="{{ form.max_years_required.value|default:'' }}" min="0" step="1">
+                                        <input type="number" class="form-control-custom" id="{{ form.max_years_required.id_for_label }}" name="{{ form.max_years_required.name }}" value="{{ form.max_years_required.value|default:'' }}" min="0" step="1" disabled>
                                         <label for="{{ form.max_years_required.id_for_label }}">
                                             <i class="fas fa-sort-numeric-down me-2"></i> Max. Years
                                         </label>
@@ -481,17 +533,44 @@
                         </div>
                     </div>
                     <div class="row g-4 mb-4">
-                        <div class="col-md-6">
-                            <div class="fitment-verdict-box fade-in-item">
-                                <h5 class="text-primary"><i class="fas fa-shield-alt me-2"></i> Candidate Fitment Verdict</h5>
-                                <p class="fitment-verdict mt-3 
-                                        {% if analysis_result.fitment_verdict == 'SELECTED' %}selected
-                                        {% elif analysis_result.fitment_verdict == 'MARGINALLY FIT' %}marginal
-                                        {% else %}rejected{% endif %}">
-                                    {{ analysis_result.fitment_verdict|default:"N/A" }}
-                                </p>
-                            </div>
+                    <div class="col-md-6">
+                    <div class="fitment-verdict-box shadow-sm rounded-4 p-4 fade-in-item bg-white">
+                        <h5 class="text-primary fw-bold d-flex align-items-center mb-3">
+                            <i class="fas fa-shield-alt me-2 text-primary"></i> Candidate Fitment Verdict
+                        </h5>
+
+                        <div class="text-center">
+                            <span class="badge verdict-badge px-4 py-2 fs-6
+                                {% if analysis_result.fitment_verdict == 'SELECTED' %} bg-success text-white
+                                {% elif analysis_result.fitment_verdict == 'MARGINALLY FIT' %} bg-warning text-dark
+                                {% else %} bg-danger text-white
+                                {% endif %}">
+                                {{ analysis_result.fitment_verdict|default:"N/A" }}
+                            </span>
                         </div>
+
+                        <p class="mt-3 text-muted small text-center">
+                            This verdict is based on AI-powered candidate evaluation.
+                        </p>
+                    </div>
+                </div>
+
+                <style>
+                    .fitment-verdict-box {
+                        transition: all 0.3s ease-in-out;
+                    }
+                    .fitment-verdict-box:hover {
+                        transform: translateY(-3px);
+                        box-shadow: 0 8px 18px rgba(0, 0, 0, 0.08);
+                    }
+                    .verdict-badge {
+                        border-radius: 30px;
+                        font-weight: 700;
+                        letter-spacing: 0.5px;
+                        text-transform: uppercase;
+                    }
+                </style>
+
                         <div class="col-md-6">
                             <div class="content-box fade-in-item">
                                 <h6><i class="fas fa-sitemap me-2"></i> Strategic Alignment</h6>
@@ -767,6 +846,9 @@
 
 <div id="preloader">
     <div class="spinner"></div>
+    <div class="preloader-progress">
+        <div class="progress-bar" id="progressBar"></div>
+    </div>
     <p class="preloader-text" id="preloaderMessage">Analyzing Resume...</p>
 </div>
 
@@ -801,12 +883,12 @@
         const uploadJdSection = document.getElementById('uploadJdSection');
         const jobDescriptionSelect = document.getElementById('jobDescriptionSelect');
         const jobDescriptionInput = document.getElementById('jobDescriptionInput');
-
-        function toggleJdSection() {
+        
+        function toggleJdSourceSection() {
             if (selectJdRadio.checked) {
                 selectJdSection.style.display = 'block';
                 uploadJdSection.style.display = 'none';
-                jobDescriptionSelect.setAttribute('required', 'required'); 
+                jobDescriptionSelect.setAttribute('required', 'required');
                 jobDescriptionInput.removeAttribute('required');
             } else {
                 selectJdSection.style.display = 'none';
@@ -815,11 +897,11 @@
                 jobDescriptionSelect.removeAttribute('required');
             }
         }
-
+        
         if (selectJdRadio && uploadJdRadio) {
-            selectJdRadio.addEventListener('change', toggleJdSection);
-            uploadJdRadio.addEventListener('change', toggleJdSection);
-            toggleJdSection();
+            selectJdRadio.addEventListener('change', toggleJdSourceSection);
+            uploadJdRadio.addEventListener('change', toggleJdSourceSection);
+            toggleJdSourceSection();
         }
 
         const resumeFileInput = document.getElementById('resumeInput');
@@ -830,8 +912,9 @@
         const pdfPlaceholder = document.getElementById('pdfPlaceholder');
         const pdfErrorMessage = document.getElementById('pdfErrorMessage');
         const pdfPlaceholderMessage = document.getElementById('pdfPlaceholderMessage');
-
-
+        const MAX_FILE_SIZE_MB = 10;
+        
+        // Initial check for PDF preview
         if (pdfEmbed && pdfEmbed.src && pdfEmbed.src !== window.location.href + '#toolbar=0&navpanes=0') {
             pdfEmbed.style.display = 'block';
             if (pdfPlaceholder) pdfPlaceholder.style.display = 'none';
@@ -843,40 +926,50 @@
         if (resumeFileInput) {
             resumeFileInput.addEventListener('change', function () {
                 const files = this.files;
+                pdfErrorMessage.style.display = 'none';
+                
                 if (files.length > 0) {
-                    if (files.length > 10) {
-                        resumeFileNameSpan.textContent = "Error: Please select a maximum of 10 files.";
-                        this.value = ''; // Clear the selected files
+                    if (files.length > 1) {
+                        // Handle multiple file upload case
+                        resumeFileNameSpan.textContent = `${files.length} files selected`;
                         pdfEmbed.style.display = 'none';
                         pdfPlaceholder.style.display = 'flex';
-                        pdfPlaceholderMessage.textContent = "Upload a PDF Resume to Preview";
-                        pdfErrorMessage.style.display = 'block';
-                        return;
-                    }
-
-                    if (files.length === 1) {
+                        pdfPlaceholderMessage.textContent = "Preview is available for single PDF uploads only.";
+                        this.setCustomValidity(""); // Clear previous errors
+                    } else {
+                        // Handle single file upload
                         const file = files[0];
                         if (file.type === 'application/pdf') {
+                            const fileSizeMB = file.size / (1024 * 1024);
+                            if (fileSizeMB > MAX_FILE_SIZE_MB) {
+                                this.value = ''; // Clear file input
+                                resumeFileNameSpan.textContent = "File too large. Max size is 10 MB.";
+                                pdfEmbed.style.display = 'none';
+                                pdfPlaceholder.style.display = 'flex';
+                                pdfPlaceholderMessage.textContent = "Upload a PDF Resume to Preview";
+                                pdfErrorMessage.textContent = "File too large. Please upload a file smaller than 10 MB.";
+                                pdfErrorMessage.style.display = 'block';
+                                this.setCustomValidity("File too large.");
+                                return;
+                            }
+                            
                             resumeFileNameSpan.textContent = file.name;
                             const fileURL = URL.createObjectURL(file);
                             pdfEmbed.src = fileURL + '#toolbar=0&navpanes=0';
                             pdfEmbed.style.display = 'block';
                             pdfPlaceholder.style.display = 'none';
-                            pdfErrorMessage.style.display = 'none';
+                            pdfPlaceholderMessage.textContent = "Upload a PDF Resume to Preview";
+                            this.setCustomValidity(""); // Clear previous errors
                         } else {
                             resumeFileNameSpan.textContent = "Invalid file type. Please upload a PDF.";
                             pdfEmbed.src = '';
                             pdfEmbed.style.display = 'none';
                             pdfPlaceholder.style.display = 'flex';
+                            pdfPlaceholderMessage.textContent = "Upload a PDF Resume to Preview";
                             pdfErrorMessage.textContent = "Please upload a valid PDF file for resume preview.";
                             pdfErrorMessage.style.display = 'block';
+                            this.setCustomValidity("Invalid file type.");
                         }
-                    } else {
-                        resumeFileNameSpan.textContent = files.length + " files selected";
-                        pdfEmbed.style.display = 'none';
-                        pdfPlaceholder.style.display = 'flex';
-                        pdfPlaceholderMessage.textContent = "Preview is available for single PDF uploads only.";
-                        pdfErrorMessage.style.display = 'none';
                     }
                 } else {
                     resumeFileNameSpan.textContent = 'Click to upload a PDF resume';
@@ -884,11 +977,11 @@
                     pdfEmbed.style.display = 'none';
                     pdfPlaceholder.style.display = 'flex';
                     pdfPlaceholderMessage.textContent = "Upload a PDF Resume to Preview";
-                    pdfErrorMessage.style.display = 'none';
+                    this.setCustomValidity("Please upload a resume.");
                 }
             });
         }
-
+        
         if (jobDescriptionFileInput) {
             jobDescriptionFileInput.addEventListener('change', function () {
                 const file = this.files[0];
@@ -912,17 +1005,25 @@
             const selectedValue = experienceTypeSelect.value;
             experienceFieldsDiv.style.display = 'none';
             minYearsInput.setAttribute('disabled', 'disabled');
+            minYearsInput.removeAttribute('required');
             minYearsInput.value = '';
             maxYearsInput.setAttribute('disabled', 'disabled');
+            maxYearsInput.removeAttribute('required');
             maxYearsInput.value = '';
-            if (selectedValue === 'Specific Range (Years)' || selectedValue === 'Minimum Years Required') {
+            if (selectedValue === 'Specific Range (Years)') {
                 experienceFieldsDiv.style.display = 'flex';
                 minYearsInput.removeAttribute('disabled');
-                if (selectedValue === 'Specific Range (Years)') {
-                    maxYearsInput.removeAttribute('disabled');
-                }
+                minYearsInput.setAttribute('required', 'required');
+                maxYearsInput.removeAttribute('disabled');
+                maxYearsInput.setAttribute('required', 'required');
+            } else if (selectedValue === 'Minimum Years Required') {
+                experienceFieldsDiv.style.display = 'flex';
+                minYearsInput.removeAttribute('disabled');
+                minYearsInput.setAttribute('required', 'required');
             }
             updateFloatingLabel(experienceTypeSelect);
+            updateFloatingLabel(minYearsInput);
+            updateFloatingLabel(maxYearsInput);
         }
 
         if (experienceTypeSelect) {
@@ -933,18 +1034,47 @@
         const resumeForm = document.getElementById('resumeForm');
         const preloader = document.getElementById('preloader');
         const preloaderMessage = document.getElementById('preloaderMessage');
+        const progressBar = document.getElementById('progressBar');
         const resultsSection = document.querySelector('.results-section');
 
         if (resumeForm) {
             resumeForm.addEventListener('submit', function(event) {
-                if (!resumeFileInput.files.length || resumeFileInput.files[0].type !== 'application/pdf') {
+                if (!this.checkValidity()) {
+                    event.preventDefault();
                     return; 
                 }
                 
                 event.preventDefault();
                 
                 preloader.classList.add('show');
-                this.submit();
+                
+                // Simulate server-side processing with a fake progress bar
+                let progress = 0;
+                const progressInterval = setInterval(() => {
+                    progress += 10;
+                    if (progress > 100) {
+                        clearInterval(progressInterval);
+                        progress = 100;
+                    }
+                    progressBar.style.width = progress + '%';
+
+                    if (progress === 10) {
+                        preloaderMessage.textContent = "Uploading resume to the server...";
+                    } else if (progress === 30) {
+                        preloaderMessage.textContent = "Analyzing resume content...";
+                    } else if (progress === 60) {
+                        preloaderMessage.textContent = "Generating detailed analysis and scores...";
+                    } else if (progress === 90) {
+                        preloaderMessage.textContent = "Finalizing the report and recommendations...";
+                    } else if (progress === 100) {
+                        preloaderMessage.textContent = "Analysis complete! Redirecting...";
+                        // Wait a moment for the animation to finish
+                        setTimeout(() => {
+                           // Submit the form for real after the animation finishes
+                           resumeForm.submit();
+                        }, 500); 
+                    }
+                }, 400); // Update progress every 400ms
             });
         }
 
@@ -965,13 +1095,15 @@
                 input.classList.remove('has-value');
             }
         }
-
+        
+        // Initialize floating labels and attach event listeners
         document.querySelectorAll('.form-group-floating .form-control-custom, .form-group-floating .form-select-custom').forEach(input => {
             input.addEventListener('focus', () => updateFloatingLabel(input));
             input.addEventListener('blur', () => updateFloatingLabel(input));
             input.addEventListener('change', () => updateFloatingLabel(input));
             updateFloatingLabel(input);
         });
+        
     });
 </script>
 {% endblock %}

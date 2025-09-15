@@ -1,0 +1,185 @@
+{% extends 'base.html' %}
+
+{% block title %}Create Job Description{% endblock %}
+{% block page_heading %}Create Job Description{% endblock %}
+
+{% block content %}
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ career.title }} - Apply Now</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+        @import url('https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.1.1/css/all.min.css');
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f1f5f9; /* Slate 100 */
+        }
+        .main-container {
+            background-color: #ffffff;
+        }
+        .btn-primary {
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px -2px rgb(0 0 0 / 0.1), 0 3px 6px -3px rgb(0 0 0 / 0.1);
+        }
+        .input-field {
+            @apply block w-full px-4 py-2 mt-1 text-slate-700 bg-white border border-slate-300 rounded-lg focus:border-blue-500 focus:ring focus:ring-blue-500 focus:ring-opacity-50;
+        }
+        .form-section-title {
+            @apply text-xl font-bold text-slate-800 border-b border-slate-200 pb-2 mb-4;
+        }
+    </style>
+</head>
+<body class="p-4 md:p-8 lg:p-12">
+    <div class="max-w-7xl mx-auto main-container rounded-3xl shadow-2xl p-6 md:p-12 border border-slate-200">
+        <!-- Back Button -->
+        <a href="{% url 'career_portal' %}" class="inline-flex items-center text-slate-500 hover:text-blue-600 mb-8 transition duration-200">
+            <i class="fas fa-arrow-left mr-2 text-sm"></i>
+            Back to all postings
+        </a>
+
+        <!-- Main Content Grid: Job Details (Left) and Form (Right) -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-12">
+            <!-- Left Column: Job Details -->
+            <div class="space-y-10">
+                <header class="pb-6 border-b border-slate-200">
+                    <h1 class="text-4xl md:text-5xl font-extrabold text-slate-900 leading-tight">{{ career.title }}</h1>
+                    <p class="mt-2 text-lg font-medium text-slate-600">
+                        Posted on: <span class="font-bold text-slate-800">{{ career.date_posted|date:"M d, Y" }}</span>
+                    </p>
+                </header>
+                
+                <div class="bg-slate-50 rounded-xl p-6 shadow-sm border border-slate-200">
+                    <h2 class="text-lg font-bold text-slate-800 mb-4 flex items-center gap-2">
+                        <i class="fas fa-info-circle text-blue-600"></i>
+                        Quick Facts
+                    </h2>
+                    <ul class="space-y-4">
+                        <li class="flex items-center text-slate-600">
+                            <i class="fas fa-map-marker-alt text-blue-500 mr-3"></i>
+                            <div>
+                                <strong class="text-sm block text-slate-800">Location</strong>
+                                <span class="text-sm">{{ career.location }}</span>
+                            </div>
+                        </li>
+                        <li class="flex items-center text-slate-600">
+                            <i class="fas fa-clock text-blue-500 mr-3"></i>
+                            <div>
+                                <strong class="text-sm block text-slate-800">Job Type</strong>
+                                <span class="text-sm">{{ career.job_type }}</span>
+                            </div>
+                        </li>
+                        <li class="flex items-center text-slate-600">
+                            <i class="fas fa-dollar-sign text-blue-500 mr-3"></i>
+                            <div>
+                                <strong class="text-sm block text-slate-800">Salary</strong>
+                                <span class="text-sm">{{ career.salary }}</span>
+                            </div>
+                        </li>
+                    </ul>
+                </div>
+
+                <div>
+                    <h2 class="text-2xl font-bold text-slate-800 mb-4 flex items-center gap-2">
+                        <i class="fas fa-file-alt text-blue-600"></i>
+                        Job Description
+                    </h2>
+                    <div class="prose max-w-none text-slate-700 leading-relaxed">
+                        <p>{{ career.description }}</p>
+                    </div>
+                </div>
+                
+                <div>
+                    <h2 class="text-2xl font-bold text-slate-800 mb-4 flex items-center gap-2">
+                        <i class="fas fa-tasks text-blue-600"></i>
+                        Key Responsibilities
+                    </h2>
+                    <div class="prose max-w-none text-slate-700 leading-relaxed">
+                        <p>{{ career.responsibilities }}</p>
+                    </div>
+                </div>
+
+                <div>
+                    <h2 class="text-2xl font-bold text-slate-800 mb-4 flex items-center gap-2">
+                        <i class="fas fa-award text-blue-600"></i>
+                        Required Qualifications
+                    </h2>
+                    <div class="prose max-w-none text-slate-700 leading-relaxed">
+                        <p>{{ career.qualifications }}</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Column: Application Form -->
+            <div class="space-y-8 p-6 md:p-8 bg-slate-50 rounded-xl shadow-md border border-slate-200">
+                <div class="text-center">
+                    <h2 class="text-3xl font-bold text-slate-800 mb-2">Apply Now</h2>
+                    <p class="text-sm text-slate-500">Submit your application for this position.</p>
+                </div>
+                
+                <form action="" method="POST" enctype="multipart/form-data" class="space-y-6">
+                    {% csrf_token %}
+                    <input type="hidden" name="career_page_id" value="{{ career.pk }}">
+
+                    <!-- Personal Information -->
+                    <div>
+                        <h3 class="form-section-title">Personal Information</h3>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <label for="first_name" class="block text-sm font-medium text-slate-700">First Name</label>
+                                <input type="text" id="first_name" name="first_name" required class="input-field">
+                            </div>
+                            <div>
+                                <label for="last_name" class="block text-sm font-medium text-slate-700">Last Name</label>
+                                <input type="text" id="last_name" name="last_name" required class="input-field">
+                            </div>
+                            <div class="md:col-span-2">
+                                <label for="email" class="block text-sm font-medium text-slate-700">Email Address</label>
+                                <input type="email" id="email" name="email" required class="input-field">
+                            </div>
+                            <div class="md:col-span-2">
+                                <label for="phone" class="block text-sm font-medium text-slate-700">Phone Number</label>
+                                <input type="tel" id="phone" name="phone" class="input-field">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Documents -->
+                    <div>
+                        <h3 class="form-section-title">Application Documents</h3>
+                        <div class="space-y-4">
+                            <div>
+                                <label for="resume" class="block text-sm font-medium text-slate-700">Resume/CV <span class="text-red-500">*</span></label>
+                                <input type="file" id="resume" name="resume" required class="input-field file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-600 hover:file:bg-blue-100">
+                            </div>
+                            <div>
+                                <label for="cover_letter" class="block text-sm font-medium text-slate-700">Cover Letter</label>
+                                <textarea id="cover_letter" name="cover_letter" rows="4" class="input-field resize-none"></textarea>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Additional Information -->
+                    <div>
+                        <h3 class="form-section-title">Additional Information</h3>
+                        <div>
+                            <label for="linkedin_url" class="block text-sm font-medium text-slate-700">LinkedIn Profile URL</label>
+                            <input type="url" id="linkedin_url" name="linkedin_url" class="input-field">
+                        </div>
+                    </div>
+                    
+                    <!-- Submit Button -->
+                    <button type="submit" class="block w-full text-center py-4 px-10 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-lg shadow-lg hover:shadow-xl btn-primary text-lg mt-8">
+                        Submit Application
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</body>
+{% endblock %}

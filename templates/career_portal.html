@@ -1,0 +1,624 @@
+{% extends 'base.html' %}
+
+{% block title %}Create Job Description{% endblock %}
+{% block page_heading %}Create Job Description{% endblock %}
+
+{% block content %}
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Company Careers Portal</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.1.1/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #F8FAFC; /* Lighter Slate */
+            color: #1F2937;
+        }
+        .main-container {
+            background-color: #FFFFFF;
+            border-radius: 1.5rem;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.05);
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 2rem;
+        }
+        @media (min-width: 1024px) {
+            .main-container {
+                grid-template-columns: 3fr 1fr;
+            }
+        }
+        .card {
+            background-color: #FFFFFF;
+            border-radius: 1rem;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
+            transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+            padding: 2rem;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.08);
+        }
+        .featured-card {
+            background: linear-gradient(135deg, #3B82F6, #1D4ED8);
+            color: #FFFFFF;
+            box-shadow: 0 15px 30px rgba(30, 64, 175, 0.2);
+            position: relative;
+            overflow: hidden;
+        }
+        .featured-card::before {
+            content: '';
+            position: absolute;
+            top: -20px;
+            left: -20px;
+            width: 150px;
+            height: 150px;
+            background: rgba(255, 255, 255, 0.1);
+            transform: rotate(45deg);
+            border-radius: 1rem;
+        }
+        .featured-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 20px 40px rgba(30, 64, 175, 0.3);
+        }
+        .featured-card .text-slate-900, .featured-card .text-slate-600, .featured-card .text-slate-500 {
+            color: #FFFFFF;
+        }
+        .featured-card .px-3 {
+            background-color: rgba(255, 255, 255, 0.15);
+            color: #FFFFFF;
+        }
+        .btn-primary {
+            background-color: #1D4ED8; 
+            transition: background-color 0.2s ease-in-out, transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+        }
+        .btn-primary:hover {
+            background-color: #1E40AF; 
+            transform: translateY(-1px);
+            box-shadow: 0 4px 8px rgba(30, 64, 175, 0.2);
+        }
+        .btn-action {
+            background-color: #F1F5F9;
+            color: #1F2937;
+            border: 1px solid #E2E8F0;
+        }
+        .btn-action:hover {
+            background-color: #E2E8F0;
+        }
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            padding: 0.25rem 0.75rem;
+            border-radius: 9999px;
+            font-size: 0.75rem;
+            font-weight: 500;
+            background-color: #E2E8F0;
+            color: #475569;
+        }
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 50;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.3s ease, visibility 0.3s ease;
+        }
+        .modal-overlay.open {
+            opacity: 1;
+            visibility: visible;
+        }
+        .modal-content {
+            background-color: #FFFFFF;
+            padding: 2.5rem;
+            border-radius: 1.5rem;
+            width: 95%;
+            max-width: 60rem;
+            position: relative;
+            transform: scale(0.95);
+            transition: transform 0.4s cubic-bezier(0.2, 0.8, 0.2, 1);
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+        .modal-overlay.open .modal-content {
+            transform: scale(1);
+        }
+        .close-btn {
+            position: absolute;
+            top: 1.5rem;
+            right: 1.5rem;
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            color: #9CA3AF;
+            cursor: pointer;
+            transition: color 0.2s ease;
+        }
+        .close-btn:hover {
+            color: #1F2937;
+        }
+        .form-input {
+            width: 100%;
+            padding: 0.75rem 1rem;
+            background-color: #F9FAFB;
+            border: 1px solid #D1D5DB;
+            border-radius: 0.5rem;
+            font-size: 0.875rem;
+            color: #1F2937;
+            transition: border-color 0.2s ease, box-shadow 0.2s ease;
+        }
+        .form-input:focus {
+            outline: none;
+            border-color: #1D4ED8;
+            box-shadow: 0 0 0 3px rgba(30, 64, 175, 0.2);
+        }
+        .form-label {
+            display: block;
+            font-size: 0.875rem;
+            font-weight: 600;
+            color: #4B5563;
+            margin-bottom: 0.5rem;
+        }
+        textarea.form-input {
+            padding: 1rem;
+        }
+        /* Custom styling for the range input */
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 1rem;
+            height: 1rem;
+            background: #1D4ED8;
+            cursor: pointer;
+            border-radius: 50%;
+            box-shadow: 0 0 0 4px rgba(30, 64, 175, 0.2);
+            transition: background-color 0.2s ease;
+        }
+        input[type="range"]::-webkit-slider-thumb:hover {
+            background: #1E40AF;
+        }
+        input[type="range"]::-moz-range-thumb {
+            width: 1rem;
+            height: 1rem;
+            background: #1D4ED8;
+            cursor: pointer;
+            border-radius: 50%;
+            box-shadow: 0 0 0 4px rgba(30, 64, 175, 0.2);
+            transition: background-color 0.2s ease;
+        }
+        input[type="range"]::-moz-range-thumb:hover {
+            background: #1E40AF;
+        }
+    </style>
+</head>
+<body class="p-4 md:p-8">
+    <main class="max-w-10xl mx-auto main-container p-6 md:p-12">
+        <section class="lg:col-span-1">
+            <header class="mb-12">
+                <div class="flex items-center justify-start mb-4 text-[#1D4ED8]">
+                    <i class="fas fa-briefcase text-4xl drop-shadow-sm"></i>
+                    <h1 class="text-3xl md:text-4xl font-bold text-slate-900 leading-tight tracking-tight ml-4">
+                        Company Careers Portal
+                    </h1>
+                </div>
+                <p class="mt-2 text-md text-slate-600 max-w-2xl">
+                    Discover your next opportunity with us. Create and manage job postings with a simple, powerful portal.
+                </p>
+            </header>
+            
+            <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
+                <div class="flex-1 w-full relative">
+                    <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-slate-400">
+                        <i class="fas fa-search text-sm"></i>
+                    </div>
+                    <input type="text" id="searchInput" placeholder="Search by job title..."
+                           class="w-full pl-12 pr-4 py-3 rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-[#1D4ED8] transition duration-150 shadow-sm text-sm">
+                </div>
+                <div class="flex flex-col sm:flex-row gap-4 w-full md:w-auto">
+                    <select id="locationFilter" class="w-full sm:w-auto px-4 py-3 rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-[#1D4ED8] transition duration-150 shadow-sm text-sm text-slate-700">
+                        <option value="">All Locations</option>
+                        {% for location in locations %}
+                        <option value="{{ location }}">{{ location }}</option>
+                        {% endfor %}
+                    </select>
+                    <select id="jobTypeFilter" class="w-full sm:w-auto px-4 py-3 rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-[#1D4ED8] transition duration-150 shadow-sm text-sm text-slate-700">
+                        <option value="">All Job Types</option>
+                        {% for job_type in job_types %}
+                        <option value="{{ job_type }}">{{ job_type }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <button id="openModalBtn"
+                        class="w-full md:w-auto py-3 px-8 text-white font-semibold rounded-xl shadow-lg btn-primary flex items-center justify-center gap-2 text-sm">
+                    <i class="fas fa-plus-circle"></i>
+                    Post New Job
+                </button>
+            </div>
+            
+            <div id="jobListingsContainer" class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {% for career in careers %}
+                <div class="card" data-title="{{ career.title|lower }}" data-location="{{ career.location|lower }}" data-job-type="{{ career.job_type|lower }}" data-salary="{{ career.salary }}" data-date-posted="{{ career.date_posted|date:'Y-m-d' }}">
+                    <div class="mb-4">
+                        <div class="flex items-center justify-between mb-2">
+                            <h3 class="text-xl font-bold text-slate-900">{{ career.title }}</h3>
+                            <span class="px-3 py-1 text-xs font-semibold rounded-full flex-shrink-0 bg-{{ career.is_active|yesno:'green,red' }}-100 text-{{ career.is_active|yesno:'green,red' }}-700">
+                                {{ career.is_active|yesno:'Active,Inactive' }}
+                            </span>
+                        </div>
+                        <div class="text-sm text-slate-600 space-y-1">
+                            <p class="flex items-center"><i class="fas fa-map-marker-alt text-slate-400 w-5 mr-2"></i> {{ career.location }}</p>
+                            <p class="flex items-center"><i class="fas fa-clock text-slate-400 w-5 mr-2"></i> {{ career.job_type }}</p>
+                        </div>
+                    </div>
+                    <div class="text-sm text-slate-500 mb-6">
+                        <p class="line-clamp-2">
+                            {{ career.description }}
+                        </p>
+                    </div>
+                    <div class="flex flex-wrap gap-2 mb-6">
+                        <span class="badge">Salary: {{ career.salary }}</span>
+                        <span class="badge">Posted: {{ career.date_posted|date:'F d, Y' }}</span>
+                    </div>
+                    <div class="flex flex-col sm:flex-row gap-3 pt-4 border-t border-slate-200 mt-auto">
+                        <a href="{% url 'career_detail' career.pk %}" class="flex-1 text-center py-2 px-4 text-sm font-medium rounded-md text-white btn-primary transition duration-200">
+                           <i class="fas fa-eye mr-1"></i> View Details
+                        </a>
+                        <form action="{% url 'toggle_status' career.pk %}" method="post" class="flex-1">
+                            {% csrf_token %}
+                            <button type="submit" class="w-full text-center py-2 px-4 text-sm font-medium rounded-md text-{{ career.is_active|yesno:'red,green' }}-500 btn-action hover:text-{{ career.is_active|yesno:'red,green' }}-700 transition duration-200">
+                                {{ career.is_active|yesno:'Disable,Enable' }}
+                            </button>
+                        </form>
+                    </div>
+                </div>
+                {% empty %}
+                <div class="col-span-1 md:col-span-2 text-center p-8 bg-slate-100 rounded-lg text-slate-500">
+                    <p class="text-lg font-semibold">No jobs found.</p>
+                    <p class="mt-2 text-sm">Try adjusting your filters or search terms.</p>
+                </div>
+                {% endfor %}
+            </div>
+            
+            <div id="paginationContainer" class="flex justify-center items-center gap-2 mt-8">
+                <button id="prevPageBtn" class="px-4 py-2 text-sm font-medium rounded-lg text-slate-600 bg-slate-100 hover:bg-slate-200 disabled:opacity-50 disabled:cursor-not-allowed transition duration-150">Previous</button>
+                <div id="pageNumbers" class="flex gap-2">
+                    </div>
+                <button id="nextPageBtn" class="px-4 py-2 text-sm font-medium rounded-lg text-slate-600 bg-slate-100 hover:bg-slate-200 disabled:opacity-50 disabled:cursor-not-allowed transition duration-150">Next</button>
+            </div>
+        </section>
+
+        <aside class="lg:col-span-1 p-6 bg-slate-50 rounded-2xl">
+            <h2 class="text-xl font-bold mb-6 text-slate-900">Advanced Filters</h2>
+            <div class="space-y-6">
+                <div>
+                    <label for="salaryFilter" class="form-label">Salary Range</label>
+                    <input type="range" id="salaryFilter" min="0" max="250000" step="10000" value="0" class="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer">
+                    <div class="flex justify-between text-xs text-slate-500 mt-2">
+                        <span id="salaryMin">$0</span>
+                        <span id="salaryMax">$250k+</span>
+                    </div>
+                </div>
+                <div>
+                    <label for="dateFilter" class="form-label">Date Posted</label>
+                    <select id="dateFilter" class="form-input">
+                        <option value="">Any Time</option>
+                        <option value="last-24-hours">Last 24 Hours</option>
+                        <option value="last-7-days">Last 7 Days</option>
+                        <option value="last-30-days">Last 30 Days</option>
+                    </select>
+                </div>
+            </div>
+            <h2 class="text-xl font-bold mt-10 mb-6 text-slate-900">Featured Job</h2>
+            {% if featured_career %}
+            <div class="featured-card p-6 flex flex-col justify-between rounded-xl">
+                <div>
+                    <div class="flex items-center justify-between mb-4">
+                        <h3 class="text-xl font-bold">{{ featured_career.title }}</h3>
+                        <span class="px-3 py-1 text-xs font-semibold rounded-full flex-shrink-0">
+                            Featured
+                        </span>
+                    </div>
+                    <div class="text-sm space-y-1">
+                        <p class="flex items-center"><i class="fas fa-map-marker-alt text-white text-opacity-80 w-5 mr-2"></i> {{ featured_career.location }}</p>
+                        <p class="flex items-center"><i class="fas fa-clock text-white text-opacity-80 w-5 mr-2"></i> {{ featured_career.job_type }}</p>
+                    </div>
+                </div>
+                <div class="mt-6">
+                    <a href="{% url 'career_detail' featured_career.pk %}"
+                       class="w-full text-center py-2 px-4 text-sm font-medium rounded-md bg-white text-[#1E40AF] transition duration-200 hover:bg-slate-100">
+                       <i class="fas fa-eye mr-1"></i> View Details
+                    </a>
+                </div>
+            </div>
+            {% endif %}
+        </aside>
+    </main>
+    
+    <div id="createJobModal" class="modal-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+        <div class="modal-content">
+            <button id="closeModalBtn" class="close-btn" aria-label="Close modal"><i class="fas fa-times"></i></button>
+            
+            <div class="text-center mb-8">
+                <h2 id="modal-title" class="text-2xl font-bold text-slate-800">Create New Job Posting</h2>
+                <p class="text-slate-500 text-sm">Fill out the form below to post a new job opening.</p>
+            </div>
+            
+            <form method="post" class="space-y-6">
+                {% csrf_token %}
+                
+                <section>
+                    <h3 class="text-lg font-semibold text-slate-700 border-b border-slate-200 pb-2 mb-4">Job Information</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                        <div>
+                            <label for="title" class="form-label">Job Title</label>
+                            <input type="text" id="title" name="title" required
+                                    class="form-input" placeholder="e.g., Senior Software Engineer">
+                        </div>
+                        <div>
+                            <label for="location" class="form-label">Location</label>
+                            <input type="text" id="location" name="location" required
+                                    class="form-input" placeholder="e.g., New York, NY">
+                        </div>
+                        <div>
+                            <label for="job_type" class="form-label">Job Type</label>
+                            <select id="job_type" name="job_type" required
+                                           class="form-input">
+                                <option value="">Select a type</option>
+                                <option value="Full-time">Full-time</option>
+                                <option value="Part-time">Part-time</option>
+                                <option value="Contract">Contract</option>
+                                <option value="Internship">Internship</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label for="salary" class="form-label">Salary Range</label>
+                            <input type="text" id="salary" name="salary"
+                                    class="form-input" placeholder="e.g., $120,000 - $150,000">
+                        </div>
+                    </div>
+                </section>
+
+                <section>
+                    <h3 class="text-lg font-semibold text-slate-700 border-b border-slate-200 pb-2 mb-4">Job Description</h3>
+                    <div>
+                        <label for="description" class="form-label">Provide a detailed description of the role.</label>
+                        <textarea id="description" name="description" rows="8" required
+                                           class="form-input"
+                                           placeholder="Describe the job responsibilities, skills, and company culture."></textarea>
+                    </div>
+                </section>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <section>
+                        <h3 class="text-lg font-semibold text-slate-700 border-b border-slate-200 pb-2">Responsibilities</h3>
+                        <textarea id="responsibilities" name="responsibilities" rows="6"
+                                           class="form-input mt-4"
+                                           placeholder="List key duties and expectations (e.g., 'Manage a team of 5', 'Develop and maintain software')."></textarea>
+                    </section>
+                    <section>
+                        <h3 class="text-lg font-semibold text-slate-700 border-b border-slate-200 pb-2">Qualifications</h3>
+                        <textarea id="qualifications" name="qualifications" rows="6"
+                                           class="form-input mt-4"
+                                           placeholder="Outline the required skills and experience (e.g., 'Bachelor's degree in Computer Science', '3+ years of experience')."></textarea>
+                    </section>
+                </div>
+
+                <div class="flex justify-end gap-3 pt-4">
+                    <button type="button" id="cancelModalBtn" 
+                                class="py-2 px-6 text-slate-600 font-semibold rounded-lg border border-slate-300 hover:bg-slate-100 transition duration-150 text-sm">
+                        Cancel
+                    </button>
+                    <button type="submit"
+                                class="py-2 px-6 text-white font-semibold rounded-lg shadow-md btn-primary flex items-center gap-2 text-sm">
+                        Post New Job
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+    
+    <div id="messageBox" class="fixed bottom-5 right-5 px-6 py-3 rounded-lg text-white font-medium shadow-lg z-50 transition-opacity duration-300 ease-in-out opacity-0"></div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const openModalBtn = document.getElementById('openModalBtn');
+            const closeModalBtn = document.getElementById('closeModalBtn');
+            const cancelModalBtn = document.getElementById('cancelModalBtn');
+            const modal = document.getElementById('createJobModal');
+            const searchInput = document.getElementById('searchInput');
+            const locationFilter = document.getElementById('locationFilter');
+            const jobTypeFilter = document.getElementById('jobTypeFilter');
+            const salaryFilter = document.getElementById('salaryFilter');
+            const dateFilter = document.getElementById('dateFilter');
+            const jobListingsContainer = document.getElementById('jobListingsContainer');
+            const prevPageBtn = document.getElementById('prevPageBtn');
+            const nextPageBtn = document.getElementById('nextPageBtn');
+            const pageNumbersContainer = document.getElementById('pageNumbers');
+            const jobsPerPage = 6; 
+            let currentPage = 1;
+            let currentVisibleCards = [];
+
+            // Modal functionality
+            const openModal = () => {
+                modal.classList.remove('hidden');
+                setTimeout(() => modal.classList.add('open'), 10);
+            };
+
+            const closeModal = () => {
+                modal.classList.remove('open');
+                setTimeout(() => modal.classList.add('hidden'), 300);
+            };
+
+            openModalBtn.addEventListener('click', openModal);
+            closeModalBtn.addEventListener('click', closeModal);
+            cancelModalBtn.addEventListener('click', closeModal);
+
+            modal.addEventListener('click', (e) => {
+                if (e.target === modal) {
+                    closeModal();
+                }
+            });
+
+            // Pagination functionality
+            const updatePaginationControls = (totalPages) => {
+                pageNumbersContainer.innerHTML = '';
+                prevPageBtn.disabled = currentPage === 1;
+                nextPageBtn.disabled = currentPage === totalPages || totalPages === 0;
+
+                for (let i = 1; i <= totalPages; i++) {
+                    const pageLink = document.createElement('button');
+                    pageLink.textContent = i;
+                    pageLink.className = `px-3 py-1 text-sm rounded-lg font-medium transition duration-150 ${i === currentPage ? 'bg-[#1D4ED8] text-white' : 'text-slate-600 hover:bg-slate-200'}`;
+                    pageLink.addEventListener('click', () => {
+                        currentPage = i;
+                        showCurrentPage();
+                    });
+                    pageNumbersContainer.appendChild(pageLink);
+                }
+            };
+
+            const showCurrentPage = () => {
+                const startIndex = (currentPage - 1) * jobsPerPage;
+                const endIndex = startIndex + jobsPerPage;
+
+                const allCards = Array.from(document.querySelectorAll('#jobListingsContainer .card'));
+                allCards.forEach(card => card.style.display = 'none');
+
+                currentVisibleCards.slice(startIndex, endIndex).forEach(card => card.style.display = 'flex');
+
+                const totalPages = Math.ceil(currentVisibleCards.length / jobsPerPage);
+                updatePaginationControls(totalPages);
+            };
+
+            prevPageBtn.addEventListener('click', () => {
+                if (currentPage > 1) {
+                    currentPage--;
+                    showCurrentPage();
+                }
+            });
+
+            nextPageBtn.addEventListener('click', () => {
+                const totalPages = Math.ceil(currentVisibleCards.length / jobsPerPage);
+                if (currentPage < totalPages) {
+                    currentPage++;
+                    showCurrentPage();
+                }
+            });
+
+            // Filter functionality
+            const filterJobs = () => {
+                const searchTerm = searchInput.value.toLowerCase();
+                const selectedLocation = locationFilter.value.toLowerCase();
+                const selectedJobType = jobTypeFilter.value.toLowerCase();
+                const selectedSalary = parseInt(salaryFilter.value, 10);
+                const selectedDate = dateFilter.value;
+
+                currentVisibleCards = [];
+                const today = new Date();
+
+                const allCards = Array.from(document.querySelectorAll('#jobListingsContainer .card'));
+                
+                allCards.forEach((card) => {
+                    const title = card.dataset.title;
+                    const location = card.dataset.location;
+                    const jobType = card.dataset.jobType;
+                    const salary = parseInt(card.dataset.salary, 10);
+                    const datePosted = new Date(card.dataset.datePosted);
+                    
+                    const titleMatch = title.includes(searchTerm);
+                    const locationMatch = !selectedLocation || location === selectedLocation;
+                    const jobTypeMatch = !selectedJobType || jobType === selectedJobType;
+                    const salaryMatch = salary >= selectedSalary;
+                    
+                    const dateMatch = (() => {
+                        if (!selectedDate) return true;
+                        const diffTime = Math.abs(today - datePosted);
+                        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                        
+                        switch (selectedDate) {
+                            case 'last-24-hours':
+                                return diffDays <= 1;
+                            case 'last-7-days':
+                                return diffDays <= 7;
+                            case 'last-30-days':
+                                return diffDays <= 30;
+                            default:
+                                return true;
+                        }
+                    })();
+
+                    if (titleMatch && locationMatch && jobTypeMatch && salaryMatch && dateMatch) {
+                        currentVisibleCards.push(card);
+                    }
+                });
+                
+                currentPage = 1;
+                showCurrentPage();
+
+                const noJobsMessage = document.querySelector('.p-8');
+                if (noJobsMessage) {
+                    noJobsMessage.style.display = currentVisibleCards.length > 0 ? 'none' : 'block';
+                }
+            };
+            
+            filterJobs();
+
+            searchInput.addEventListener('input', filterJobs);
+            locationFilter.addEventListener('change', filterJobs);
+            jobTypeFilter.addEventListener('change', filterJobs);
+            salaryFilter.addEventListener('input', filterJobs);
+            dateFilter.addEventListener('change', filterJobs);
+
+            // Clipboard functionality
+            window.copyToClipboard = (relativeUrl) => {
+                const tempInput = document.createElement('input');
+                const fullUrl = window.location.origin + relativeUrl;
+                tempInput.value = fullUrl;
+                document.body.appendChild(tempInput);
+                tempInput.select();
+                document.execCommand('copy');
+                document.body.removeChild(tempInput);
+                
+                showTemporaryMessage('Shareable link copied to clipboard!', 'success');
+            };
+
+            // Custom message box
+            const showTemporaryMessage = (message, type) => {
+                const messageBox = document.getElementById('messageBox');
+                messageBox.textContent = message;
+                
+                messageBox.className = 'fixed bottom-5 right-5 px-6 py-3 rounded-lg text-white font-medium shadow-lg z-50 transition-opacity duration-300 ease-in-out';
+                
+                if (type === 'success') {
+                    messageBox.classList.add('bg-green-600');
+                } else if (type === 'error') {
+                    messageBox.classList.add('bg-red-600');
+                } else {
+                    messageBox.classList.add('bg-slate-800');
+                }
+
+                messageBox.classList.remove('opacity-0');
+                messageBox.classList.add('opacity-100');
+
+                setTimeout(() => {
+                    messageBox.classList.remove('opacity-100');
+                    messageBox.classList.add('opacity-0');
+                }, 3000);
+            };
+        });
+    </script>
+<!-- </body> -->
+{% endblock %}

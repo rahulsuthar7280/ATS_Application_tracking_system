@@ -1,5 +1,6 @@
 # Django core imports
 from email.message import EmailMessage
+import time
 from django.http import HttpResponse, JsonResponse, HttpResponseBadRequest
 from django.views.decorators.csrf import csrf_protect, csrf_exempt
 from django.views.decorators.http import require_POST
@@ -35,19 +36,25 @@ import fitz               # For PDFs (PyMuPDF)
 import phonenumbers       # For phone number parsing
 import google             # Required for genai
 import google.api_core.exceptions
-
+import os
 import logging
+from hr_app.UserCreationForm import AdminUserCreationForm
+from hr_app.linkedin_multi_poster import post_jobs_to_linkedin
 from hr_app.models import EmailConfiguration
+import email
+import imaplib
+from hr_app.admin import User
 navigation_logger = logging.getLogger('hr_app_navigation') #
 # Local imports
 from .forms import ResumeUploadForm, FinalDecisionForm, PhoneNumberForm, CustomUserCreationForm, CustomAuthenticationForm
-from .models import Application, CandidateAnalysis, JobDescriptionDocument
+from .models import Application, Apply_career, CandidateAnalysis, CareerPage, Document, DraftEmail, Folder, JobDescriptionDocument, SentEmail
 from .services import llm_call
 from hr_app import services
 from django.core.files.uploadedfile import SimpleUploadedFile
 # import win32com.client
-# import pythoncom
-
+import pythoncom
+import string
+from django.contrib.auth.hashers import make_password
 from django.shortcuts import render, redirect
 from django.urls import reverse
 from django.http import HttpResponse
@@ -67,52 +74,61 @@ from reportlab.lib.styles import getSampleStyleSheet
 from io import BytesIO
 import json
 import uuid
+from django.contrib.auth.decorators import user_passes_test
+from django.contrib.auth import get_user_model
 
-
+User = get_user_model() # Get the currently active user model
 # Assuming these are already defined correctly
 resume_storage = FileSystemStorage(location='media/resumes')
 job_description_storage = FileSystemStorage(location='media/job_descriptions')
 
 def signup_view(request):
+    """
+    Handles user registration using a Django form.
+    """
     if request.method == 'POST':
-        username = request.POST.get('username')  # Assuming email used as username
-        password = request.POST.get('password')
+        form = CustomUserCreationForm(request.POST)
+        if form.is_valid():
+            # Save the new user and set a default role
+            user = form.save(commit=False)
+            user.role = 'user'  # Automatically set the role to 'user'
+            user.save()
+            
+            # Log the user in after successful registration
+            login(request, user)
+            messages.success(request, "Account created successfully! Welcome.")
+            return redirect('dashboard') # Redirect to your dashboard
+        else:
+            # Display form errors to the user
+            for field, errors in form.errors.items():
+                for error in errors:
+                    messages.error(request, f"Error in {field}: {error}")
+    else:
+        form = CustomUserCreationForm()
+        
+    return render(request, 'signup.html', {'form': form})
 
-        if not username or not password:
-            messages.error(request, "Email and password are required.")
-            return render(request, 'signup.html')
 
-        if User.objects.filter(username=username).exists():
-            messages.error(request, "User already exists.")
-            return render(request, 'signup.html')
-
-        user = User.objects.create_user(username=username, password=password)
-        login(request, user)
-        messages.success(request, "Account created successfully!")
-        return redirect('dashboard')  # Replace with your dashboard route
-
-    return render(request, 'signup.html')
-
-@csrf_protect
 def signin_view(request):
+    """
+    Handles user login using a Django authentication form for better validation.
+    """
     if request.method == 'POST':
-        username = request.POST.get('username')
-        password = request.POST.get('password')
-
-        if not username or not password:
-            messages.error(request, "Both fields are required.")
-            return render(request, 'signin.html')
-
-        user = authenticate(request, username=username, password=password)
-        if user is not None:
+        form = CustomAuthenticationForm(request, data=request.POST)
+        if form.is_valid():
+            # The form's is_valid() method authenticates the user
+            user = form.get_user()
             login(request, user)
             messages.success(request, f"Welcome back, {user.username}!")
-            return redirect('dashboard')  # Replace with your dashboard route
+            return redirect('dashboard')
         else:
-            messages.error(request, "Invalid credentials.")
-            return render(request, 'signin.html')
+            # The form handles the error message for invalid credentials
+            messages.error(request, "Invalid username or password.")
+    else:
+        form = CustomAuthenticationForm()
+    
+    return render(request, 'signin.html', {'form': form})
 
-    return render(request, 'signin.html')
 
 @login_required
 def signout_view(request):
@@ -122,6 +138,7 @@ def signout_view(request):
     logout(request)
     messages.info(request, "You have been logged out.")
     return redirect('signin') # Redirect to signin page after logout
+
 
 # --- Role-based Access Control Helpers ---
 
@@ -150,14 +167,6 @@ job_description_storage = FileSystemStorage(location=settings.JOB_DESCRIPTION_UP
 
 # @login_required # Ensure user is logged in to access this page
 def home(request):
-    # """
-    # Renders the home page, which will likely be the resume analysis page by default.
-    # """
-    # navigation_logger.info( #
-    #     f"User (ID: {request.user.id if request.user.is_authenticated else 'Anonymous'}) "
-    #     f"navigated to Home Page. Path: {request.path}"
-    # )
-    # return redirect('/home') #
     return render(request, 'home.html')
 
 def _parse_experience_string(experience_str):
@@ -188,129 +197,6 @@ def _parse_experience_string(experience_str):
             return None
             
     return None # Could not parse
-
-@login_required
-# def resume_analysis_view(request):
-#     analysis_result = None
-#     resume_url = None
-
-#     form = ResumeUploadForm(request.POST or None, request.FILES or None)
-
-#     if request.method == 'POST':
-#         logging.info("POST request received for resume analysis.")
-#         if form.is_valid():
-#             logging.info("Form is valid. Processing uploaded files and form data.")
-#             resume_file = form.cleaned_data['resume_pdf']
-#             job_description_file = form.cleaned_data['job_description']
-#             job_role = form.cleaned_data['job_role']
-#             target_experience_type = form.cleaned_data['target_experience_type']
-#             min_years_required = form.cleaned_data['min_years_required']
-#             max_years_required = form.cleaned_data['max_years_required']
-
-#             try:
-#                 # 1. Save the resume file for PDF preview
-#                 resume_filename = resume_storage.save(resume_file.name, resume_file)
-#                 resume_url = request.build_absolute_uri(resume_storage.url(resume_filename))
-#                 logging.info(f"Resume file '{resume_filename}' saved for preview. URL: {resume_url}")
-
-#                 # 2. Call the main AI analysis service function.
-#                 llm_response = services.analyze_resume_with_llm(
-#                     resume_file_obj=resume_file,
-#                     job_description_file_obj=job_description_file,
-#                     job_role=job_role,
-#                     experience_type=target_experience_type,
-#                     min_years=min_years_required,
-#                     max_years=max_years_required
-#                 )
-
-#                 if llm_response and not llm_response.get("error"):
-#                     analysis_result = llm_response
-                    
-#                     # --- START: DATABASE SAVE LOGIC ---
-#                     try:
-#                         # Get the analysis_summary dictionary safely
-#                         analysis_summary = analysis_result.get("analysis_summary", {})
-#                         candidate_fitment_analysis = analysis_result.get("candidate_fitment_analysis", {})
-                        
-#                         # Prepare data for the CandidateAnalysis model.
-#                         # Serialize complex data to JSON strings.
-#                         candidate_data_for_db = {
-#                             "resume_file_path": resume_filename,
-#                             "full_name": analysis_result.get("full_name"),
-#                             "job_role": job_role, # Use form data for this
-#                             "phone_no": analysis_result.get("contact_number"),
-#                             "hiring_recommendation": analysis_result.get("hiring_recommendation"),
-#                             "suggested_salary_range": analysis_result.get("suggested_salary_range"),
-#                             "interview_questions": json.dumps(analysis_result.get("interview_questions", [])),
-                            
-#                             # Store the entire analysis_summary as a JSON string if needed,
-#                             # or remove this if all sub-components are stored separately
-#                             "analysis_summary": json.dumps(analysis_summary), 
-                            
-#                             "experience_match": analysis_result.get("experience_match"),
-#                             "overall_experience": analysis_result.get("overall_experience"),
-#                             "current_company_name": analysis_result.get("current_company_name"),
-#                             "current_company_address": analysis_result.get("current_company_address"),
-#                             "fitment_verdict": analysis_result.get("fitment_verdict"), 
-#                             "aggregate_score": analysis_result.get("aggregate_score"), 
-                            
-#                             # Fields extracted from candidate_fitment_analysis
-#                             "strategic_alignment": candidate_fitment_analysis.get("strategic_alignment", ""),
-#                             "quantifiable_impact": candidate_fitment_analysis.get("quantifiable_impact", ""),
-#                             "potential_gaps_risks": candidate_fitment_analysis.get("potential_gaps_risks", ""),
-#                             "comparable_experience": candidate_fitment_analysis.get("comparable_experience_analysis", ""), # Note the key name difference
-                            
-#                             # Other top-level complex fields that need JSON dumping
-#                             "scoring_matrix_json": json.dumps(analysis_result.get("scoring_matrix", [])),
-#                             "bench_recommendation_json": json.dumps(analysis_result.get("bench_recommendation", {})),
-#                             "alternative_role_recommendations_json": json.dumps(analysis_result.get("alternative_role_recommendations", [])),
-#                             "automated_recruiter_insights_json": json.dumps(analysis_result.get("automated_recruiter_insights", {})),
-
-#                             # NEW: Fields extracted from analysis_summary
-#                             "candidate_overview": analysis_summary.get("candidate_overview", ""),
-#                             "technical_prowess_json": json.dumps(analysis_summary.get("technical_prowess", {})),
-#                             "project_impact_json": json.dumps(analysis_summary.get("project_impact", [])),
-#                             "education_certifications_json": json.dumps(analysis_summary.get("education_certifications", {})),
-#                             "overall_rating_summary": analysis_summary.get("overall_rating", ""), # Renamed to avoid conflict
-#                             "conclusion_summary": analysis_summary.get("conclusion", ""), # Renamed to avoid conflict
-#                         }
-                        
-#                         # Use .create() to save the new object and get its automatically generated ID.
-#                         candidate_obj = CandidateAnalysis.objects.create(**candidate_data_for_db)
-                        
-#                         # Now, update the analysis_result dictionary with the new ID
-#                         analysis_result['id'] = candidate_obj.id 
-                        
-#                         messages.success(request, f"Analysis saved to database for {candidate_obj.full_name}.")
-#                     except Exception as db_save_error:
-#                         logging.warning(f"AI analysis completed, but failed to save to database: {db_save_error}")
-#                         messages.warning(request, f"AI analysis completed, but failed to save to database: {db_save_error}")
-#                         # Even if save fails, analysis_result is still available for the page, but without an id
-#                     # --- END: DATABASE SAVE LOGIC ---
-                    
-#                     messages.success(request, f"AI analysis completed for {analysis_result.get('full_name', 'the candidate')}.")
-#                 else:
-#                     error_message = llm_response.get("error", "AI analysis failed to return a valid response.") if llm_response else "LLM response was empty or None."
-#                     logging.error(f"LLM response error: {error_message}")
-#                     messages.error(request, error_message)
-#             except Exception as e:
-#                 logging.error(f"An unexpected error occurred during the analysis process: {e}", exc_info=True)
-#                 messages.error(request, f"An unexpected error occurred during analysis: {e}")
-#         else:
-#             logging.warning("Form is not valid. Displaying errors.")
-#             messages.error(request, "Please correct the errors in the form before submitting.")
-
-#     context = {
-#         'form': form,
-#         'analysis_result': analysis_result,
-#         'resume_url': resume_url,
-#     }
-
-#     return render(request, 'resume_analysis.html', context)
-
-
-
-
 
 
 def resume_analysis_view(request):
@@ -385,42 +271,34 @@ def resume_analysis_view(request):
                             candidate_data_for_db = {
                                 "resume_file_path": resume_filename,
                                 "full_name": analysis_result.get("full_name"),
-                                "job_role": job_role, # Use form data for this
+                                "job_role": job_role,
                                 "phone_no": analysis_result.get("contact_number"),
                                 "hiring_recommendation": analysis_result.get("hiring_recommendation"),
                                 "suggested_salary_range": analysis_result.get("suggested_salary_range"),
                                 "interview_questions": json.dumps(analysis_result.get("interview_questions", [])),
-                                
-                                # Store the entire analysis_summary as a JSON string if needed,
-                                # or remove this if all sub-components are stored separately
-                                "analysis_summary": json.dumps(analysis_summary), 
-                                
+                                "analysis_summary": json.dumps(analysis_summary),
                                 "experience_match": analysis_result.get("experience_match"),
                                 "overall_experience": analysis_result.get("overall_experience"),
                                 "current_company_name": analysis_result.get("current_company_name"),
                                 "current_company_address": analysis_result.get("current_company_address"),
-                                "fitment_verdict": analysis_result.get("fitment_verdict"), 
-                                "aggregate_score": analysis_result.get("aggregate_score"), 
-                                
-                                # Fields extracted from candidate_fitment_analysis
+                                "fitment_verdict": analysis_result.get("fitment_verdict"),
+                                "aggregate_score": analysis_result.get("aggregate_score"),
                                 "strategic_alignment": candidate_fitment_analysis.get("strategic_alignment", ""),
                                 "quantifiable_impact": candidate_fitment_analysis.get("quantifiable_impact", ""),
                                 "potential_gaps_risks": candidate_fitment_analysis.get("potential_gaps_risks", ""),
-                                "comparable_experience": candidate_fitment_analysis.get("comparable_experience_analysis", ""), # Note the key name difference
-                                
-                                # Other top-level complex fields that need JSON dumping
+                                "comparable_experience": candidate_fitment_analysis.get("comparable_experience_analysis", ""),
                                 "scoring_matrix_json": json.dumps(analysis_result.get("scoring_matrix", [])),
                                 "bench_recommendation_json": json.dumps(analysis_result.get("bench_recommendation", {})),
                                 "alternative_role_recommendations_json": json.dumps(analysis_result.get("alternative_role_recommendations", [])),
                                 "automated_recruiter_insights_json": json.dumps(analysis_result.get("automated_recruiter_insights", {})),
-
-                                # NEW: Fields extracted from analysis_summary
                                 "candidate_overview": analysis_summary.get("candidate_overview", ""),
                                 "technical_prowess_json": json.dumps(analysis_summary.get("technical_prowess", {})),
                                 "project_impact_json": json.dumps(analysis_summary.get("project_impact", [])),
                                 "education_certifications_json": json.dumps(analysis_summary.get("education_certifications", {})),
-                                "overall_rating_summary": analysis_summary.get("overall_rating", ""), # Renamed to avoid conflict
-                                "conclusion_summary": analysis_summary.get("conclusion", ""), # Renamed to avoid conflict
+                                "overall_rating_summary": analysis_summary.get("overall_rating", ""),
+                                "conclusion_summary": analysis_summary.get("conclusion", ""),
+                                # --- THE CRUCIAL LINE IS ADDED HERE ---
+                                "user": request.user 
                             }
                             
                             # Use .create() to save the new object and get its automatically generated ID.
@@ -433,7 +311,6 @@ def resume_analysis_view(request):
                         except Exception as db_save_error:
                             logging.warning(f"AI analysis completed, but failed to save to database: {db_save_error}")
                             messages.warning(request, f"AI analysis completed, but failed to save to database: {db_save_error}")
-                            # Even if save fails, analysis_result is still available for the page, but without an id
                         # --- END: DATABASE SAVE LOGIC ---
                         
                         messages.success(request, f"AI analysis completed for {analysis_result.get('full_name', 'the candidate')}.")
@@ -453,7 +330,7 @@ def resume_analysis_view(request):
         'form': form,
         'analysis_result': analysis_result,
         'resume_url': resume_url,
-        'job_description_documents': job_description_documents, # Pass the documents to the template
+        'job_description_documents': job_description_documents,
     }
 
     return render(request, 'resume_analysis.html', context)
@@ -461,43 +338,47 @@ def resume_analysis_view(request):
 @login_required
 def interview_dashboard_view(request):
     """
-    Displays a dashboard of all candidates with their high-level interview status.
-    This will be mapped to the 'interview_status' URL name.
+    Displays a dashboard of all candidates with their high-level interview status
+    for the currently logged-in user.
     """
-    unique_job_roles = CandidateAnalysis.objects.values_list('job_role', flat=True).distinct().exclude(job_role__isnull=True).exclude(job_role__exact='').order_by('job_role') #
+    # Filter the initial querysets to only show data for the logged-in user
+    user_candidates_query = CandidateAnalysis.objects.filter(user=request.user)
+    
+    unique_job_roles = user_candidates_query.values_list('job_role', flat=True).distinct().exclude(job_role__isnull=True).exclude(job_role__exact='').order_by('job_role')
 
-    all_candidates_query = CandidateAnalysis.objects.filter(interview_status='Pending') #
-    completed_interviews = CandidateAnalysis.objects.filter(interview_status='Complete')
+    all_candidates_query = user_candidates_query.filter(interview_status='Pending')
+    completed_interviews = user_candidates_query.filter(interview_status='Complete')
 
-    selected_job_role = request.GET.get('job_role') #
-    if selected_job_role: #
-        all_candidates_query = all_candidates_query.filter(job_role=selected_job_role) #
+    selected_job_role = request.GET.get('job_role')
+    if selected_job_role:
+        all_candidates_query = all_candidates_query.filter(job_role=selected_job_role)
 
-    try: #
-        all_candidates = all_candidates_query.order_by('-created_at') #
-    except Exception: # Catch any potential FieldError
-        all_candidates = all_candidates_query.order_by('-id') #
-        messages.warning(request, "Could not sort by 'created_at'. Sorting by creation order (ID) instead. Consider adding a 'created_at' or 'last_updated' field to your CandidateAnalysis model.") #
+    try:
+        all_candidates = all_candidates_query.order_by('-created_at')
+    except Exception:  # Catch any potential FieldError
+        all_candidates = all_candidates_query.order_by('-id')
+        messages.warning(request, "Could not sort by 'created_at'. Sorting by creation order (ID) instead. Consider adding a 'created_at' or 'last_updated' field to your CandidateAnalysis model.")
 
-    for candidate in all_candidates: #
-        if candidate.bland_call_id: #
-            try: #
-                call_details = services.get_blandai_call_details(candidate.bland_call_id) #
-                if call_details and not call_details.get('error'): #
-                    candidate.call_details = call_details #
+    for candidate in all_candidates:
+        if candidate.bland_call_id:
+            try:
+                # Make sure the 'services' module is imported correctly
+                call_details = services.get_blandai_call_details(candidate.bland_call_id)
+                if call_details and not call_details.get('error'):
+                    candidate.call_details = call_details
                 else:
-                    candidate.call_details = {'status': 'error', 'error': call_details.get('error', 'API Error')} #
-            except Exception as e: #
-                candidate.call_details = {'status': 'error', 'error': f'Fetch failed: {e}'} #
+                    candidate.call_details = {'status': 'error', 'error': call_details.get('error', 'API Error')}
+            except Exception as e:
+                candidate.call_details = {'status': 'error', 'error': f'Fetch failed: {e}'}
         else:
-            candidate.call_details = None #
+            candidate.call_details = None
 
-    context = { #
-        'all_candidates': all_candidates, #
-        'unique_job_roles': unique_job_roles, #
-        'completed_interviews':completed_interviews
+    context = {
+        'all_candidates': all_candidates,
+        'unique_job_roles': unique_job_roles,
+        'completed_interviews': completed_interviews,
     }
-    return render(request, 'interview_dashboard.html', context) #
+    return render(request, 'interview_dashboard.html', context)
 
 
 @login_required
@@ -725,19 +606,6 @@ def candidate_profile_view(request, candidate_id):
             logging.info(f"POST request for initiate_interview_form received for candidate ID: {candidate_id}")
             phone_number = request.POST.get('phone_number')
             
-            # Here you would add your logic to initiate the AI interview call
-            # For example:
-            # try:
-            #     call_response = services.initiate_blandai_call(candidate_id, phone_number)
-            #     if call_response and call_response.get('success'):
-            #         candidate.bland_call_id = call_response.get('call_id') # Save call ID if your model has it
-            #         candidate.save()
-            #         messages.success(request, f"AI interview call initiated for {candidate.full_name} to {phone_number}.")
-            #     else:
-            #         messages.error(request, f"Failed to initiate AI interview call: {call_response.get('error', 'Unknown error')}")
-            # except Exception as e:
-            #     messages.error(request, f"An error occurred while initiating interview: {e}")
-            
             messages.info(request, f"Initiate AI Interview form submitted for {phone_number}. (Logic to be implemented)")
 
         else:
@@ -919,44 +787,48 @@ def initiate_call_interview(request):
 @login_required
 def top_recommendations_view(request):
     """
-    Displays top recommended candidates based on job role and AI analysis.
+    Displays top recommended candidates based on job role and AI analysis
+    for the currently logged-in user.
     """
-    navigation_logger.info( #
+    navigation_logger.info(
         f"User (ID: {request.user.id if request.user.is_authenticated else 'Anonymous'}) "
         f"navigated to Top Recommendations Page. Path: {request.path}"
     )
-    unique_job_roles = CandidateAnalysis.objects.values_list('job_role', flat=True).distinct().exclude(job_role__isnull=True).exclude(job_role__exact='').order_by('job_role')
+
+    # Filter the base queryset by the logged-in user
+    user_candidates_query = CandidateAnalysis.objects.filter(user=request.user)
+
+    unique_job_roles = user_candidates_query.values_list('job_role', flat=True).distinct().exclude(job_role__isnull=True).exclude(job_role__exact='').order_by('job_role')
     
-    recommended_candidates_query = CandidateAnalysis.objects.all()
+    recommended_candidates_query = user_candidates_query
 
     selected_job_role = request.GET.get('job_role')
     if selected_job_role:
         recommended_candidates_query = recommended_candidates_query.filter(job_role=selected_job_role)
         messages.info(request, f"Showing recommendations for job role: {selected_job_role}")
-        navigation_logger.info(f"Filtered recommendations by job role: {selected_job_role}") #
+        navigation_logger.info(f"Filtered recommendations by job role: {selected_job_role}")
     else:
         messages.info(request, "Showing top candidates across all job roles.")
-        navigation_logger.info("Viewing all recommendations (no job role filter).") #
+        navigation_logger.info("Viewing all recommendations (no job role filter).")
 
     # Apply AI-driven recommendation logic:
     # Prioritize 'Hire' recommendations first, then 'Good Match' for experience.
-    # You can customize this logic based on how your AI populates these fields.
     recommended_candidates = recommended_candidates_query.order_by(
         # Candidates recommended for hiring first
-        Case( #
-            When(hiring_recommendation='Hire', then=0), #
-            When(hiring_recommendation='Resign', then=1), #
-            When(hiring_recommendation='Reject', then=2), #
-            default=3, #
-            output_field=IntegerField(), #
+        Case(
+            When(hiring_recommendation='Hire', then=0),
+            When(hiring_recommendation='Resign', then=1),
+            When(hiring_recommendation='Reject', then=2),
+            default=3,
+            output_field=IntegerField(),
         ),
         # Then by experience match
-        Case( #
-            When(experience_match='Good Match', then=0), #
-            When(experience_match='Overqualified', then=1), #
-            When(experience_match='Underqualified', then=2), #
-            default=3, #
-            output_field=IntegerField(), #
+        Case(
+            When(experience_match='Good Match', then=0),
+            When(experience_match='Overqualified', then=1),
+            When(experience_match='Underqualified', then=2),
+            default=3,
+            output_field=IntegerField(),
         ),
         '-created_at' # Finally, by most recent analysis
     )
@@ -970,48 +842,117 @@ def top_recommendations_view(request):
     return render(request, 'top_recommendations.html', context)
 
 
+
+
+def convert_to_lpa(salary_string):
+    """
+    Converts a salary string (e.g., '₹50,000 - ₹65,000 per month') to LPA.
+    Handles 'monthly' and 'LPA' formats.
+    """
+    if not salary_string:
+        return "N/A"
+
+    salary_string = salary_string.lower().replace(',', '')
+    numbers = re.findall(r'\d+', salary_string)
+    
+    if not numbers:
+        return "N/A"
+    
+    if 'lpa' in salary_string or 'annum' in salary_string:
+        # Already in LPA, just clean and format
+        min_salary = int(numbers[0])
+        max_salary = int(numbers[1]) if len(numbers) > 1 else min_salary
+        return f"₹{min_salary / 100000:.2f} - ₹{max_salary / 100000:.2f} LPA"
+    
+    if 'month' in salary_string or 'monthly' in salary_string:
+        # Convert monthly to LPA
+        min_monthly = int(numbers[0])
+        min_lpa = (min_monthly * 12) / 100000
+        
+        max_lpa = None
+        if len(numbers) > 1:
+            max_monthly = int(numbers[1])
+            max_lpa = (max_monthly * 12) / 100000
+        
+        if max_lpa:
+            return f"₹{min_lpa:.2f} - ₹{max_lpa:.2f} LPA"
+        else:
+            return f"₹{min_lpa:.2f} LPA"
+
+    # Assume it's a direct yearly amount without 'lpa' or 'annum' specified
+    min_salary = int(numbers[0])
+    min_lpa = min_salary / 100000
+
+    if len(numbers) > 1:
+        max_salary = int(numbers[1])
+        max_lpa = max_salary / 100000
+        return f"₹{min_lpa:.2f} - ₹{max_lpa:.2f} LPA"
+    else:
+        return f"₹{min_lpa:.2f} LPA"
+
+
 @login_required
 def candidate_records_view(request):
     """
-    Displays all stored candidate analysis records.
+    Displays all stored candidate analysis records for the logged-in user.
     Allows for final decision and salary updates.
     """
-    candidates = CandidateAnalysis.objects.all().order_by('-created_at')  #
-    job_roles = CandidateAnalysis.objects.values_list('job_role', flat=True).distinct().order_by('job_role')
-
-    final_decision_forms = {} #
-
-    for candidate in candidates: #
-        initial_data = { #
-            'final_decision': candidate.final_decision, #
-            'final_salary': candidate.final_salary #
+    # Fetch all candidates from the database for the current user
+    candidates = CandidateAnalysis.objects.filter(user=request.user).order_by('-created_at')
+    
+    # Process each candidate record to convert the salary to LPA
+    processed_candidates = []
+    for candidate in candidates:
+        candidate_data = {
+            'id': candidate.id,
+            'full_name': candidate.full_name,
+            'job_role': candidate.job_role,
+            'overall_experience': candidate.overall_experience,
+            'hiring_recommendation': candidate.hiring_recommendation,
+            'suggested_salary_range': convert_to_lpa(candidate.suggested_salary_range), # Salary is converted here
+            'final_decision': candidate.final_decision,
+            'final_salary': candidate.final_salary,
+            'analysis_type': candidate.analysis_type,
+            'resume_file_path': candidate.resume_file_path,
         }
-        final_decision_forms[candidate.id] = FinalDecisionForm(prefix=f'decision_{candidate.id}', initial=initial_data) #
+        processed_candidates.append(candidate_data)
 
-    if request.method == 'POST': #
-        candidate_id = request.POST.get('candidate_id') #
-        if candidate_id: #
-            candidate = get_object_or_404(CandidateAnalysis, id=candidate_id) #
-            form = FinalDecisionForm(request.POST, prefix=f'decision_{candidate.id}') #
+    # Get unique job roles for the current user
+    job_roles = candidates.values_list('job_role', flat=True).distinct().order_by('job_role')
+
+    final_decision_forms = {}
+    for candidate in candidates:
+        initial_data = {
+            'final_decision': candidate.final_decision,
+            'final_salary': candidate.final_salary
+        }
+        final_decision_forms[candidate.id] = FinalDecisionForm(prefix=f'decision_{candidate.id}', initial=initial_data)
+
+    if request.method == 'POST':
+        candidate_id = request.POST.get('candidate_id')
+        if candidate_id:
+            # Important: Filter the get_object_or_404 call by user as well for security
+            candidate = get_object_or_404(CandidateAnalysis, id=candidate_id, user=request.user)
+            form = FinalDecisionForm(request.POST, prefix=f'decision_{candidate.id}')
             
-            if form.is_valid(): #
-                candidate.final_decision = form.cleaned_data['final_decision'] #
-                candidate.final_salary = form.cleaned_data['final_salary'] #
-                candidate.save() #
-                messages.success(request, f"Final decision updated for {candidate.full_name}.") #
-                return redirect('records') #
+            if form.is_valid():
+                candidate.final_decision = form.cleaned_data['final_decision']
+                candidate.final_salary = form.cleaned_data['final_salary']
+                candidate.save()
+                messages.success(request, f"Final decision updated for {candidate.full_name}.")
+                return redirect('records')
             else:
-                final_decision_forms[candidate.id] = form #
-                messages.error(request, "Error updating final decision.") #
+                final_decision_forms[candidate.id] = form
+                messages.error(request, "Error updating final decision.")
         else:
-            messages.error(request, "Invalid request to update record.") #
+            messages.error(request, "Invalid request to update record.")
 
-    context = { #
-        'candidates': candidates,  #
+    context = {
+        'candidates': processed_candidates,  # Pass the new processed list
         'job_roles': job_roles,
-        'final_decision_forms': final_decision_forms, #
+        'final_decision_forms': final_decision_forms,
     }
-    return render(request, 'records.html', context) #
+    return render(request, 'records.html', context)
 
 def selected_candidate(request):
     """
@@ -1270,312 +1211,84 @@ except ImportError: #
 
 
 
-# def show_applications_view(request):
-#     return render(request, 'show_application.html')
-
-
-
-
-
-
-
-# -------------------------
-# Django view (remains unchanged)
-# -------------------------
-
 
 GEMINI_API_KEY = "AIzaSyBgZUbdu3hIwP5hmOkwtgVKKFNtLXx9j0U"
 genai.configure(api_key=GEMINI_API_KEY)
 model = genai.GenerativeModel('gemini-2.5-flash')
 
-# def show_unread_emails(request):
-#     """
-#     Connects to Outlook, downloads resume attachments, analyzes them with Gemini,
-#     saves the extracted information to the database, and marks emails as read.
-#     This version uses the real Gemini API to extract data from resumes.
-#     """
-#     attachments_folder = os.path.join(settings.BASE_DIR, 'media', 'resumes')
-
-#     # Ensure the attachments folder exists
-#     if not os.path.exists(attachments_folder):
-#         os.makedirs(attachments_folder)
-
-#     try:
-#         # Initialize COM library and connect to Outlook
-#         pythoncom.CoInitialize()
-#         outlook = win32com.client.Dispatch("Outlook.Application").GetNamespace("MAPI")
-#         inbox = outlook.GetDefaultFolder(6)  # 6 refers to the inbox folder
-#         messages = inbox.Items
-
-#         # Iterate through messages to find and process unread emails
-#         for message in messages:
-#             # Check for unread emails with attachments
-#             if message.UnRead and message.Attachments.Count > 0:
-#                 for attachment in message.Attachments:
-#                     # Get the original file name and extension
-#                     original_file_name = attachment.FileName
-#                     name, extension = os.path.splitext(original_file_name)
-                    
-#                     # Create a unique filename by appending a timestamp
-#                     timestamp = datetime.now().strftime('%Y%m%d%H%M%S%f')
-#                     unique_file_name = f"{name}_{timestamp}{extension}"
-
-#                     file_path = os.path.join(attachments_folder, unique_file_name)
-                    
-#                     # Construct a URL for the database lookup using the unique name
-#                     resume_url_for_db = f"/media/resumes/{unique_file_name}"
-
-#                     try:
-#                         attachment.SaveAsFile(file_path)
-#                         logger.info(f"Downloaded attachment: {unique_file_name}")
-
-#                         # Read the content of the saved document
-#                         file_content = ""
-#                         if file_path.endswith('.pdf'):
-#                             try:
-#                                 doc = fitz.open(file_path)
-#                                 text = ""
-#                                 for page in doc:
-#                                     text += page.get_text()
-#                                 file_content = text
-#                                 doc.close()
-#                             except Exception as e:
-#                                 logger.error(f"Error reading PDF file {file_path}: {e}")
-#                                 continue
-#                         elif file_path.endswith('.docx'):
-#                             try:
-#                                 file_content = docx2txt.process(file_path)
-#                             except Exception as e:
-#                                 logger.error(f"Error reading DOCX file {file_path}: {e}")
-#                                 continue
-#                         else:
-#                             logger.warning(f"Unsupported attachment type: {original_file_name}. Skipping.")
-#                             continue # Skip unsupported file types
-
-#                         # Construct the prompt for Gemini
-#                         prompt = f"""
-#                         You are an expert HR assistant. Your task is to extract specific information from the following resume text.
-#                         The resume text is from a job application. Your response should be a JSON object containing the following keys:
-#                         'candidate_name', 'experience', 'mobile_number', 'location', 'email_address'.
-                        
-#                         Here is the resume text:
-#                         ---
-#                         {file_content}
-#                         ---
-                        
-#                         Instructions for each field:
-#                         - 'candidate_name': The full name of the candidate.
-#                         - 'experience': The total years of professional experience, as an integer. If not found, use 0.
-#                         - 'mobile_number': The candidate's mobile number, including the country code. If not found, use an empty string.
-#                         - 'location': The candidate's city and country of residence.
-#                         - 'email_address': The candidate's email address found within the resume.
-#                         """
-
-#                         try:
-#                             # --- LIVE GEMINI API CALL ---
-#                             response = model.generate_content(prompt)
-#                             response_text = response.text.strip('` \n')
-#                             if response_text.startswith('json'):
-#                                 response_text = response_text[4:].strip()
-#                             extracted_data = json.loads(response_text)
-#                             # --- END OF LIVE GEMINI API CALL ---
-
-#                             # --- FIX FOR DATETIME ERROR STARTS HERE ---
-#                             sent_on_datetime = message.SentOn
-#                             if sent_on_datetime.tzinfo is None or sent_on_datetime.tzinfo.utcoffset(sent_on_datetime) is None:
-#                                 local_tz = pytz.timezone(settings.TIME_ZONE)
-#                                 sent_on_local = local_tz.localize(sent_on_datetime)
-#                                 sent_on_utc = sent_on_local.astimezone(pytz.utc)
-#                             else:
-#                                 sent_on_utc = sent_on_datetime.astimezone(pytz.utc)
-#                             # --- FIX FOR DATETIME ERROR ENDS HERE ---
-
-
-#                             # Create and save a new Application instance
-#                             application = Application.objects.create(
-#                                 candidate_name=extracted_data.get('candidate_name'),
-#                                 from_email=message.SenderEmailAddress,
-#                                 delivery_date=sent_on_utc,
-#                                 experience=extracted_data.get('experience'),
-#                                 mobile_number=extracted_data.get('mobile_number'),
-#                                 location=extracted_data.get('location'),
-#                                 email_address=extracted_data.get('email_address'),
-#                                 subject=message.Subject,
-#                                 resume_url=resume_url_for_db # Use the newly generated unique URL
-#                             )
-#                             logger.info(f"Saved application for {application.candidate_name} (ID: {application.id})")
-
-#                             message.UnRead = False
-#                             message.Save() # Mark the email as read after successful processing and saving
-
-#                         except Exception as e:
-#                             logger.error(f"Error processing document with Gemini or saving to DB for {unique_file_name}: {e}")
-#                             message.UnRead = False # Still mark as read to prevent infinite loop
-#                             message.Save()
-#                     except Exception as e:
-#                         logger.error(f"Error saving attachment {unique_file_name}: {e}")
-#                         message.UnRead = False
-#                         message.Save()
-
-
-#     except Exception as e:
-#         logger.error(f"Error connecting to Outlook or iterating messages: {e}")
-#         if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
-#             return JsonResponse({'error': 'Failed to connect to Outlook or process emails. Please ensure it is open and configured correctly.'}, status=500)
-
-#     # After processing, retrieve all applications to display
-#     applications = Application.objects.all().order_by('-delivery_date')
-    
-#     # Prepare data for JSON response (for AJAX)
-#     applications_data = []
-#     for app in applications:
-#         applications_data.append({
-#             'id': app.id,
-#             'candidate_name': app.candidate_name,
-#             'from': app.from_email,
-#             'date': app.delivery_date.isoformat() if app.delivery_date else None,
-#             'experience': app.experience,
-#             'mobile_number': app.mobile_number,
-#             'location': app.location,
-#             'email_address': app.email_address,
-#             'resume_url': app.resume_url,
-#             'subject': app.subject,
-#         })
-    
-#     # Render the page or return JSON based on request type
-#     if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
-#         return JsonResponse({'emails': applications_data})
-#     else:
-#         context = {
-#             'emails': applications 
-#         }
-#         return render(request, 'show_application.html', context)
-
-
-
-
 
 
 logger = logging.getLogger(__name__)
 
+@login_required
 def show_unread_emails(request):
     """
-    Connects to Outlook, downloads resume attachments, analyzes them,
-    saves the extracted information to the database, and marks emails as read.
+    Retrieves records from the Apply_career model only for the logged-in user
+    and passes them to a template for display.
     """
-    attachments_folder = os.path.join(settings.BASE_DIR, 'media', 'resumes')
-
-    if not os.path.exists(attachments_folder):
-        os.makedirs(attachments_folder)
-
-    try:
-        pythoncom.CoInitialize()
-        outlook = win32com.client.Dispatch("Outlook.Application").GetNamespace("MAPI")
-        inbox = outlook.GetDefaultFolder(6)  # 6 refers to the inbox folder
-        messages = inbox.Items
-
-        for message in messages:
-            if message.UnRead and message.Attachments.Count > 0:
-                for attachment in message.Attachments:
-                    original_file_name = attachment.FileName
-                    name, extension = os.path.splitext(original_file_name)
-                    
-                    timestamp = datetime.now().strftime('%Y%m%d%H%M%S%f')
-                    unique_file_name = f"{name}_{timestamp}{extension}"
-
-                    file_path = os.path.join(attachments_folder, unique_file_name)
-                    resume_url_for_db = f"/media/resumes/{unique_file_name}"
-
-                    try:
-                        attachment.SaveAsFile(file_path)
-                        logger.info(f"Downloaded attachment: {unique_file_name}")
-
-                        file_content = ""
-                        if file_path.endswith('.pdf'):
-                            try:
-                                doc = fitz.open(file_path)
-                                text = ""
-                                for page in doc:
-                                    text += page.get_text()
-                                file_content = text
-                                doc.close()
-                            except Exception as e:
-                                logger.error(f"Error reading PDF file {file_path}: {e}")
-                                continue
-                        elif file_path.endswith('.docx'):
-                            try:
-                                file_content = docx2txt.process(file_path)
-                            except Exception as e:
-                                logger.error(f"Error reading DOCX file {file_path}: {e}")
-                                continue
-                        else:
-                            logger.warning(f"Unsupported attachment type: {original_file_name}. Skipping.")
-                            continue
-
-                        # NOTE: Replace this with your actual Gemini API call
-                        # For demonstration, we'll use a placeholder for extracted data.
-                        # response = model.generate_content(prompt)
-                        # extracted_data = json.loads(response.text)
-                        extracted_data = {
-                            'candidate_name': 'Candidate Name Placeholder',
-                            'experience': 5,
-                            'mobile_number': '+1234567890',
-                            'location': 'City, Country',
-                            'email_address': 'email@example.com',
-                            'job_role': 'Python Developer'
-                        }
-
-                        sent_on_datetime = message.SentOn
-                        if sent_on_datetime.tzinfo is None or sent_on_datetime.tzinfo.utcoffset(sent_on_datetime) is None:
-                            local_tz = pytz.timezone(settings.TIME_ZONE)
-                            sent_on_local = local_tz.localize(sent_on_datetime)
-                            sent_on_utc = sent_on_local.astimezone(pytz.utc)
-                        else:
-                            sent_on_utc = sent_on_datetime.astimezone(pytz.utc)
-
-                        application = Application.objects.create(
-                            candidate_name=extracted_data.get('candidate_name', ''),
-                            from_email=message.SenderEmailAddress,
-                            delivery_date=sent_on_utc,
-                            experience=extracted_data.get('experience', ''),
-                            mobile_number=extracted_data.get('mobile_number', ''),
-                            location=extracted_data.get('location', ''),
-                            email_address=extracted_data.get('email_address', ''),
-                            job_role=extracted_data.get('job_role', ''),
-                            subject=message.Subject,
-                            resume_url=resume_url_for_db,
-                            remark='',  # Initialize remark to an empty string
-                            # job_role='' # Initialize job_role to an empty string
-                        )
-                        logger.info(f"Saved application for {application.candidate_name} (ID: {application.id})")
-
-                        message.UnRead = False
-                        message.Save()
-
-                    except Exception as e:
-                        logger.error(f"Error processing document or saving to DB for {unique_file_name}: {e}")
-                        message.UnRead = False
-                        message.Save()
-                else:
-                    logger.error(f"Error saving attachment {unique_file_name}: {e}")
-                    message.UnRead = False
-                    message.Save()
-
-    except Exception as e:
-        logger.error(f"Error connecting to Outlook or iterating messages: {e}")
-        if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
-            return JsonResponse({'error': 'Failed to connect to Outlook or process emails. Please ensure it is open and configured correctly.'}, status=500)
-
-    applications = Application.objects.all().order_by('-delivery_date')
-    job_descriptions = JobDescriptionDocument.objects.all().order_by('-uploaded_at')
+    applications = Apply_career.objects.filter(user=request.user).order_by('-date_applied')
+    
+    # We also need to pass a list of available careers for the dropdown
+    careers = CareerPage.objects.all().order_by('title')
     
     context = {
         'emails': applications,
-        'job_descriptions': job_descriptions
+        'careers': careers,
     }
+    
     return render(request, 'show_application.html', context)
 
+@login_required
+def basic_ats_analysis(request, application_id):
+    """
+    Handles basic resume analysis for a given application.
+    This logic does not use an LLM.
+    """
+    if request.method == 'POST':
+        try:
+            application = get_object_or_404(Apply_career, pk=application_id, user=request.user)
+            
+            # --- Placeholder for Basic ATS Logic ---
+            # This is where you'd implement the logic to analyze the resume.
+            # For example, counting keywords, checking file size, or simple parsing.
+            
+            # For this example, we'll just return a mock analysis result.
+            analysis_result = {
+                'score': 85,
+                'match_percentage': 85.0,
+                'keywords_found': ['Python', 'Django', 'SQL'],
+                'comments': 'Strong match on keywords. Good fit for the role.'
+            }
+            
+            # In a real application, you would save this result to a model.
+            
+            return JsonResponse({'success': True, 'analysis': analysis_result})
+        except Exception as e:
+            return JsonResponse({'success': False, 'error': str(e)}, status=400)
+    
+    return JsonResponse({'success': False, 'error': 'Invalid request method'}, status=405)
 
+
+@login_required
+def advance_ats_analysis(request, application_id):
+    """
+    Handles advanced resume analysis using an LLM.
+    """
+    if request.method == 'POST':
+        try:
+            application = get_object_or_404(Apply_career, pk=application_id, user=request.user)
+            
+            llm_analysis = {
+                'ai_summary': "The candidate has 5 years of experience in Django and is proficient in database management. Their skills align well with the job description, especially in API development.",
+                'confidence_score': 0.95,
+                'suggested_questions': ["Can you describe a challenging project using Django?", "How do you handle database migrations?"],
+            }
+            
+            return JsonResponse({'success': True, 'analysis': llm_analysis})
+        except Exception as e:
+            return JsonResponse({'success': False, 'error': str(e)}, status=400)
+    
+    return JsonResponse({'success': False, 'error': 'Invalid request method'}, status=405)
 @csrf_exempt
 @require_POST
 def update_application_data(request):
@@ -1872,41 +1585,104 @@ def dashboard(request):
     return render(request, 'dashboard.html', context)
 
 
-@login_required
-@user_passes_test(is_admin, login_url='/signin/') # Redirect to signin if not admin/superadmin
+User = get_user_model() # Get the currently active user model
+
+# Helper functions to check user roles
+def is_superadmin(user):
+    """Checks if the user has the 'superadmin' role."""
+    return user.is_authenticated and user.role == 'superadmin'
+
+def is_admin(user):
+    """Checks if the user has the 'admin' role."""
+    return user.is_authenticated and user.role == 'admin'
+
+def is_admin_or_superadmin(user):
+    """Checks if the user is either an 'admin' or 'superadmin'."""
+    return is_admin(user) or is_superadmin(user)
+
+
+@user_passes_test(is_superadmin, login_url='/signin/')
+def superadmin_dashboard_view(request):
+    # Get all users to display in the table
+    all_users = User.objects.all()
+
+    # Get the available roles from your model
+    available_roles = User.ROLE_CHOICES # Assuming ROLE_CHOICES is defined in your model
+
+    context = {
+        'users': all_users,
+        'available_roles': available_roles,
+    }
+    return render(request, 'superadmin_dashboard.html', context)
+
+
 def admin_dashboard_view(request):
     """
-    Admin-specific dashboard.
+    Renders the admin dashboard and handles user creation.
     """
-    messages.info(request, f"Welcome, Admin {request.user.username}!")
-    # You can add more admin-specific logic and data here
-    return render(request, 'admin_dashboard.html')
+    if request.method == 'POST':
+        # --- Handle User Creation Form Submission ---
+        username = request.POST.get('username')
+        password = request.POST.get('password')
+        role = request.POST.get('role', 'user')
+
+        try:
+            # Ensure only superadmins can create admin users
+            if request.user.role == 'admin' and role != 'user':
+                messages.error(request, "You do not have permission to create this type of user.")
+            else:
+                new_user = User.objects.create_user(username=username, password=password, role=role)
+                if request.user.role == 'admin':
+                    new_user.created_by = request.user
+                
+                # Ensure is_staff status for admin/superadmin roles
+                if role == 'admin' or role == 'superadmin':
+                    new_user.is_staff = True
+
+                new_user.save()
+                messages.success(request, f"User '{new_user.username}' created successfully with role '{new_user.get_role_display()}'.")
+        except Exception as e:
+            messages.error(request, f"Error creating user: {e}")
+
+        # Always redirect after a POST request to prevent form resubmission
+        return redirect('admin_dashboard') # Assuming your URL name is 'admin_dashboard'
+
+    else: # request.method == 'GET'
+        # --- Handle Page Load (Displaying Users) ---
+        
+        # Filter users based on the current user's role
+        if request.user.role == 'superadmin':
+            all_users = User.objects.all().order_by('-date_joined')
+        else:
+            all_users = User.objects.filter(created_by=request.user).order_by('-date_joined')
+
+        context = {
+            'users': all_users,
+            'current_user_role': request.user.role,
+            'current_username': request.user.username,
+        }
+        
+        return render(request, 'admin_dashboard.html', context)
 
 @login_required
-@user_passes_test(is_superadmin, login_url='/signin/') # Redirect to signin if not superadmin
-def superadmin_dashboard_view(request):
-    """
-    Superadmin-specific dashboard.
-    """
-    messages.info(request, f"Welcome, Superadmin {request.user.username}!")
-    # You can add more superadmin-specific logic and data here
-    return render(request, 'superadmin_dashboard.html')
-
-
 def all_job_descriptions(request):
     """
-    Renders the page to display all uploaded and created job descriptions.
+    Renders the page to display all uploaded and created job descriptions for the
+    currently logged-in user.
     """
-    job_descriptions = JobDescriptionDocument.objects.all()
+    # Filter the queryset to only show job descriptions belonging to the current user
+    job_descriptions = JobDescriptionDocument.objects.filter(user=request.user)
     context = {
         'job_descriptions': job_descriptions,
     }
     return render(request, 'all_job_descriptions.html', context)
 
 
+@login_required
 def create_job_description(request):
     """
     Handles the creation of a new job description via text input with detailed IT fields.
+    The new job description will be linked to the current user.
     """
     if request.method == 'POST':
         title = request.POST.get('title')
@@ -1927,13 +1703,10 @@ def create_job_description(request):
         education_experience = request.POST.get('education_experience')
         benefits = request.POST.get('benefits')
 
-        # Handle empty salary fields by setting them to None
-        # This prevents the ValueError when saving to an IntegerField
         salary_min = int(salary_min) if salary_min else None
         salary_max = int(salary_max) if salary_max else None
 
         if title:
-            # Concatenate all text fields into a single string for storage in job_description field
             description_text_content = f"Title: {title}\n"
             if company_name: description_text_content += f"Company: {company_name}\n"
             if job_level: description_text_content += f"Job Level: {job_level.replace('_', ' ').title()}\n"
@@ -1952,8 +1725,9 @@ def create_job_description(request):
             if education_experience: description_text_content += f"\nEducation & Experience:\n{education_experience}\n"
             if benefits: description_text_content += f"\nBenefits:\n{benefits}\n"
 
-            # Create a JobDescriptionDocument instance with all fields
+            # Create a JobDescriptionDocument instance and link it to the current user
             JobDescriptionDocument.objects.create(
+                user=request.user,  # This is the crucial line
                 title=title,
                 company_name=company_name,
                 job_level=job_level,
@@ -1971,7 +1745,7 @@ def create_job_description(request):
                 preferred_skills=preferred_skills,
                 education_experience=education_experience,
                 benefits=benefits,
-                job_description=description_text_content, # Store the full text content here
+                job_description=description_text_content,
             )
             messages.success(request, 'Job description created successfully!')
             return redirect('all_job_descriptions')
@@ -2547,6 +2321,8 @@ def advance_resume_analysis_view(request):
 def calendar_scheduler(request):
     return render(request,'calendar_scheduler.html')
 
+#################### Start Send Email Process ###########################
+
 
 def send_configured_email(user, subject, message_body, recipient_list):
     """
@@ -2582,59 +2358,64 @@ def send_configured_email(user, subject, message_body, recipient_list):
 @login_required
 def configure_email(request):
     """
-    Handles the dynamic email configuration form for the logged-in user.
+    Handles the display and submission of the email configuration form.
+    For GET requests, it fetches the existing configuration.
+    For POST requests, it updates or creates a new configuration.
     """
     # Get or create the email configuration for the current user.
     config, created = EmailConfiguration.objects.get_or_create(user=request.user)
 
     if request.method == 'POST':
+        # Get data from the POST request
         email_host = request.POST.get('email_host')
         email_port = request.POST.get('email_port')
+        imap_host = request.POST.get('imap_host')
+        imap_port = request.POST.get('imap_port')
         email_host_user = request.POST.get('email_host_user')
         email_host_password = request.POST.get('email_host_password')
-        email_use_tls = request.POST.get('email_use_tls') == 'on'
-        email_use_ssl = request.POST.get('email_use_ssl') == 'on'
         email_from = request.POST.get('email_from')
+        security_protocol = request.POST.get('security_protocol')
 
-        if not email_host or not email_port or not email_host_user or not email_host_password:
-            messages.error(request, "All fields except 'From' Email Address must be filled out.")
-        elif email_use_tls and email_use_ssl:
-            messages.error(request, "You cannot use both TLS and SSL simultaneously.")
-        else:
-            try:
-                config.email_host = email_host
-                config.email_port = int(email_port)
-                config.email_host_user = email_host_user
-                config.email_host_password = email_host_password
-                config.email_use_tls = email_use_tls
-                config.email_use_ssl = email_use_ssl
-                config.email_from = email_from
-                config.save()
-                messages.success(request, "Email configuration updated successfully!")
-            except ValueError:
-                messages.error(request, "Port must be a valid number.")
-        return redirect('configure_email')
-    
-    context = {'config': config}
-    return render(request, 'email_config_form.html', context)
+        # Update the model instance with the new data
+        config.email_host = email_host
+        config.email_port = email_port
+        config.imap_host = imap_host
+        config.imap_port = imap_port
+        config.email_host_user = email_host_user
+        config.email_host_password = email_host_password
+        config.email_from = email_from
+        
+        # Set TLS and SSL based on the radio button selection
+        config.email_use_tls = (security_protocol == 'tls')
+        config.email_use_ssl = (security_protocol == 'ssl')
+        
+        try:
+            # Save the updated model instance to the database
+            config.save()
+            messages.success(request, "Email configuration saved successfully!")
+            # Redirect to the same page to show the updated data
+            return redirect('configure_email')
+        except Exception as e:
+            messages.error(request, f"Error saving configuration: {e}")
+            return redirect('configure_email')
+
+    # For GET requests, render the template with the current configuration
+    return render(request, 'email_dashboard.html', {'config': config})
+
 
 @login_required
 def send_job_description(request):
     """
-    Handles sending a job description to a candidate via email.
-    Fetches job descriptions dynamically from the database.
+    Handles sending a job description to a candidate via email and logs the sent email.
     """
     job_descriptions = JobDescriptionDocument.objects.all()
 
     if request.method == 'POST':
-        # Retrieve the string of multiple emails from the textarea
         recipient_emails_string = request.POST.get('recipient_emails')
         job_description_id = request.POST.get('job_description')
         email_body = request.POST.get('email_body')
         
-        # Parse the string into a list of emails
         if recipient_emails_string:
-            # Replace semicolons with commas, then split by commas, and strip whitespace
             recipient_list = [email.strip() for email in recipient_emails_string.replace(';', ',').split(',') if email.strip()]
         else:
             recipient_list = []
@@ -2645,22 +2426,23 @@ def send_job_description(request):
 
         try:
             job_description = get_object_or_404(JobDescriptionDocument, pk=job_description_id)
-            
-            # Use the URL of the stored PDF file
             file_name = os.path.basename(job_description.file.name)
             pdf_url = request.build_absolute_uri(f'/media/job_descriptions/{file_name}')
-
-            # Append the PDF link to the email body
             updated_email_body = f"{email_body}\n\nYou can view the full job description here: {pdf_url}"
-            
             subject = f"Job Description: {job_description.title}"
             
-            # The send_configured_email function now receives a list of recipients
             success = send_configured_email(request.user, subject, updated_email_body, recipient_list)
 
             if success:
+                # Log the sent email
+                SentEmail.objects.create(
+                    user=request.user,
+                    recipient_emails=", ".join(recipient_list),
+                    subject=subject,
+                    body=updated_email_body
+                )
                 messages.success(request, "Email sent successfully!")
-                # return redirect('success_page') # Uncomment and modify as needed
+                return redirect('email_dashboard')
             else:
                 messages.error(request, "Failed to send email. Please check your configuration.")
                 return render(request, 'send_job_description.html', {'job_descriptions': job_descriptions})
@@ -2671,6 +2453,177 @@ def send_job_description(request):
     
     context = {'job_descriptions': job_descriptions}
     return render(request, 'send_job_description.html', context)
+
+
+@login_required
+def sent_emails(request):
+    """
+    Displays a list of emails sent by the current user.
+    """
+    sent_emails_list = SentEmail.objects.filter(user_id=request.user.id).order_by('-sent_at')
+    context = {'sent_emails_list': sent_emails_list}
+    return render(request, 'sent_emails.html', context)
+
+@login_required
+def inbox(request):
+    """
+    Fetches emails from the user's IMAP server and returns them as a JSON response.
+    """
+    try:
+        # Retrieve the user's email configuration from the database
+        config = EmailConfiguration.objects.get(user_id=request.user.id)
+    except EmailConfiguration.DoesNotExist:
+        return JsonResponse({'error_message': 'Email configuration not found. Please configure your email settings.'}, status=404)
+
+    imap_server = None
+    try:
+        # Establish a connection to the IMAP server
+        imap_server = imaplib.IMAP4_SSL(config.imap_host)
+        imap_server.login(config.email_host_user, config.email_host_password)
+        imap_server.select('INBOX')
+
+        # Search for all email messages in the inbox
+        status, messages_data = imap_server.search(None, 'ALL')
+        email_ids = messages_data[0].split()
+        
+        # Get the 10 most recent email IDs
+        latest_emails_ids = email_ids[-10:] if len(email_ids) > 10 else email_ids
+        
+        inbox_emails = []
+        for e_id in reversed(latest_emails_ids):
+            # Fetch the entire email message
+            status, data = imap_server.fetch(e_id, '(RFC822)')
+            raw_email = data[0][1]
+            msg = email.message_from_bytes(raw_email)
+
+            # Parse email details
+            subject = msg.get('Subject')
+            from_address = msg.get('From')
+            date = msg.get('Date')
+            
+            # Get the email body
+            email_body = ""
+            if msg.is_multipart():
+                for part in msg.walk():
+                    content_type = part.get_content_type()
+                    content_disposition = str(part.get_content_disposition())
+
+                    if content_type == 'text/plain' and 'attachment' not in content_disposition:
+                        email_body = part.get_payload(decode=True).decode()
+                        break
+                else:
+                    email_body = msg.get_payload(decode=True).decode()
+
+            # Append the email details to the list
+            inbox_emails.append({
+                'from': from_address,
+                'subject': subject,
+                'date': date,
+                'body': email_body,
+            })
+
+        return JsonResponse({'inbox_emails': inbox_emails})
+
+    except Exception as e:
+        # Return a JSON response with an error message
+        return JsonResponse({'error_message': f'Failed to connect to IMAP server: {e}'}, status=500)
+    finally:
+        # Ensure the connection is closed
+        if imap_server:
+            imap_server.logout()
+
+
+@login_required
+def save_draft(request):
+    """
+    Saves a new email draft or updates an existing one.
+    """
+    if request.method == 'POST':
+        draft_id = request.POST.get('draft_id')
+        subject = request.POST.get('subject', '')
+        body = request.POST.get('body', '')
+        recipient_emails = request.POST.get('recipient_emails', '')
+        
+        try:
+            if draft_id:
+                draft = get_object_or_404(DraftEmail, pk=draft_id, user_id=request.user.id)
+                draft.subject = subject
+                draft.body = body
+                draft.recipient_emails = recipient_emails
+                draft.save()
+                messages.success(request, "Draft updated successfully!")
+            else:
+                DraftEmail.objects.create(
+                    user=request.user,
+                    subject=subject,
+                    body=body,
+                    recipient_emails=recipient_emails
+                )
+                messages.success(request, "Draft saved successfully!")
+        except Exception as e:
+            messages.error(request, f"Failed to save draft: {e}")
+            
+    return redirect('list_drafts')
+
+@login_required
+def list_drafts(request):
+    """
+    Displays a list of email drafts for the current user.
+    """
+    
+    drafts = DraftEmail.objects.filter(user_id=request.user.id).order_by('-last_modified')
+    context = {'drafts': drafts}
+    return render(request, 'list_drafts.html', context)
+
+@login_required
+def edit_draft(request, draft_id):
+    """
+    Renders the form to edit a specific draft.
+    """
+    draft = get_object_or_404(DraftEmail, pk=draft_id, user_id=request.user.id)
+    context = {'draft': draft}
+    return render(request, 'edit_draft.html', context)
+
+@login_required
+def send_draft(request, draft_id):
+    """
+    Sends an email from a saved draft and deletes the draft upon success.
+    """
+    draft = get_object_or_404(DraftEmail, pk=draft_id, user_id=request.user.id)
+    recipient_list = [email.strip() for email in draft.recipient_emails.replace(';', ',').split(',') if email.strip()]
+    
+    if not recipient_list:
+        messages.error(request, "Cannot send email. No recipient specified in the draft.")
+        return redirect('edit_draft', draft_id=draft.id)
+    
+    success = send_configured_email(request.user, draft.subject, draft.body, recipient_list)
+    
+    if success:
+        # Log the sent email
+        SentEmail.objects.create(
+            user=request.user,
+            recipient_emails=draft.recipient_emails,
+            subject=draft.subject,
+            body=draft.body
+        )
+        draft.delete()
+        messages.success(request, "Email sent successfully and draft deleted!")
+        return redirect('email_dashboard')
+    else:
+        messages.error(request, "Failed to send email. Please check your configuration.")
+        return redirect('email_dashboard')
+
+@login_required
+def delete_draft(request, draft_id):
+    """
+    Deletes a specific draft.
+    """
+    if request.method == 'POST':
+        draft = get_object_or_404(DraftEmail, pk=draft_id, user_id=request.user.id)
+        draft.delete()
+        messages.success(request, "Draft deleted successfully!")
+    return redirect('list_drafts')
+
 
 @login_required
 def success_page(request):
@@ -2690,3 +2643,435 @@ def get_job_description_content(request, job_id):
         return JsonResponse({'description': job_description.description})
     except Exception as e:
         return JsonResponse({'error': f'Job description not found: {e}'}, status=404)
+    
+
+@login_required
+def email_dashboard(request):
+    """
+    A unified view for the email dashboard, displaying inbox, sent, drafts,
+    and the form to send a new email.
+    """
+    context = {}
+    error_message = None
+
+    # --- Fetch all necessary data ---
+
+    # Get email configuration
+    try:
+        config = EmailConfiguration.objects.get(user_id=request.user.id)
+        context['config'] = config
+    except EmailConfiguration.DoesNotExist:
+        context['config'] = None
+        error_message = "Email configuration not found. Please configure your email settings."
+
+    # Fetch sent emails
+    sent_emails_list = SentEmail.objects.filter(user_id=request.user.id).order_by('-sent_at')
+    context['sent_emails_list'] = sent_emails_list
+
+    # Fetch drafts
+    drafts = DraftEmail.objects.filter(user_id=request.user.id).order_by('-last_modified')
+    context['drafts'] = drafts
+
+    # Fetch job descriptions for the "send new email" form
+    job_descriptions = JobDescriptionDocument.objects.all()
+    context['job_descriptions'] = job_descriptions
+    
+    # --- Inbox logic: only include replies to platform-sent emails ---
+    inbox_emails = []
+    if not error_message:  # Only try to fetch if configuration exists
+        imap_server = None
+        try:
+            # Get list of all recipients you have ever emailed from this platform
+            platform_recipients = set()
+            for sent in sent_emails_list:
+                if sent.recipient_emails:
+                    platform_recipients.update([email.strip() for email in sent.recipient_emails.split(";")])
+
+            # Establish a connection to the IMAP server
+            imap_server = imaplib.IMAP4_SSL(config.imap_host)
+            imap_server.login(config.email_host_user, config.email_host_password)
+            imap_server.select('INBOX')
+
+            # Search for all email messages in the inbox
+            status, messages_data = imap_server.search(None, 'ALL')
+            email_ids = messages_data[0].split()
+
+            # Get the 20 most recent email IDs (increase/decrease as needed)
+            latest_emails_ids = email_ids[-20:] if len(email_ids) > 20 else email_ids
+
+            for e_id in reversed(latest_emails_ids):
+                # Fetch the entire email message
+                status, data = imap_server.fetch(e_id, '(RFC822)')
+                raw_email = data[0][1]
+                msg = email.message_from_bytes(raw_email)
+
+                # Parse email details
+                subject = msg.get('Subject', '')
+                from_address = msg.get('From', '')
+                date = msg.get('Date', '')
+
+                # Only include if the "From" matches one of our platform recipients
+                if not any(recipient in from_address for recipient in platform_recipients):
+                    continue
+
+                # Get the email body
+                email_body = ""
+                if msg.is_multipart():
+                    for part in msg.walk():
+                        content_type = part.get_content_type()
+                        content_disposition = str(part.get_content_disposition())
+
+                        if content_type == 'text/plain' and 'attachment' not in content_disposition:
+                            try:
+                                email_body = part.get_payload(decode=True).decode()
+                            except:
+                                email_body = part.get_payload(decode=True).decode(errors="ignore")
+                            break
+                else:
+                    try:
+                        email_body = msg.get_payload(decode=True).decode()
+                    except:
+                        email_body = msg.get_payload(decode=True).decode(errors="ignore")
+
+                # Append the email details to the list
+                inbox_emails.append({
+                    'from': from_address,
+                    'subject': subject,
+                    'date': date,
+                    'body': email_body,
+                })
+
+        except Exception as e:
+            error_message = f'Failed to connect to IMAP server: {e}'
+        finally:
+            if imap_server:
+                imap_server.logout()
+
+    context['inbox_emails'] = inbox_emails
+    context['error_message'] = error_message
+    
+    return render(request, 'email_dashboard.html', context)
+
+
+
+
+###################### Start User create #################
+
+@user_passes_test(is_admin_or_superadmin, login_url='/signin/')
+def create_user(request):
+    """
+    Handles the form submission for creating a new user.
+    """
+    if request.method == 'POST':
+        username = request.POST.get('username')
+        password = request.POST.get('password')
+        role = request.POST.get('role', 'user')  # Default to 'user' if not specified
+
+        # Ensure that only superadmins can create admin users
+        if request.user.role == 'admin' and role != 'user':
+            messages.error(request, "You do not have permission to create this type of user.")
+            return redirect('admin_dashboard')
+        
+        # Ensure that the role selected is valid based on the user's permissions
+        if request.user.role == 'superadmin' and role not in ['admin', 'user']:
+            messages.error(request, "Invalid role selected.")
+            return redirect('superadmin_dashboard')
+            
+        try:
+            # Create a new user with the provided details
+            new_user = User.objects.create_user(username=username, password=password, role=role)
+
+            # --- This crucial block of code links the new user to their creator ---
+            if request.user.role == 'admin':
+                new_user.created_by = request.user
+            
+            # --- This new line ensures that any new admin has staff status enabled ---
+            if role == 'admin' or role == 'superadmin':
+                new_user.is_staff = True
+
+            new_user.save()
+            # ---------------------------------------------------------------------
+
+            messages.success(request, f"User '{new_user.username}' created successfully with role '{new_user.get_role_display()}'.")
+        except Exception as e:
+            messages.error(request, f"Error creating user: {e}")
+            
+        if request.user.role == 'superadmin':
+            return redirect('superadmin_dashboard')
+        else:
+            return redirect('admin_dashboard')
+
+    # If the request is not a POST, redirect to the appropriate dashboard
+    if request.user.role == 'superadmin':
+        return redirect('superadmin_dashboard')
+    else:
+        return redirect('admin_dashboard')
+ 
+
+    
+# Helper function to check if the user is a superuser or admin
+def is_admin_or_superuser(user):
+    return user.is_superuser or user.groups.filter(name='Admins').exists()
+
+@login_required
+@user_passes_test(is_admin_or_superuser)
+def toggle_user_status(request, user_id):
+    if request.method == 'POST':
+        target_user = get_object_or_404(User, id=user_id)
+
+        # Prevent an admin from disabling their own account
+        if target_user == request.user:
+            messages.error(request, "You cannot change the status of your own account.")
+            return redirect('admin_dashboard')
+
+        target_user.is_active = not target_user.is_active
+        target_user.save()
+
+        if target_user.is_active:
+            messages.success(request, f"User '{target_user.username}' has been enabled.")
+        else:
+            messages.success(request, f"User '{target_user.username}' has been disabled.")
+
+    return redirect('admin_dashboard')
+
+def set_user_password(request, user_id):
+    """
+    Sets a manual password for a specific user.
+    """
+    if request.method == 'POST':
+        try:
+            user = User.objects.get(id=user_id)
+            new_password = request.POST.get('new_password')
+            
+            if not new_password:
+                messages.error(request, "Password cannot be empty.")
+                return redirect('admin_dashboard')
+
+            # Set the new password for the user
+            user.password = make_password(new_password)
+            user.save()
+            
+            # Add a success message to be displayed in the pop-up
+            messages.success(request, f"Password for '{user.username}' has been successfully set.")
+            
+        except User.DoesNotExist:
+            messages.error(request, "User not found.")
+            
+        return redirect('admin_dashboard')
+
+    return redirect('admin_dashboard')
+
+
+#################  Job Posting ################
+from selenium.webdriver.support.ui import Select
+from selenium.webdriver.common.keys import Keys
+from selenium.webdriver.chrome.service import Service as ChromeService
+from webdriver_manager.chrome import ChromeDriverManager
+from selenium import webdriver
+from selenium.webdriver.common.by import By
+
+
+
+@login_required
+def post_jobs(request):
+    """
+    A Django view to retrieve job descriptions from the database
+    and post them to LinkedIn.
+    """
+    try:
+        # Fetch all job descriptions from the database.
+        # This is a simplified query; you can add filters (e.g., jobs not yet posted).
+        jobs_to_post = JobDescriptionDocument.objects.all()
+
+        # Convert the Django queryset to a list of dictionaries
+        jobs_data = list(jobs_to_post.values(
+            'title', 'company_name', 'job_level', 'employment_type',
+            'country', 'state', 'city', 'overview', 'responsibilities',
+            'required_skills', 'preferred_skills', 'education_experience',
+            'benefits'
+        ))
+
+        # Check if any jobs were found
+        if not jobs_data:
+            return HttpResponse("No job descriptions found to post.", status=200)
+
+        # Call the Selenium function to post the jobs
+        post_jobs_to_linkedin(
+            jobs_data=jobs_data,
+            username="rahulsuthar7280@gmail.com",
+            password="rahul@7280"
+        )
+
+        return HttpResponse(f"Successfully started the job posting process for {len(jobs_data)} jobs.", status=200)
+    
+    except Exception as e:
+        # In a real-world scenario, you would log this error and return a more user-friendly message.
+        return HttpResponse(f"An error occurred while trying to post the jobs: {str(e)}", status=500)
+
+
+
+########################## Career page ###################
+def list_careers(request):
+    """
+    Displays the list of all career pages and handles the creation of a new one.
+    """
+    if request.method == 'POST':
+        # Manually extract all fields from the POST request
+        title = request.POST.get('title')
+        description = request.POST.get('description')
+        location = request.POST.get('location')
+        job_type = request.POST.get('job_type')
+        salary = request.POST.get('salary')
+        responsibilities = request.POST.get('responsibilities')
+        qualifications = request.POST.get('qualifications')
+
+        # Create a new CareerPage object with all the collected data
+        CareerPage.objects.create(
+            title=title,
+            description=description,
+            location=location,
+            job_type=job_type,
+            salary=salary,
+            responsibilities=responsibilities,
+            qualifications=qualifications
+        )
+        return redirect('career_portal')
+    
+    careers = CareerPage.objects.all()
+    # Assuming you also need locations and job types for the filters
+    locations = CareerPage.objects.values_list('location', flat=True).distinct()
+    job_types = CareerPage.objects.values_list('job_type', flat=True).distinct()
+
+    context = {
+        'careers': careers,
+        'locations': locations,
+        'job_types': job_types,
+    }
+    return render(request, 'career_portal.html', context)
+
+
+# The other views (toggle_status, share_career, career_detail) remain unchanged
+def toggle_status(request, pk):
+    career_page = get_object_or_404(CareerPage, pk=pk)
+    career_page.is_active = not career_page.is_active
+    career_page.save()
+    return redirect('career_portal')
+
+def share_career(request, pk):
+    career_page = get_object_or_404(CareerPage, pk=pk)
+    share_url = request.build_absolute_uri(reverse('career_detail', args=[pk]))
+    return redirect('list_careers')
+
+def career_detail(request, pk):
+    career_page = get_object_or_404(CareerPage, pk=pk)
+    
+    if request.method == 'POST':
+        # Manually retrieve form data from the POST request
+        first_name = request.POST.get('first_name')
+        last_name = request.POST.get('last_name')
+        email = request.POST.get('email')
+        phone = request.POST.get('phone')
+        linkedin_url = request.POST.get('linkedin_url')
+        resume_file = request.FILES.get('resume')
+        cover_letter_file = request.FILES.get('cover_letter')
+        
+        # Perform a basic check for required fields
+        if not all([first_name, last_name, email, resume_file]):
+            # You might want to add error messages to the context here
+            return render(request, 'career_detail.html', {'career': career_page})
+        
+        # Handle file uploads and create the file path
+        fs = FileSystemStorage()
+        resume_filename = fs.save(resume_file.name, resume_file)
+        
+        # Save cover letter if provided
+        cover_letter_filename = None
+        if cover_letter_file:
+            cover_letter_filename = fs.save(cover_letter_file.name, cover_letter_file)
+
+        # Create and save a new Application instance
+        application = Apply_career.objects.create(
+            career=career_page,
+            first_name=first_name,
+            last_name=last_name,
+            email=email,
+            phone=phone,
+            resume=fs.url(resume_filename),
+            cover_letter=fs.url(cover_letter_filename) if cover_letter_filename else None,
+            linkedin_url=linkedin_url
+        )
+        
+        return redirect('career_detail')
+    
+    context = {
+        'career': career_page,
+    }
+    return render(request, 'career_detail.html', context)
+
+def application_success(request):
+    """
+    A simple view for a success page after form submission.
+    """
+    return render(request, 'application_success.html')
+
+
+
+##################### Create Folder ##################
+from django.db.models import Count
+def file_manager_view(request, folder_id=None):
+    """
+    Displays either all folders or the contents of a specific folder.
+    """
+    selected_folder = None
+    folders_to_display = []
+    documents_to_display = []
+    
+    # Use annotate to get the count of documents for each folder
+    all_folders = Folder.objects.annotate(
+        document_count=Count('documents')
+    ).order_by('name')
+
+    if folder_id is not None:
+        # State 2: Folder-Browse State
+        selected_folder = get_object_or_404(all_folders, id=folder_id)
+        documents_to_display = selected_folder.documents.all()
+    else:
+        # State 1: Home State
+        folders_to_display = all_folders
+        
+    context = {
+        'all_folders': all_folders, # For the upload form dropdown
+        'selected_folder': selected_folder, # The folder being browsed (or None)
+        'folders_to_display': folders_to_display, # The list of folders
+        'documents_to_display': documents_to_display, # The list of documents in the selected folder
+    }
+
+    return render(request, 'file_manager.html', context)
+
+def create_folder_view(request):
+    # ... (no change to this view)
+    if request.method == 'POST':
+        folder_name = request.POST.get('folder_name')
+        if folder_name:
+            folder, created = Folder.objects.get_or_create(name=folder_name)
+            if created:
+                folder_path = os.path.join(settings.MEDIA_ROOT, 'documents', folder_name)
+                os.makedirs(folder_path, exist_ok=True)
+    return redirect('file_manager')
+
+def upload_file_view(request):
+    # ... (no change to this view)
+    if request.method == 'POST':
+        folder_id = request.POST.get('folder_id')
+        files = request.FILES.getlist('file')
+        try:
+            folder = Folder.objects.get(id=folder_id)
+            for file in files:
+                Document.objects.create(folder=folder, file=file)
+        except Folder.DoesNotExist:
+            pass
+    return redirect('file_manager')
+
+
+################################################
+

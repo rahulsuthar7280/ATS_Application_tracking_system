@@ -1,0 +1,325 @@
+{% extends 'base.html' %}
+
+{% block title %}Incoming Applications{% endblock %}
+
+{% block content %}
+<head>
+    <meta charset="UTF-8">
+    <title>File Manager</title>
+    <style>
+        /* --- General Layout and Typography --- */
+        body {
+            font-family: 'Roboto', sans-serif;
+            margin: 0;
+            background-color: #f0f2f5;
+            color: #333;
+            line-height: 1.6;
+        }
+        .container {
+            max-width: 1400px;
+            margin: 20px auto;
+            padding: 0 20px;
+        }
+        h1 {
+            color: #2c3e50;
+            border-bottom: 2px solid #e0e6ed;
+            padding-bottom: 15px;
+            text-align: center;
+            margin-bottom: 25px;
+        }
+
+        /* --- Header for Buttons --- */
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        .header h2 {
+            margin: 0;
+            color: #34495e;
+            font-size: 1.5rem;
+        }
+        .header-buttons {
+            display: flex;
+            gap: 15px; /* Spacing between buttons */
+        }
+        .btn-primary {
+            background-color: #2980b9;
+            color: white;
+            padding: 12px 25px;
+            border: none;
+            border-radius: 50px; /* Pill-shaped button */
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: 500;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 8px rgba(0,0,0,0.15);
+        }
+        .btn-secondary {
+            background-color: #2ecc71;
+            color: white;
+            padding: 12px 25px;
+            border: none;
+            border-radius: 50px;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: 500;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .btn-secondary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 8px rgba(0,0,0,0.15);
+        }
+
+        /* --- Content Grid for Folders and Files --- */
+        .content-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            gap: 20px;
+        }
+        .card {
+            background: #fff;
+            border-radius: 12px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+            padding: 20px;
+            text-align: center;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 6px 15px rgba(0,0,0,0.1);
+        }
+        .card-link {
+            display: block;
+            text-decoration: none;
+            color: inherit;
+        }
+        .card-icon {
+            font-size: 3rem;
+            margin-bottom: 10px;
+        }
+        .card-title {
+            font-size: 1rem;
+            font-weight: 600;
+            color: #2c3e50;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .folder-icon { color: #f1c40f; }
+        .file-icon { color: #95a5a6; }
+        .card-count {
+            font-size: 0.8rem;
+            color: #7f8c8d;
+            margin-top: 5px;
+        }
+        
+        /* --- Forms and Modal --- */
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: bold;
+        }
+        input[type="text"], select, input[type="file"] {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 15px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            box-sizing: border-box;
+        }
+        .btn-form {
+            background-color: #2ecc71;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        .btn-form:hover {
+            background-color: #27ae60;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0,0,0,0.4);
+            backdrop-filter: blur(5px);
+            -webkit-backdrop-filter: blur(5px);
+            padding-top: 50px;
+        }
+        .modal-content {
+            background-color: #fff;
+            margin: 5% auto;
+            padding: 25px;
+            border-radius: 10px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.2);
+            width: 80%;
+            max-width: 400px;
+            position: relative;
+            animation: fadeIn 0.3s ease-out;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .close-btn {
+            color: #aaa;
+            float: right;
+            font-size: 2rem;
+            font-weight: bold;
+            line-height: 1;
+            cursor: pointer;
+        }
+        .close-btn:hover, .close-btn:focus {
+            color: #000;
+        }
+        .empty-message {
+            text-align: center;
+            color: #7f8c8d;
+            font-style: italic;
+            padding: 40px;
+            grid-column: 1 / -1;
+        }
+        .back-link {
+            margin-bottom: 20px;
+            display: inline-block;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <!-- <h1>File Manager</h1> -->
+
+    <div class="header">
+        {% if selected_folder %}
+            <h2>Current Folder: {{ selected_folder.name }}</h2>
+        {% else %}
+            <h2>All Folders</h2>
+        {% endif %}
+        <div class="header-buttons">
+            <button id="openUploadModalBtn" class="btn-secondary">Upload Files</button>
+            <button id="openCreateModalBtn" class="btn-primary">Create Folder</button>
+        </div>
+    </div>
+
+    <div class="content-grid">
+        {% if selected_folder %}
+            <div class="back-link" style="grid-column: 1 / -1;"><a href="{% url 'file_manager' %}">&#x2B05; Back to all folders</a></div>
+            {% if documents_to_display %}
+                {% for document in documents_to_display %}
+                    <div class="card">
+                        <a href="{{ document.file.url }}" target="_blank" class="card-link">
+                            <span class="card-icon file-icon">&#x1F4C4;</span>
+                            <div class="card-title">{{ document.file.name }}</div>
+                        </a>
+                    </div>
+                {% endfor %}
+            {% else %}
+                <p class="empty-message">This folder is empty.</p>
+            {% endif %}
+        {% else %}
+            {% if all_folders %}
+                {% for folder in all_folders %}
+                    <div class="card">
+                        <a href="{% url 'browse_folder' folder.id %}" class="card-link">
+                            <span class="card-icon folder-icon">&#x1F4C1;</span>
+                            <div class="card-title">{{ folder.name }}</div>
+                            <div class="card-count">{{ folder.document_count }} document{{ folder.document_count|pluralize }}</div>
+                        </a>
+                    </div>
+                {% endfor %}
+            {% else %}
+                <p class="empty-message">No folders have been created yet. Click "Create Folder" to get started.</p>
+            {% endif %}
+        {% endif %}
+    </div>
+</div>
+
+<div id="createFolderModal" class="modal">
+    <div class="modal-content">
+        <span class="close-btn">&times;</span>
+        <h2>Create New Folder</h2>
+        <form method="post" action="{% url 'create_folder' %}">
+            {% csrf_token %}
+            <label for="id_modal_folder_name">Folder Name:</label>
+            <input type="text" name="folder_name" required id="id_modal_folder_name">
+            <button class="btn-primary" type="submit">Create</button>
+        </form>
+    </div>
+</div>
+
+<div id="uploadFileModal" class="modal">
+    <div class="modal-content">
+        <span class="close-btn">&times;</span>
+        <h2>Upload Files</h2>
+        <form method="post" enctype="multipart/form-data" action="{% url 'upload_file' %}">
+            {% csrf_token %}
+            <label for="id_folder_select">Select a Folder:</label>
+            <select name="folder_id" id="id_folder_select" required>
+                <option value="">-- Select a folder --</option>
+                {% for folder in all_folders %}
+                    <option value="{{ folder.id }}" {% if selected_folder and folder.id == selected_folder.id %}selected{% endif %}>{{ folder.name }}</option>
+                {% endfor %}
+            </select>
+            <label for="id_file">Select File(s):</label>
+            <input type="file" name="file" required id="id_file" multiple>
+            <button class="btn-form" type="submit">Upload</button>
+        </form>
+    </div>
+</div>
+
+<script>
+    // Get the modal and buttons for Create Folder
+    const createModal = document.getElementById("createFolderModal");
+    const openCreateBtn = document.getElementById("openCreateModalBtn");
+    const createCloseBtn = createModal.querySelector(".close-btn");
+
+    // Get the modal and buttons for Upload Files
+    const uploadModal = document.getElementById("uploadFileModal");
+    const openUploadBtn = document.getElementById("openUploadModalBtn");
+    const uploadCloseBtn = uploadModal.querySelector(".close-btn");
+
+    // Event listeners for Create Folder Modal
+    openCreateBtn.onclick = function() {
+        createModal.style.display = "block";
+    }
+    createCloseBtn.onclick = function() {
+        createModal.style.display = "none";
+    }
+
+    // Event listeners for Upload Files Modal
+    openUploadBtn.onclick = function() {
+        uploadModal.style.display = "block";
+    }
+    uploadCloseBtn.onclick = function() {
+        uploadModal.style.display = "none";
+    }
+
+    // Close modals when clicking outside
+    window.onclick = function(event) {
+        if (event.target == createModal) {
+            createModal.style.display = "none";
+        }
+        if (event.target == uploadModal) {
+            uploadModal.style.display = "none";
+        }
+    }
+</script>
+
+</body>
+{% endblock %}

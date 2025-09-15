@@ -1,35 +1,50 @@
 {% extends 'base.html' %}
 
 {% block title %}Incoming Applications{% endblock %}
-{% block page_heading %}Incoming Applications{% endblock %}
 
 {% block content %}
 <div class="content-wrapper">
-    <h1 class="page-heading">Incoming Applications</h1>
-
+    <!-- <h2 class="page-heading">Incoming Applications</h2> -->
+    
     {% if emails %}
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <div class="input-group search-box" style="max-width: 300px;">
-            <span class="input-group-text"><i class="fas fa-search"></i></span>
-            <input type="text" id="searchInput" class="form-control" placeholder="Search applications...">
-        </div>
+    <div class="card p-3 mb-4 shadow-subtle rounded-3">
+        <div class="row align-items-center g-3">
+            <div class="col-lg-4 col-md-6 col-12">
+                <div class="input-group search-box">
+                    <span class="input-group-text"><i class="fas fa-search"></i></span>
+                    <input type="text" id="searchInput" class="form-control" placeholder="Search by name, email, phone...">
+                </div>
+            </div>
 
-        <div class="d-flex align-items-center">
-            <div class="btn-group me-3" role="group" aria-label="Application filters">
-                <button id="allApplicationsBtn" type="button" class="btn btn-outline-primary active">All</button>
-                <button id="todaysApplicationsBtn" type="button" class="btn btn-outline-primary">Today</button>
-            </div>
-             <div class="btn-group me-3" role="group" aria-label="Application filters">
-                <button id="gmailBtnFilter" type="button" class="btn btn-outline-primary">Gmail</button>
-                <button id="naukriBtnFilter" type="button" class="btn btn-outline-primary">Naukri</button>
-                <button id="linkedinBtnFilter" type="button" class="btn btn-outline-primary">LinkedIn</button>
-                <button id="glassdoorBtnFilter" type="button" class="btn btn-outline-primary">Glassdoor</button>
-                <button id="zohoBtnFilter" type="button" class="btn btn-outline-primary">Zoho</button>
-                <button id="indeedBtnFilter" type="button" class="btn btn-outline-primary">Indeed</button>
-            </div>
-            <div class="btn-group me-3" role="group" aria-label="Application filters">
-                <button id="basicAtsBtnFilter" type="button" class="btn btn-outline-primary">Basic ATS</button>
-                <button id="advancedAtsBtnFilter" type="button" class="btn btn-outline-primary">Advanced ATS</button>
+            <div class="col-lg-8 col-md-6 col-12 d-flex flex-wrap justify-content-md-end align-items-center">
+                <div class="filter-group me-3 mb-2 mb-md-0">
+                    <span class="filter-label">Date:</span>
+                    <div class="btn-group" role="group" id="dateFilterGroup">
+                        <button id="allApplicationsBtn" type="button" class="btn btn-filter-date active">All</button>
+                        <button id="todaysApplicationsBtn" type="button" class="btn btn-filter-date">Today</button>
+                    </div>
+                </div>
+
+                <div class="filter-group me-3 mb-2 mb-md-0">
+                    <span class="filter-label">Source:</span>
+                    <div class="btn-group" role="group" id="sourceFilterGroup">
+                        <button type="button" class="btn btn-filter-source active" data-source=""><i class="fas fa-filter"></i></button>
+                        <button type="button" class="btn btn-filter-source" data-source="Gmail"><i class="fas fa-envelope icon-gmail"></i></button>
+                        <button type="button" class="btn btn-filter-source" data-source="Naukri"><i class="fas fa-briefcase icon-naukri"></i></button>
+                        <button type="button" class="btn btn-filter-source" data-source="LinkedIn"><i class="fab fa-linkedin-in icon-linkedin"></i></button>
+                        <button type="button" class="btn btn-filter-source" data-source="Glassdoor"><i class="fas fa-building icon-glassdoor"></i></button>
+                        <button type="button" class="btn btn-filter-source" data-source="Indeed"><i class="fas fa-file-alt icon-indeed"></i></button>
+                    </div>
+                </div>
+
+                <div class="filter-group mb-2 mb-md-0">
+                    <span class="filter-label">ATS Analysis:</span>
+                    <div class="btn-group" role="group" id="atsFilterGroup">
+                        <button type="button" class="btn btn-filter-ats active" data-ats-type="">All</button>
+                        <button type="button" class="btn btn-filter-ats" data-ats-type="Basic">Basic</button>
+                        <button type="button" class="btn btn-filter-ats" data-ats-type="Advanced">Advanced</button>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
@@ -37,57 +52,53 @@
     <div class="card p-4 shadow-subtle rounded-3">
         <div class="table-responsive">
             <table id="incomingApplicationsTable" class="table universal-table">
-                <thead class="table-header">
+                <thead>
                     <tr>
-                        <th scope="col" class="id-col">Id</th>
-                        <th scope="col" class="name-col">Candidate Name</th>
-                        <th scope="col" class="date-col">Date Received</th>
-                        <th scope="col" class="exp-col">Experience</th>
-                        <th scope="col" class="mobile-col">Mobile Number</th>
-                        <th scope="col" class="location-col">Location</th>
-                        <th scope="col" class="email-col">Email</th>
-                        <th scope="col" class="resume-col text-center">Resume</th>
-                        <th scope="col" class="jd-col">Job Description</th>
-                        <th scope="col" class="remark-col">Remark</th>
-                        <th scope="col" class="action-col text-center">Action</th>
+                        <th scope="col">Id</th>
+                        <th scope="col">Candidate Name</th>
+                        <th scope="col">Date Applied</th>
+                        <th scope="col">Job Title</th>
+                        <th scope="col">Phone Number</th>
+                        <th scope="col">LinkedIn</th>
+                        <th scope="col">Email</th>
+                        <th scope="col">Resume</th>
+                        <th scope="col">Basic ATS</th>
+                        <th scope="col">Advanced ATS</th>
                     </tr>
                 </thead>
                 <tbody>
-                    {% for email in emails %}
-                    <tr data-delivery-date="{{ email.delivery_date|date:'Y-m-d' }}" data-email-id="{{ email.id }}" data-analysis-type="{{ email.candidateanalysis_set.first.analysis_type|default:'' }}" data-source="{{ email.source|default:'' }}">
+                    {% for application in emails %}
+                    <tr data-delivery-date="{{ application.date_applied|date:'Y-m-d' }}" 
+                        data-email-id="{{ application.pk }}"
+                        data-source="{{ application.source|default:'N/A' }}"
+                        data-ats-type="{{ application.analysis_type|default:'' }}">
                         <td>{{ forloop.counter }}</td>
-                        <td class="candidate-name-cell text-truncate">{{ email.candidate_name }}</td>
-                        <td class="text-truncate">{{ email.delivery_date|date:"Y-m-d" }}</td>
-                        <td class="text-truncate">{{ email.experience }}</td>
-                        <td class="text-truncate">{{ email.mobile_number }}</td>
-                        <td class="text-truncate">{{ email.location }}</td>
-                        <td class="text-truncate">{{ email.email_address }}</td>
-                        <td class="text-center">
-                            {% if email.resume_url %}
-                                <a href="{{ email.resume_url }}" target="_blank" class="btn btn-sm btn-outline-secondary btn-view-resume">View</a>
+                        <td class="candidate-name">{{ application.first_name }} {{ application.last_name }}</td>
+                        <td>{{ application.date_applied|date:"Y-m-d" }}</td>
+                        <td>{{ application.career.title|default:"N/A" }}</td>
+                        <td>{{ application.phone|default:"N/A" }}</td>
+                        <td>
+                            {% if application.linkedin_url %}
+                                <a href="{{ application.linkedin_url }}" target="_blank" class="text-primary">View Profile</a>
                             {% else %}
                                 <span class="text-muted">N/A</span>
                             {% endif %}
                         </td>
-                        <td class="job-role-cell">
-                            <select class="form-select job-description-select">
-                                <option value="">Select JD</option>
-                                {% for jd in job_descriptions %}
-                                    <option value="{{ jd.id }}" data-file-url="" {% if email.job_description and email.job_description.id == jd.id %}selected{% endif %}>{{ jd.title }}</option>
-                                {% endfor %}
-                            </select>
+                        <td>{{ application.email }}</td>
+                        <td class="text-center">
+                            {% if application.resume %}
+                                <a href="{{ application.resume.url }}" target="_blank" class="btn btn-sm btn-outline-secondary btn-view-resume">View</a>
+                            {% else %}
+                                <span class="text-muted">N/A</span>
+                            {% endif %}
                         </td>
-                        <td class="remark-cell">
-                            <div class="input-group">
-                                <input type="text" class="form-control remark-input" value="{{ email.remark|default:'' }}" placeholder="Add remark..." readonly>
-                                <button class="btn btn-sm btn-outline-primary save-remark-btn" type="button" style="display:none;">Save</button>
-                            </div>
+                         <td class="text-center">
+                            <button type="button" class="btn btn-sm btn-info text-white view-details-btn" data-bs-toggle="modal" data-application-id="{{ application.pk }}"> View</button>
                         </td>
                         <td class="text-center">
-                            <button type="button" class="btn btn-sm btn-primary btn-analyze" data-bs-toggle="modal" data-bs-target="#atsOptionsModal" data-email-id="{{ email.id }}">
-                                Analyze
-                            </button>
+                            <button class="btn btn-primary btn-sm advance-ats-btn" data-bs-toggle="modal" data-bs-target="#analysisResultModal" data-application-id="{{ application.pk }}">Generate</button>
                         </td>
+                       
                     </tr>
                     {% endfor %}
                 </tbody>
@@ -97,7 +108,7 @@
             <p><i class="fas fa-inbox fa-3x mb-3"></i></p>
             <h4 class="fw-light">No applications found for this filter.</h4>
         </div>
-
+        
         <nav aria-label="Page navigation" class="mt-4">
             <ul class="pagination justify-content-center" id="pagination-controls"></ul>
         </nav>
@@ -105,60 +116,27 @@
     {% else %}
     <div class="text-center card p-5 mt-5 shadow-lg custom-card">
         <h3 class="text-muted">No incoming applications found.</h3>
-        <p>This section will display emails with attached resumes for processing.</p>
-        <p>Please ensure that Outlook is open and configured correctly on your local system.</p>
+        <p>This section will display new job applications.</p>
     </div>
     {% endif %}
 </div>
 
-<div class="modal fade" id="remarkModal" tabindex="-1" aria-labelledby="remarkModalLabel" aria-hidden="true">
+<div class="modal fade" id="analysisResultModal" tabindex="-1" aria-labelledby="analysisResultModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content shadow-lg rounded-3">
-            <div class="modal-header bg-primary text-white border-0 rounded-top-3">
-                <h5 class="modal-title" id="remarkModalLabel">Add/Edit Remark</h5>
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="analysisResultModalLabel">Analysis Results</h5>
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-            <div class="modal-body p-4">
-                <input type="hidden" id="remarkApplicationId">
-                <div class="mb-3">
-                    <label for="remarkTextArea" class="form-label">Remark:</label>
-                    <textarea class="form-control" id="remarkTextArea" rows="5"></textarea>
+            <div class="modal-body" id="analysisResultBody">
                 </div>
-            </div>
-            <div class="modal-footer justify-content-center border-0 bg-light-subtle rounded-bottom-3">
-                <button type="button" class="btn btn-secondary universal-btn" data-bs-dismiss="modal">Close</button>
-                <button type="button" id="saveRemarkBtn" class="btn btn-primary universal-btn">Save</button>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
             </div>
         </div>
     </div>
 </div>
 
-<div class="modal fade" id="atsOptionsModal" tabindex="-1" aria-labelledby="atsOptionsModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content shadow-lg rounded-3">
-            <div class="modal-header bg-primary text-white border-0 rounded-top-3">
-                <h5 class="modal-title" id="atsOptionsModalLabel">Choose ATS Analysis</h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body p-4 text-center">
-                <p class="text-muted fw-light">Select the type of ATS analysis to perform:</p>
-                <div id="atsOptionsButtons" class="d-flex flex-column align-items-center mt-4">
-                    <a href="#" id="basicAtsBtn" class="btn btn-outline-primary btn-lg w-75 mb-3" data-dismiss="modal">
-                        <span class="spinner-border spinner-border-sm me-2 d-none" role="status" aria-hidden="true"></span>
-                        <span class="button-text">Basic</span>
-                    </a>
-                    <a href="#" id="premiumAtsBtn" class="btn btn-primary btn-lg w-75" data-dismiss="modal">
-                        <span class="spinner-border spinner-border-sm me-2 d-none" role="status" aria-hidden="true"></span>
-                        <span class="button-text">Advanced</span>
-                    </a>
-                </div>
-            </div>
-            <div class="modal-footer justify-content-center border-0 bg-light-subtle rounded-bottom-3">
-                <button type="button" class="btn btn-secondary universal-btn" data-bs-dismiss="modal">Close</button>
-            </div>
-        </div>
-    </div>
-</div>
 {% endblock %}
 
 {% block extra_head %}
@@ -166,156 +144,89 @@
 <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
+    /* Your CSS code provided in the prompt */
     :root {
-        --primary-color: #0d6efd;
+        --primary-color: #174D8C;
         --secondary-color: #6c757d;
-        --light-bg-color: #f8f9fa;
-        --table-bg-odd: #f8faff;
-        --table-bg-even: #ffffff;
+        --light-bg-color: #f4f7f9;
+        --card-bg: #ffffff;
+        --input-border: #d4d8de;
+        --table-header-bg: var(--primary-color);
+        --table-row-hover: #eaf1f7;
+        --date-filter-bg: #e0f2f7;
+        --date-filter-border: #b3e0ed;
+        --date-filter-active-bg: #007bff;
+        --date-filter-active-color: white;
+        --source-filter-bg: #e6e6e6;
+        --source-filter-border: #d4d4d4;
+        --source-filter-active-bg: #6c757d;
+        --source-filter-active-color: white;
+        --ats-filter-bg: #e0e0e0;
+        --ats-filter-border: #cccccc;
+        --ats-filter-active-bg: #28a745;
+        --ats-filter-active-color: white;
+        --icon-gmail-color: #EA4335;
+        --icon-naukri-color: #FF7B00;
+        --icon-linkedin-color: #0A66C2;
+        --icon-glassdoor-color: #0CCE8D;
+        --icon-indeed-color: #00305E;
+        --icon-filter-color: #6c757d;
     }
-    body {
-        font-family: 'Inter', sans-serif;
-        background-color: var(--light-bg-color);
-        color: #343a40;
-    }
-    .page-heading {
-        font-size: 2.5rem;
-        color: var(--primary-color);
-        margin-bottom: 2rem;
-        text-align: center;
-        font-weight: 700;
-        text-shadow: 1px 1px 2px rgba(0,0,0,0.05);
-    }
-    .card {
-        border: 1px solid #e9ecef;
-        box-shadow: 0 0.5rem 1rem rgba(0,0,0,0.05) !important;
-        background-color: white;
-    }
-    .shadow-subtle {
-        box-shadow: 0 0.25rem 0.5rem rgba(0,0,0,0.08) !important;
-    }
-    /* Filter Buttons & Search Input */
-    .search-box .input-group-text {
-        background-color: #e9ecef;
-        border-color: #dee2e6;
-        color: var(--secondary-color);
-    }
-    .search-box .form-control {
-        border-color: #dee2e6;
-    }
-    .search-box .form-control:focus {
-        border-color: var(--primary-color);
-        box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
-    }
-    .btn-group .btn {
-        font-weight: 500;
-    }
-    .btn-group .btn-outline-primary {
-        border-color: #ced4da;
-    }
-    .btn-group .btn-outline-primary.active {
-        background-color: var(--primary-color);
-        color: white;
-        border-color: var(--primary-color);
-        box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-    }
-    .export-btn {
-        font-weight: 500;
-        transition: transform 0.2s;
-    }
-    .export-btn:hover {
-        transform: translateY(-2px);
-    }
-    /* Table Styling */
-    .universal-table {
-        border-collapse: separate;
-        border-spacing: 0;
-        width: 100%;
-    }
-    .universal-table thead th {
-        background-color: var(--primary-color);
-        color: white;
-        text-transform: uppercase;
-        font-size: 0.85rem;
-        padding: 1rem;
-        border: none;
-    }
-    .universal-table tbody tr {
-        transition: background-color 0.2s;
-    }
-    .universal-table tbody tr:nth-child(odd) {
-        background-color: var(--table-bg-odd);
-    }
-    .universal-table tbody tr:nth-child(even) {
-        background-color: var(--table-bg-even);
-    }
-    .universal-table tbody tr:hover {
-        background-color: #e0f2ff;
-        transform: translateY(-2px);
-        box-shadow: 0 4px 8px rgba(0,0,0,0.05);
-    }
-    .universal-table td {
-        padding: 1rem;
-        border-top: 1px solid #e9ecef;
-        vertical-align: middle;
-        font-size: 0.95rem;
-    }
-    .id-col { width: 5%; }
-    .name-col { width: 15%; }
-    .date-col { width: 10%; }
-    .exp-col { width: 8%; }
-    .mobile-col { width: 10%; }
-    .location-col { width: 10%; }
-    .email-col { width: 15%; }
-    .resume-col { width: 7%; }
-    .jd-col { width: 10%; }
-    .remark-col { width: 15%; }
-    .action-col { width: 10%; }
-    
-    .table-responsive {
-        border-radius: 0.5rem;
-        overflow: hidden;
-    }
-
-    /* Resume URL and Action Buttons */
-    .btn-view-resume {
-        padding: 0.25rem 0.75rem;
-        font-size: 0.8rem;
-    }
-    .btn-analyze {
-        font-size: 0.8rem;
-        padding: 0.25rem 0.75rem;
-    }
-    .job-description-select {
-        font-size: 0.85rem;
-        padding: 0.375rem 0.75rem;
-        height: auto;
-    }
-
-    /* Modal Styling */
-    .modal-header {
-        border-bottom: none;
-    }
-    .modal-body p {
-        font-size: 1.1rem;
-    }
-    .modal-body .btn-lg {
-        font-size: 1.25rem;
-        font-weight: 600;
-        transition: transform 0.2s;
-    }
-    .modal-body .btn-lg:hover {
-        transform: translateY(-3px);
-    }
-    .modal-footer {
-        border-top: none;
-    }
+    body { font-family: 'Inter', sans-serif; background-color: var(--light-bg-color); color: #343a40; }
+    .page-heading { font-size: 2.5rem; color: var(--primary-color); margin-bottom: 2rem; text-align: center; font-weight: 700; text-shadow: 1px 1px 2px rgba(0,0,0,0.05); }
+    .card { border: none; box-shadow: 0 0.5rem 1rem rgba(0,0,0,0.05) !important; background-color: var(--card-bg); }
+    .shadow-subtle { box-shadow: 0 0.25rem 0.5rem rgba(0,0,0,0.08) !important; }
+    .filter-group { display: flex; align-items: center; white-space: nowrap; }
+    .filter-label { font-weight: 600; color: #495057; margin-right: 0.5rem; }
+    .search-box .input-group-text { background-color: #f8f9fa; border: 1px solid var(--input-border); border-right: none; color: var(--secondary-color); }
+    .search-box .form-control { border: 1px solid var(--input-border); }
+    .search-box .form-control:focus { border-color: var(--primary-color); box-shadow: 0 0 0 0.25rem rgba(23, 77, 140, 0.1); }
+    .btn-group .btn { font-weight: 500; padding: 0.5rem 0.75rem; border-radius: 0.375rem; transition: all 0.2s ease-in-out; margin-right: -1px; }
+    .btn-group .btn:first-child { border-top-left-radius: 0.375rem; border-bottom-left-radius: 0.375rem; }
+    .btn-group .btn:last-child { border-top-right-radius: 0.375rem; border-bottom-right-radius: 0.375rem; margin-right: 0; }
+    .btn-group .btn + .btn { margin-left: -1px; }
+    .btn-filter-date { border: 1px solid var(--date-filter-border); color: #333; background-color: var(--date-filter-bg); }
+    .btn-filter-date.active, .btn-filter-date:hover { background-color: var(--date-filter-active-bg); color: var(--date-filter-active-color); border-color: var(--date-filter-active-bg); z-index: 1; }
+    .btn-filter-date:hover:not(.active) { background-color: var(--date-filter-bg); filter: brightness(95%); }
+    .btn-filter-source { border: 1px solid var(--source-filter-border); color: #333; background-color: var(--source-filter-bg); min-width: 45px; text-align: center; }
+    .btn-filter-source.active, .btn-filter-source:hover { background-color: var(--source-filter-active-bg); border-color: var(--source-filter-active-bg); color: var(--source-filter-active-color); z-index: 1; }
+    .btn-filter-source:hover:not(.active) { background-color: var(--source-filter-bg); filter: brightness(95%); }
+    .btn-filter-source i { font-size: 1.1rem; }
+    .btn-filter-source[data-source=""] i { color: var(--icon-filter-color); }
+    .btn-filter-source[data-source="Gmail"] i { color: var(--icon-gmail-color); }
+    .btn-filter-source[data-source="Naukri"] i { color: var(--icon-naukri-color); }
+    .btn-filter-source[data-source="LinkedIn"] i { color: var(--icon-linkedin-color); }
+    .btn-filter-source[data-source="Glassdoor"] i { color: var(--icon-glassdoor-color); }
+    .btn-filter-source[data-source="Indeed"] i { color: var(--icon-indeed-color); }
+    .btn-filter-source.active i, .btn-filter-source:hover i { color: white !important; }
+    .btn-filter-ats { border: 1px solid var(--ats-filter-border); color: #333; background-color: var(--ats-filter-bg); }
+    .btn-filter-ats.active, .btn-filter-ats:hover { background-color: var(--ats-filter-active-bg); color: var(--ats-filter-active-color); border-color: var(--ats-filter-active-bg); z-index: 1; }
+    .btn-filter-ats:hover:not(.active) { background-color: var(--ats-filter-bg); filter: brightness(95%); }
+    .universal-table { border-collapse: separate; border-spacing: 0; width: 100%; table-layout: fixed; }
+    .universal-table thead th { background-color: var(--table-header-bg); color: white; text-transform: uppercase; font-size: 0.8rem; padding: 1rem 0.75rem; border: none; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .universal-table thead th:first-child { border-top-left-radius: 0.5rem; }
+    .universal-table thead th:last-child { border-top-right-radius: 0.5rem; }
+    .universal-table tbody tr { transition: background-color 0.2s; border-bottom: 1px solid #e9ecef; }
+    .universal-table tbody tr:hover { background-color: var(--table-row-hover); }
+    .universal-table td { padding: 1rem 0.75rem; vertical-align: middle; font-size: 0.9rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .universal-table tbody tr:last-child { border-bottom: none; }
+    .table-responsive { border-radius: 0.5rem; overflow-x: auto; }
+    .candidate-name { font-weight: 600; color: var(--primary-color); }
+    .btn-view-resume { padding: 0.25rem 0.75rem; font-size: 0.8rem; }
+    .btn-analyze { font-size: 0.8rem; padding: 0.25rem 0.75rem; }
+    .job-description-select { font-size: 0.85rem; padding: 0.375rem 0.75rem; height: auto; width: 100%; border-color: var(--input-border); }
+    .remark-input { background-color: #f8f9fa; border-color: var(--input-border); cursor: pointer; }
+    .modal-header { background-color: var(--primary-color) !important; }
+    .modal-body p { font-size: 1rem; }
+    .modal-body .btn-lg { font-size: 1.1rem; font-weight: 600; transition: transform 0.2s; }
+    .modal-body .btn-lg:hover { transform: translateY(-2px); }
 </style>
 {% endblock %}
 
 {% block extra_js %}
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
 <script>
     $(document).ready(function() {
         const rows = $("#incomingApplicationsTable tbody tr");
@@ -323,122 +234,6 @@
         const rowsPerPage = 10;
         let currentPage = 1;
 
-        function displayRows(page) {
-            rows.hide();
-            let start = (page - 1) * rowsPerPage;
-            let end = start + rowsPerPage;
-            rows.slice(start, end).show();
-        }
-
-        function setupPagination() {
-            const numRows = $("#incomingApplicationsTable tbody tr:visible").length;
-            const numPages = Math.ceil(numRows / rowsPerPage);
-            paginationControls.empty();
-
-            for (let i = 1; i <= numPages; i++) {
-                const li = $('<li>').addClass('page-item');
-                const a = $('<a>').addClass('page-link').attr('href', '#').text(i);
-                if (i === currentPage) {
-                    li.addClass('active');
-                }
-                a.on('click', function(e) {
-                    e.preventDefault();
-                    currentPage = i;
-                    displayRows(currentPage);
-                    $('.page-item').removeClass('active');
-                    li.addClass('active');
-                    window.scrollTo({ top: 0, behavior: 'smooth' });
-                });
-                li.append(a);
-                paginationControls.append(li);
-            }
-
-            if (numPages <= 1) {
-                paginationControls.hide();
-            } else {
-                paginationControls.show();
-            }
-        }
-
-        function filterAndPaginate() {
-            const filter = $('#searchInput').val().toLowerCase();
-            const isToday = $('#todaysApplicationsBtn').hasClass('active');
-            const isBasicAts = $('#basicAtsBtnFilter').hasClass('active');
-            const isAdvancedAts = $('#advancedAtsBtnFilter').hasClass('active');
-            const todayDate = new Date().toISOString().slice(0, 10);
-            
-            // Determine the active platform filter
-            let activeSourceFilter = '';
-            if ($('#naukriBtnFilter').hasClass('active')) {
-                activeSourceFilter = 'Naukri';
-            } else if ($('#linkedinBtnFilter').hasClass('active')) {
-                activeSourceFilter = 'LinkedIn';
-            } else if ($('#gmailBtnFilter').hasClass('active')) {
-                activeSourceFilter = 'Gmail';
-            } else if ($('#glassdoorBtnFilter').hasClass('active')) {
-                activeSourceFilter = 'Glassdoor';
-            } else if ($('#zohoBtnFilter').hasClass('active')) {
-                activeSourceFilter = 'Zoho';
-            } else if ($('#indeedBtnFilter').hasClass('active')) {
-                activeSourceFilter = 'Indeed';
-            }
-
-
-            let hasVisibleRows = false;
-            rows.each(function() {
-                const row = $(this);
-                const text = row.text().toLowerCase();
-                const deliveryDate = row.data('delivery-date');
-                const analysisType = row.data('analysis-type');
-                const source = row.data('source');
-                const dateMatch = isToday ? (deliveryDate === todayDate) : true;
-                const textMatch = text.includes(filter);
-
-                let typeMatch = true;
-                if (isBasicAts) {
-                    typeMatch = analysisType === 'Basic';
-                } else if (isAdvancedAts) {
-                    typeMatch = analysisType === 'Advance';
-                }
-                
-                // New logic for source filter
-                const sourceMatch = (activeSourceFilter === '') ? true : (source === activeSourceFilter);
-
-                // Show the row if all filter conditions are met
-                if (textMatch && dateMatch && typeMatch && sourceMatch) {
-                    row.show();
-                    hasVisibleRows = true;
-                } else {
-                    row.hide();
-                }
-            });
-
-            if (hasVisibleRows) {
-                $('#noApplicationsMessage').hide();
-                // Reset to first page after filtering
-                currentPage = 1;
-                displayRows(currentPage);
-                setupPagination();
-            } else {
-                $('#noApplicationsMessage').show();
-                paginationControls.empty();
-            }
-        }
-
-        // Handle opening the modal on click of the readonly input
-        $('#incomingApplicationsTable').on('click', '.remark-input', function() {
-            const applicationId = $(this).closest('tr').data('email-id');
-            const currentRemark = $(this).val();
-            
-            $('#remarkApplicationId').val(applicationId);
-            $('#remarkTextArea').val(currentRemark);
-            
-            // Manually show the modal
-            const remarkModal = new bootstrap.Modal(document.getElementById('remarkModal'));
-            remarkModal.show();
-        });
-
-        // Function to get CSRF token from cookies
         function getCookie(name) {
             let cookieValue = null;
             if (document.cookie && document.cookie !== '') {
@@ -454,207 +249,182 @@
             return cookieValue;
         }
 
-        // Event listener for the "Save" button inside the modal
-        $('#saveRemarkBtn').on('click', function(e) {
-            e.preventDefault();
-            const applicationId = $('#remarkApplicationId').val();
-            const remark = $('#remarkTextArea').val();
-            const $row = $(`tr[data-email-id="${applicationId}"]`);
-            const jobDescriptionId = $row.find('.job-description-select').val();
+        function displayRows(page) {
+            const visibleRows = $("#incomingApplicationsTable tbody tr:visible");
+            visibleRows.hide();
+            let start = (page - 1) * rowsPerPage;
+            let end = start + rowsPerPage;
+            visibleRows.slice(start, end).show();
+        }
 
-            if (!remark && !jobDescriptionId) {
-                alert('Please enter a remark or select a job description.');
-                return;
-            }
+        function setupPagination() {
+            const numRows = $("#incomingApplicationsTable tbody tr:visible").length;
+            const numPages = Math.ceil(numRows / rowsPerPage);
+            paginationControls.empty();
 
-            const $button = $(this);
-            $button.prop('disabled', true).text('Saving...');
-
-            $.ajax({
-                url: '/update_application_data/',
-                type: 'POST',
-                contentType: 'application/json',
-                headers: {
-                    'X-CSRFToken': getCookie('csrftoken')
-                },
-                data: JSON.stringify({
-                    application_id: applicationId,
-                    remark: remark,
-                    job_description_id: jobDescriptionId
-                }),
-                success: function(response) {
-                    if (response.success) {
-                        $row.find('.remark-input').val(remark);
-                        $button.text('Saved!');
-                        
-                        setTimeout(() => {
-                            const remarkModal = bootstrap.Modal.getInstance(document.getElementById('remarkModal'));
-                            if (remarkModal) {
-                                remarkModal.hide();
-                            }
-                            $button.text('Save').prop('disabled', false);
-                        }, 1000);
-                    } else {
-                        alert('Error saving data: ' + response.message);
-                        $button.text('Save').prop('disabled', false);
+            if (numPages > 1) {
+                for (let i = 1; i <= numPages; i++) {
+                    const li = $('<li>').addClass('page-item');
+                    const a = $('<a>').addClass('page-link').attr('href', '#').text(i);
+                    if (i === currentPage) {
+                        li.addClass('active');
                     }
-                },
-                error: function(xhr, status, error) {
-                    console.error("AJAX Error:", status, error);
-                    alert('An error occurred. Please try again.');
-                    $button.text('Save').prop('disabled', false);
+                    a.on('click', function(e) {
+                        e.preventDefault();
+                        currentPage = i;
+                        displayRows(currentPage);
+                        $('.page-item').removeClass('active');
+                        li.addClass('active');
+                        window.scrollTo({ top: 0, behavior: 'smooth' });
+                    });
+                    li.append(a);
+                    paginationControls.append(li);
+                }
+                paginationControls.show();
+            } else {
+                paginationControls.hide();
+            }
+        }
+
+        function filterAndPaginate() {
+            const filterText = $('#searchInput').val().toLowerCase();
+            const isToday = $('#todaysApplicationsBtn').hasClass('active');
+            const activeSourceFilter = $('#sourceFilterGroup .btn.active').data('source') || '';
+            const activeAtsFilter = $('#atsFilterGroup .btn.active').data('ats-type') || '';
+            
+            const todayDate = new Date().toISOString().slice(0, 10);
+            
+            let hasVisibleRows = false;
+            rows.each(function() {
+                const row = $(this);
+                const rowText = row.text().toLowerCase();
+                const deliveryDate = row.data('delivery-date');
+                const analysisType = String(row.data('ats-type') || '');
+                const source = String(row.data('source') || '');
+                
+                const textMatch = rowText.includes(filterText);
+                const dateMatch = !isToday || (deliveryDate === todayDate);
+                const sourceMatch = (activeSourceFilter === '') || (source.toLowerCase() === activeSourceFilter.toLowerCase());
+                const typeMatch = (activeAtsFilter === '') || (analysisType.toLowerCase() === activeAtsFilter.toLowerCase());
+
+                if (textMatch && dateMatch && sourceMatch && typeMatch) {
+                    row.show();
+                    hasVisibleRows = true;
+                } else {
+                    row.hide();
                 }
             });
-        });
 
-        // Event listener for select change to automatically update the Job Description
-        $('#incomingApplicationsTable').on('change', '.job-description-select', function() {
-            const $select = $(this);
-            const applicationId = $select.closest('tr').data('email-id');
-            const jobDescriptionId = $select.val();
-            const remark = $select.closest('tr').find('.remark-input').val();
+            if (hasVisibleRows) {
+                $('#noApplicationsMessage').hide();
+                currentPage = 1;
+                displayRows(currentPage);
+                setupPagination();
+            } else {
+                $('#noApplicationsMessage').show();
+                paginationControls.empty();
+            }
+        }
+
+        // --- NEW/MODIFIED JAVASCRIPT LOGIC ---
+
+        // Handle the "View Details / Basic ATS" button click
+        $('#incomingApplicationsTable').on('click', '.view-details-btn', function() {
+            const applicationId = $(this).data('application-id');
+            const $button = $(this);
+            const originalText = $button.text();
+            
+            // Disable button and show loading state
+            $button.prop('disabled', true).text('Analyzing...');
 
             $.ajax({
-                url: '/update_application_data/',
+                url: `/basic-ats/${applicationId}/`,
                 type: 'POST',
-                contentType: 'application/json',
-                headers: {
-                    'X-CSRFToken': getCookie('csrftoken')
-                },
-                data: JSON.stringify({
-                    application_id: applicationId,
-                    remark: remark,
-                    job_description_id: jobDescriptionId
-                }),
+                headers: { 'X-CSRFToken': getCookie('csrftoken') },
                 success: function(response) {
-                    if (response.success) {
-                        console.log("Job Description updated successfully.");
-                    } else {
-                        alert('Error updating Job Description: ' + response.message);
-                    }
+                    displayAnalysisResults(response.analysis, 'Basic');
+                    $(`tr[data-email-id="${applicationId}"]`).attr('data-ats-type', 'Basic');
                 },
                 error: function() {
-                    alert('An error occurred while updating the Job Description. Please try again.');
+                    alert('An error occurred during basic analysis.');
+                },
+                complete: function() {
+                    // Re-enable button and restore text
+                    $button.prop('disabled', false).text(originalText);
                 }
             });
         });
 
-        // Event listeners for search and filters
-        $('#searchInput').on('keyup', function() {
-            currentPage = 1;
-            filterAndPaginate();
+        // Handle the "Analyze (Advanced)" button click
+        $('#incomingApplicationsTable').on('click', '.advance-ats-btn', function() {
+            const applicationId = $(this).data('application-id');
+            const $button = $(this);
+            const originalText = $button.text();
+
+            // Disable button and show loading state
+            $button.prop('disabled', true).text('Analyzing...');
+
+            $.ajax({
+                url: `/advance-ats/${applicationId}/`,
+                type: 'POST',
+                headers: { 'X-CSRFToken': getCookie('csrftoken') },
+                success: function(response) {
+                    displayAnalysisResults(response.analysis, 'Advanced');
+                    $(`tr[data-email-id="${applicationId}"]`).attr('data-ats-type', 'Advanced');
+                },
+                error: function() {
+                    alert('An error occurred during advanced analysis.');
+                },
+                complete: function() {
+                    // Re-enable button and restore text
+                    $button.prop('disabled', false).text(originalText);
+                }
+            });
         });
 
-        $('#allApplicationsBtn').on('click', function() {
-            $(this).addClass('active').siblings().removeClass('active');
-            currentPage = 1;
-            filterAndPaginate();
-        });
-
-        $('#todaysApplicationsBtn').on('click', function() {
-            $(this).addClass('active').siblings().removeClass('active');
-            currentPage = 1;
-            filterAndPaginate();
-        });
-
-        $('#basicAtsBtnFilter').on('click', function() {
-            $(this).addClass('active').siblings().removeClass('active');
-            currentPage = 1;
-            filterAndPaginate();
-        });
-        
-        $('#advancedAtsBtnFilter').on('click', function() {
-            $(this).addClass('active').siblings().removeClass('active');
-            currentPage = 1;
-            filterAndPaginate();
-        });
-        
-        // New event listeners for the source filters
-        $('#naukriBtnFilter').on('click', function() {
-            $(this).addClass('active').siblings().removeClass('active');
-            currentPage = 1;
-            filterAndPaginate();
-        });
-        $('#gmailBtnFilter').on('click', function() {
-            $(this).addClass('active').siblings().removeClass('active');
-            currentPage = 1;
-            filterAndPaginate();
-        });
-        
-        $('#linkedinBtnFilter').on('click', function() {
-            $(this).addClass('active').siblings().removeClass('active');
-            currentPage = 1;
-            filterAndPaginate();
-        });
-        
-        $('#glassdoorBtnFilter').on('click', function() {
-            $(this).addClass('active').siblings().removeClass('active');
-            currentPage = 1;
-            filterAndPaginate();
-        });
-        
-        $('#zohoBtnFilter').on('click', function() {
-            $(this).addClass('active').siblings().removeClass('active');
-            currentPage = 1;
-            filterAndPaginate();
-        });
-        
-        $('#indeedBtnFilter').on('click', function() {
-            $(this).addClass('active').siblings().removeClass('active');
-            currentPage = 1;
-            filterAndPaginate();
-        });
-
-
-        let currentEmailId;
-        $('#incomingApplicationsTable').on('click', '.btn-analyze', function() {
-            currentEmailId = $(this).data('email-id');
-        });
-
-        $('#premiumAtsBtn').on('click', function(e) {
-            e.preventDefault();
-            const $currentRow = $(`[data-email-id="${currentEmailId}"]`);
-            const selectedJdId = $currentRow.find('.job-description-select').val();
-
-            if (!selectedJdId) {
-                // Use a custom modal or message box instead of alert
-                // For demonstration, let's use a simple console log for now
-                console.log("Please select a job description before proceeding with advanced analysis.");
-                return;
+        // Function to display the analysis results in a modal
+        function displayAnalysisResults(data, type) {
+            let html = `<h5>${type} Analysis Result</h5><hr>`;
+            if (type === 'Basic') {
+                html += `<p><strong>Score:</strong> ${data.score}</p>`;
+                html += `<p><strong>Match Percentage:</strong> ${data.match_percentage}%</p>`;
+                html += `<p><strong>Keywords Found:</strong> ${data.keywords_found.join(', ')}</p>`;
+                html += `<p><strong>Comments:</strong> ${data.comments}</p>`;
+            } else if (type === 'Advanced') {
+                html += `<p><strong>AI Summary:</strong> ${data.ai_summary}</p>`;
+                html += `<p><strong>Confidence Score:</strong> ${data.confidence_score}</p>`;
+                html += `<p><strong>Suggested Questions:</strong></p>`;
+                html += `<ul>`;
+                data.suggested_questions.forEach(q => {
+                    html += `<li>${q}</li>`;
+                });
+                html += `</ul>`;
             }
 
-            const url = `/advance_resume_analysis/?application_id=${currentEmailId}&job_description_id=${selectedJdId}`;
-            
-            const $button = $(this);
-            $button.prop('disabled', true);
-            $button.find('.button-text').text('Loading...');
-            $button.find('.spinner-border').removeClass('d-none');
-            
-            window.location.href = url;
+            $('#analysisResultBody').html(html);
+            const analysisResultModal = new bootstrap.Modal(document.getElementById('analysisResultModal'));
+            analysisResultModal.show();
+        }
+
+        // Event listeners for filters and search
+        $('#searchInput').on('keyup', filterAndPaginate);
+        $('#dateFilterGroup .btn').on('click', function() {
+            $('#dateFilterGroup .btn').removeClass('active');
+            $(this).addClass('active');
+            filterAndPaginate();
         });
-
-        $('#basicAtsBtn').on('click', function(e) {
-            e.preventDefault();
-            const $currentRow = $(`[data-email-id="${currentEmailId}"]`);
-            const selectedJdId = $currentRow.find('.job-description-select').val();
-
-            if (!selectedJdId) {
-                // Use a custom modal or message box instead of alert
-                console.log("Please select a job description before proceeding with basic analysis.");
-                return;
-            }
-
-            const url = `/basic_resume_analysis/?application_id=${currentEmailId}&job_description_id=${selectedJdId}`;
-            
-            const $button = $(this);
-            $button.prop('disabled', true);
-            $button.find('.button-text').text('Loading...');
-            $button.find('.spinner-border').removeClass('d-none');
-            
-            window.location.href = url;
+        $('#sourceFilterGroup .btn').on('click', function() {
+            $('#sourceFilterGroup .btn').removeClass('active');
+            $(this).addClass('active');
+            filterAndPaginate();
         });
-
-        // Initial display of rows
+        $('#atsFilterGroup .btn').on('click', function() {
+            $('#atsFilterGroup .btn').removeClass('active');
+            $(this).addClass('active');
+            filterAndPaginate();
+        });
+        
+        // Initial display
         filterAndPaginate();
     });
 </script>

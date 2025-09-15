@@ -1,0 +1,547 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Admin Dashboard{% endblock %}
+{% block page_heading %}Admin Dashboard{% endblock %}
+
+{% block content %}
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        /* ----------------------------------------------------------- */
+        /* --- Full-Screen Layout CSS (Starts Here)              --- */
+        /* ----------------------------------------------------------- */
+
+        /* Body and Root adjustments for full-screen layout */
+        body, html {
+            height: 100%;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            color: #495057;
+            overflow-x: hidden;
+            background-color: #f8f9fa; /* Added background color to body for consistency */
+        }
+
+        /* Main Dashboard Container - No longer a flex container */
+        .dashboard-container {
+            min-height: 100vh;
+            width: 100%;
+            padding: 2.5rem;
+            box-sizing: border-box; /* Ensures padding is included in width/height */
+        }
+
+        /* Main Content Wrapper - No longer needs to grow */
+        .main-content-wrapper {
+            display: flex;
+            flex-direction: column;
+        }
+        
+        /* Header */
+        .main-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding-bottom: 2rem;
+            margin-bottom: 2rem;
+            border-bottom: 1px solid #e9ecef;
+        }
+
+        .header-title {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: #212529;
+            margin: 0;
+        }
+
+        .header-actions {
+            display: flex;
+            align-items: center;
+            gap: 1.5rem;
+        }
+
+        .user-display {
+            font-size: 1rem;
+            font-weight: 500;
+            color: #6c757d;
+        }
+
+        .btn-icon-text {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 0.75rem 1.5rem;
+            border-radius: 8px;
+            background-color: #e74c3c;
+            color: white;
+            text-decoration: none;
+            font-weight: 600;
+            transition: background-color 0.3s ease;
+        }
+
+        .btn-icon-text:hover {
+            background-color: #c0392b;
+        }
+
+        /* Responsive Grid Layout */
+        .dashboard-grid {
+            flex-grow: 1; /* Allows grid to fill remaining vertical space */
+            display: grid;
+            gap: 2rem;
+            grid-template-columns: 1fr;
+            grid-auto-flow: dense;
+        }
+
+        @media (min-width: 1024px) {
+            .dashboard-grid {
+                grid-template-columns: 1.2fr 2fr;
+            }
+            .card-hero {
+                grid-column: 1 / 2;
+                min-height: 400px;
+            }
+            .card-full-width {
+                grid-column: 2 / 3;
+            }
+        }
+
+        /* Card Styles */
+        .card {
+            background-color: #ffffff;
+            border-radius: 16px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
+            padding: 2rem;
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.08);
+        }
+
+        .card-title {
+            font-size: 1.6rem;
+            font-weight: 600;
+            color: #343a40;
+            margin-top: 0;
+            margin-bottom: 1.5rem;
+            border-bottom: 2px solid #007bff;
+            padding-bottom: 0.75rem;
+            display: flex;
+            align-items: center;
+        }
+
+        .card-title i {
+            margin-right: 12px;
+            color: #007bff;
+        }
+
+        /* Form and Input Styling */
+        .form-section {
+            display: flex;
+            flex-direction: column;
+            gap: 1.25rem;
+        }
+        
+        .form-group label {
+            display: block;
+            font-weight: 600;
+            color: #555;
+            margin-bottom: 0.5rem;
+        }
+
+        .form-group input,
+        .form-group select {
+            width: 100%;
+            padding: 0.8rem 1rem;
+            border: 1px solid #ced4da;
+            border-radius: 8px;
+            font-size: 1rem;
+            transition: border-color 0.3s, box-shadow 0.3s;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus {
+            outline: none;
+            border-color: #007bff;
+            box-shadow: 0 0 0 4px rgba(0, 123, 255, 0.1);
+        }
+
+        .btn-full-width {
+            width: 100%;
+            padding: 1rem;
+        }
+
+        .btn-primary {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        .btn-primary:hover {
+            background-color: #0056b3;
+        }
+
+        /* Table Styles */
+        .table-responsive {
+            overflow-x: auto;
+        }
+
+        .user-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .user-table thead th {
+            text-align: left;
+            padding: 1rem;
+            background-color: #f1f3f5;
+            color: #6c757d;
+            font-weight: 600;
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            white-space: nowrap;
+        }
+
+        .user-table tbody tr {
+            border-bottom: 1px solid #e9ecef;
+            transition: background-color 0.2s;
+        }
+
+        .user-table tbody tr:hover {
+            background-color: #f8f9fa;
+        }
+
+        .user-table td {
+            padding: 1rem;
+            color: #495057;
+            vertical-align: middle;
+            white-space: nowrap;
+        }
+
+        /* Badges & Status */
+        .status-badge {
+            display: inline-block;
+            padding: 0.3rem 0.8rem;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            color: white;
+        }
+
+        .status-active { background-color: #28a745; }
+        .status-disabled { background-color: #dc3545; }
+
+        /* Action Buttons */
+        .action-cell {
+            position: relative;
+        }
+
+        .action-buttons-group {
+            display: flex;
+            gap: 0.75rem;
+        }
+
+        .btn-action {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 0.6rem 1rem;
+            border-radius: 8px;
+            border: none;
+            color: white;
+            cursor: pointer;
+            transition: background-color 0.3s;
+            font-size: 0.9rem;
+            font-weight: 500;
+        }
+
+        .btn-action i {
+            font-size: 1rem;
+        }
+
+        .btn-disable { background-color: #dc3545; }
+        .btn-enable { background-color: #28a745; }
+        .btn-set-password { background-color: #ffc107; }
+
+        .btn-disable:hover { background-color: #c82333; }
+        .btn-enable:hover { background-color: #218838; }
+        .btn-set-password:hover { background-color: #e0a800; }
+
+        /* Set Password Form (Collapsible Drawer) */
+        .password-form-container {
+            position: absolute;
+            right: 0;
+            top: 0;
+            bottom: 0;
+            display: flex;
+            align-items: center;
+            background-color: #f1f3f5;
+            border-radius: 8px;
+            padding: 0.75rem;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s ease-in-out;
+            width: 250px;
+            transform: translateX(110%);
+        }
+
+        .password-form-container.active {
+            opacity: 1;
+            visibility: visible;
+            transform: translateX(0);
+        }
+
+        .password-form {
+            display: flex;
+            gap: 0.5rem;
+            width: 100%;
+        }
+
+        .password-form input {
+            flex-grow: 1;
+            padding: 0.6rem;
+            border-radius: 6px;
+            font-size: 0.9rem;
+            border: 1px solid #ced4da;
+        }
+
+        .btn-set-password-submit {
+            background-color: #17a2b8;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            padding: 0.6rem 0.8rem;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        .btn-set-password-submit:hover {
+            background-color: #138496;
+        }
+
+        /* Toast Notifications */
+        #toast-container {
+            position: fixed;
+            top: 2rem;
+            right: 2rem;
+            z-index: 1000;
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .toast {
+            background-color: #ffffff;
+            border-radius: 12px;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+            padding: 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            min-width: 350px;
+            transition: all 0.4s ease-in-out;
+            border-left: 6px solid;
+            animation: slideIn 0.5s forwards;
+        }
+
+        .toast-success { border-color: #28a745; }
+        .toast-error { border-color: #dc3545; }
+
+        .toast-icon i {
+            font-size: 1.8rem;
+        }
+
+        .toast-success .toast-icon i { color: #28a745; }
+        .toast-error .toast-icon i { color: #dc3545; }
+
+        .text-content {
+            flex-grow: 1;
+        }
+
+        .toast-title {
+            font-weight: 700;
+            font-size: 1.1rem;
+            margin-bottom: 0.25rem;
+        }
+
+        .toast-message {
+            font-size: 0.9rem;
+            color: #6c757d;
+            margin: 0;
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+    </style>
+</head>
+<body>
+<div class="dashboard">
+    <div class="main">
+        <header class="main-header">
+            <h1 class="header-title">Admin Dashboard</h1>
+            <div class="header-actions">
+                <span class="user-display">Welcome, **{{ current_username }}**</span>
+                <a href="{% url 'signout' %}" class="btn btn-icon-text btn-logout">
+                    <i class="fas fa-sign-out-alt"></i> Sign Out
+                </a>
+            </div>
+        </header>
+
+        <div class="dashboard-grid">
+            <div class="card card-hero">
+                <h2 class="card-title"><i class="fas fa-user-plus"></i> Create New User</h2>
+                <form action="{% url 'admin_dashboard' %}" method="post" class="form-section">
+                    {% csrf_token %}
+                    <div class="form-group">
+                        <label for="username">Username</label>
+                        <input type="text" name="username" id="username" placeholder="Enter username" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="password">Password</label>
+                        <input type="password" name="password" id="password" placeholder="Enter password" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="role">Role</label>
+                        <select name="role" id="role">
+                            <option value="user">User</option>
+                            {% if current_user_role == 'superadmin' %}
+                            <option value="admin">Admin</option>
+                            {% endif %}
+                        </select>
+                    </div>
+                    <button type="submit" class="btn btn-primary btn-full-width">Create User</button>
+                </form>
+            </div>
+
+            <div class="card card-full-width">
+                <h2 class="card-title"><i class="fas fa-users-cog"></i> User Management</h2>
+                <div class="table-responsive">
+                    <table class="user-table">
+                        <thead>
+                            <tr>
+                                <th>Username</th>
+                                <th>Role</th>
+                                <th>Status</th>
+                                <th>Date Joined</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for user in users %}
+                            <tr>
+                                <td>{{ user.username }}</td>
+                                <td>{{ user.role }}</td>
+                                <td>
+                                    {% if user.is_active %}
+                                    <span class="status-badge status-active">Active</span>
+                                    {% else %}
+                                    <span class="status-badge status-disabled">Disabled</span>
+                                    {% endif %}
+                                </td>
+                                <td>{{ user.date_joined|date:"M d, Y" }}</td>
+                                <td class="action-cell">
+                                    <div class="action-buttons-group">
+                                        {% if user.is_active %}
+                                        <button class="btn btn-action btn-disable" onclick="showToast('User has been disabled', 'success');">
+                                            <i class="fas fa-ban"></i>
+                                            <span>Disable</span>
+                                        </button>
+                                        {% else %}
+                                        <button class="btn btn-action btn-enable" onclick="showToast('User has been enabled', 'success');">
+                                            <i class="fas fa-check-circle"></i>
+                                            <span>Enable</span>
+                                        </button>
+                                        {% endif %}
+                                        <button class="btn btn-action btn-set-password" data-user-id="{{ user.pk }}" onclick="togglePasswordForm(this)">
+                                            <i class="fas fa-key"></i>
+                                            <span>Set Password</span>
+                                        </button>
+                                    </div>
+                                    <div class="password-form-container" id="password-form-{{ user.pk }}">
+                                        <form action="#" method="post" class="password-form">
+                                            <input type="password" name="new_password" placeholder="New Password" required>
+                                            <button type="submit" class="btn btn-set-password-submit">
+                                                <i class="fas fa-check"></i>
+                                            </button>
+                                        </form>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="5" style="text-align: center; padding: 2rem;">No users found.</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div id="toast-container"></div>
+
+<script>
+    function togglePasswordForm(button) {
+        const userId = button.getAttribute('data-user-id');
+        const formContainer = document.getElementById(`password-form-${userId}`);
+        const allFormContainers = document.querySelectorAll('.password-form-container');
+        
+        allFormContainers.forEach(container => {
+            if (container.id !== `password-form-${userId}` && container.classList.contains('active')) {
+                container.classList.remove('active');
+            }
+        });
+        
+        formContainer.classList.toggle('active');
+    }
+
+    function showToast(message, type) {
+        const container = document.getElementById('toast-container');
+        const toast = document.createElement('div');
+        toast.className = `toast toast-${type}`;
+        
+        const icon = type === 'success' ? '<i class="fas fa-check-circle"></i>' : '<i class="fas fa-exclamation-circle"></i>';
+        const title = type === 'success' ? 'Success' : 'Error';
+
+        toast.innerHTML = `<div class="toast-icon">${icon}</div> <div class="text-content"><div class="toast-title">${title}</div><p class="toast-message">${message}</p></div>`;
+        container.appendChild(toast);
+
+        setTimeout(() => {
+            toast.style.opacity = '0';
+            setTimeout(() => toast.remove(), 300);
+        }, 5000);
+    }
+
+    window.addEventListener('DOMContentLoaded', () => {
+        // This part is for the original Django code. Since we are
+        // in a static file, we will not have messages.
+        const messages = document.querySelectorAll('.message');
+        messages.forEach(msg => {
+            const type = msg.classList.contains('success') ? 'success' : 'error';
+            showToast(msg.textContent.trim(), type);
+        });
+    });
+</script>
+</body>
+{% endblock %}

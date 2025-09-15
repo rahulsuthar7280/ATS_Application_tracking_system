@@ -11,9 +11,16 @@ urlpatterns = [
     path('signin/', views.signin_view, name='signin'),
     path('signout/', views.signout_view, name='signout'),
 
+
+    path('create-user/', views.create_user, name='create_user'),
+
+
     # Role-based Dashboards (new)
-    path('admin-dashboard/', views.admin_dashboard_view, name='admin_dashboard'),
-    path('superadmin-dashboard/', views.superadmin_dashboard_view, name='superadmin_dashboard'),
+    path('admin_dashboard/', views.admin_dashboard_view, name='admin_dashboard'),
+    path('superadmin_dashboard/', views.superadmin_dashboard_view, name='superadmin_dashboard'),
+    path('toggle_user_status/<int:user_id>/', views.toggle_user_status, name='toggle_user_status'),
+    # path('reset-password/<int:user_id>/', views.reset_user_password, name='reset_user_password'),
+    path('set-password/<int:user_id>/', views.set_user_password, name='set_user_password'),
 
     # Existing URLs (ensure they are protected with @login_required in views.py)
     path('', views.home, name='home'), # Redirects to dashboard now
@@ -47,10 +54,14 @@ urlpatterns = [
 
     path('configure-email/', views.configure_email, name='configure_email'),
     path('send-job-description/', views.send_job_description, name='send_job_description'),
+    # path('success/', views.success_page, name='success_page'),
+    # path('configure_email/', views.configure_email, name='configure_email'),
+    # path('send_job_description/', views.send_job_description, name='send_job_description'),
+    path('sent_emails/', views.sent_emails, name='sent_emails'),
+    path('inbox/', views.inbox, name='inbox'),
     path('success/', views.success_page, name='success_page'),
-    # path('job-descriptions/', views.all_job_descriptions, name='all_job_descriptions'),
-    # path('delete-jd/<int:jd_id>/', views.delete_jd, name='delete_jd'),
-    # path('analyze-jd/<int:jd_id>/', views.analyze_jd, name='analyze_jd'),
+    path('get_job_description_content/<int:job_id>/', views.get_job_description_content, name='get_job_description_content'),
+    path('email_dashboard/', views.email_dashboard, name='email_dashboard'),
 
 
     path('analyze-resume/<int:email_id>/<str:analysis_type>/<int:job_description_id>/', views.analyze_resume, name='analyze_resume_with_jd'),
@@ -71,6 +82,22 @@ urlpatterns = [
     # path('results/<uuid:email_id>/<str:analysis_type>/', views.analysis_page, name='analysis_page_no_jd'),
     # path('results/<uuid:email_id>/<str:analysis_type>/<uuid:job_description_id>/', views.analysis_page, name='analysis_page_with_jd'),
     path('calendar_scheduler/', views.calendar_scheduler, name='calendar_scheduler'),
+
+    path('post-jobs/', views.post_jobs, name='post_jobs_view'),
+
+    path('career_portal/', views.list_careers, name='career_portal'),
+    path('toggle/<int:pk>/', views.toggle_status, name='toggle_status'),
+    path('share/<int:pk>/', views.share_career, name='share_career'),
+    path('careers/<int:pk>/', views.career_detail, name='career_detail'),
+
+    path('basic-ats/<int:application_id>/', views.basic_ats_analysis, name='basic_ats_analysis'),
+    path('advance-ats/<int:application_id>/', views.advance_ats_analysis, name='advance_ats_analysis'),
+
+
+    path('file_manager/', views.file_manager_view, name='file_manager'),
+    path('folder/<int:folder_id>/', views.file_manager_view, name='browse_folder'),
+    path('create-folder/', views.create_folder_view, name='create_folder'),
+    path('upload-file/', views.upload_file_view, name='upload_file'),
 
 ]
 

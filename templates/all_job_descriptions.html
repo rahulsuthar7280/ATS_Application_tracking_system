@@ -24,8 +24,8 @@
         </div>
     </div>
 
-    {# This card contains the table and client-side search results message #}
-    <div class="card p-4 shadow-subtle rounded-3" id="jobDescriptionsTableCard" style="display: none;"> {# Hidden by default #}
+    {# This card is shown if there are job descriptions to display #}
+    <div class="card p-4 shadow-subtle rounded-3" id="jobDescriptionsTableCard" style="display: none;">
         <div class="table-responsive">
             <table id="jobDescriptionsTable" class="table table-striped table-hover w-100 universal-table">
                 <thead class="bg-primary text-white">
@@ -37,8 +37,8 @@
                     </tr>
                 </thead>
                 <tbody>
-                    {% for jd in job_descriptions %} {# Iterate directly over job_descriptions #}
-                    <tr>
+                    {% for jd in job_descriptions %}
+                    <tr data-jd-id="{{ jd.id }}">
                         <td>{{ forloop.counter }}</td>
                         <td>
                             <a href="{% url 'analyze_jd' jd.id %}" class="text-decoration-none text-dark fw-semibold hover-underline-effect">
@@ -61,7 +61,7 @@
                     {% endfor %}
                 </tbody>
             </table>
-            {# This message is now purely for client-side search filtering #}
+            {# This message is purely for client-side search filtering #}
             <div id="noJDsMessage" class="text-center p-5 text-muted" style="display: none;">
                 <p><i class="fas fa-search-minus fa-3x mb-3"></i></p>
                 <h4 class="fw-light">No job descriptions match your search.</h4>
@@ -71,7 +71,7 @@
     </div>
 
     {# This message is displayed when there are NO job descriptions AT ALL (from the server) #}
-    <div class="text-center card p-5 mt-5 shadow-lg custom-card" id="noJobDescriptionsServerMessage" style="display: none;"> {# Hidden by default #}
+    <div class="text-center card p-5 mt-5 shadow-lg custom-card" id="noJobDescriptionsServerMessage" style="display: none;">
         <h3 class="text-muted">No job descriptions have been added yet.</h3>
         <p class="mb-4">Start by creating a new job description or uploading an existing file.</p>
         <div class="d-flex justify-content-center gap-3 mt-3">
@@ -85,6 +85,7 @@
     </div>
 </div>
 
+{# Delete Confirmation Modal #}
 <div class="modal fade" id="deleteJdModal" tabindex="-1" aria-labelledby="deleteJdModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content shadow-lg rounded-3">
@@ -104,6 +105,7 @@
     </div>
 </div>
 
+{# Custom Alert Modal for feedback messages #}
 <div class="modal fade" id="customAlertModal" tabindex="-1" aria-labelledby="customAlertModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content shadow-lg rounded-3">
@@ -122,29 +124,43 @@
 </div>
 {% endblock %}
 
+
 {% block extra_head %}
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
 <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
+    /* --- Root Variables for a consistent theme --- */
     :root {
-        --primary-color: #0069d9;
+        --primary-color: #0d6efd;
+        --info-color: #17a2b8;
+        --warning-color: #ffc107;
+        --danger-color: #dc3545;
         --secondary-color: #6c757d;
         --light-bg-color: #f8f9fa;
+        --card-bg-color: #ffffff;
         --table-bg-odd: #f8faff;
         --table-bg-even: #ffffff;
-        --button-hover-scale: 1.05;
+        --text-color: #212529;
+        --text-muted-color: #6c757d;
+        --box-shadow-subtle: 0 0.25rem 0.5rem rgba(0,0,0,0.08);
+        --box-shadow-lg: 0 0.5rem 1rem rgba(0,0,0,0.1);
+        --transition-timing: 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
         --button-hover-pulse: translateY(-2px);
     }
+
+    /* --- General Body & Layout --- */
     body {
         font-family: 'Inter', sans-serif;
         background-color: var(--light-bg-color);
-        color: #343a40;
+        color: var(--text-color);
     }
+
     .content-wrapper {
-        max-width: 1200px; /* Increased max-width for better use of screen space */
-        margin: auto; /* Center the content wrapper */
+        max-width: 1200px;
+        margin: auto;
     }
+
     .page-heading {
         font-size: 2.5rem;
         color: var(--primary-color);
@@ -153,78 +169,94 @@
         font-weight: 700;
         text-shadow: 1px 1px 2px rgba(0,0,0,0.05);
     }
+
     .card {
         border: 1px solid #e9ecef;
-        box-shadow: 0 0.5rem 1rem rgba(0,0,0,0.05) !important;
-        background-color: white;
+        background-color: var(--card-bg-color);
+        box-shadow: var(--box-shadow-subtle) !important;
+        transition: box-shadow var(--transition-timing);
     }
-    .shadow-subtle {
-        box-shadow: 0 0.25rem 0.5rem rgba(0,0,0,0.08) !important;
+    
+    .card:hover {
+        box-shadow: var(--box-shadow-lg) !important;
     }
-    /* Header Actions and Search Bar */
+
+    .shadow-lg {
+        box-shadow: var(--box-shadow-lg) !important;
+    }
+
+    /* --- Header Actions and Search Bar --- */
     .header-actions {
-        padding: 1rem;
+        padding: 1.5rem;
         border-radius: 0.75rem;
-        background-color: #f0f8ff; /* Light blue background for the header area */
+        background-color: #f0f8ff;
         box-shadow: 0 2px 8px rgba(0,0,0,0.08);
     }
+
     .search-bar .universal-search-input {
         border-radius: 0 0.5rem 0.5rem 0;
         border-left: none;
     }
+    
     .search-bar .universal-search-icon {
         background-color: #e9ecef;
         border-radius: 0.5rem 0 0 0.5rem;
         border-right: none;
-        color: #6c757d;
+        color: var(--secondary-color);
     }
+    
     .search-bar .universal-search-input:focus {
         border-color: var(--primary-color);
-        box-shadow: 0 0 0 0.25rem rgba(0, 123, 255, 0.25);
+        box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
     }
 
-    /* Table Styling */
+    /* --- Table Styling --- */
     .universal-table {
         border-collapse: separate;
         border-spacing: 0;
         border-radius: 0.5rem;
         overflow: hidden;
     }
+
     .universal-table thead th {
         background-color: var(--primary-color);
         color: white;
         padding: 1rem;
-        border-bottom: 3px solid #0056b3;
+        border-bottom: 3px solid #0b5ed7;
         font-weight: 600;
         text-transform: uppercase;
         font-size: 0.85rem;
         vertical-align: middle;
     }
+
     .universal-table tbody tr {
-        transition: background-color 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+        transition: background-color 0.2s ease-in-out, transform 0.2s ease-in-out;
     }
+
     .universal-table tbody tr:nth-child(odd) {
         background-color: var(--table-bg-odd);
     }
+
     .universal-table tbody tr:nth-child(even) {
         background-color: var(--table-bg-even);
     }
+
     .universal-table tbody tr:hover {
         background-color: #e2f2ff;
-        box-shadow: 0 4px 8px rgba(0,0,0,0.05);
         transform: translateY(-2px);
     }
+
     .universal-table tbody td {
         padding: 1rem 1rem;
         vertical-align: middle;
         border-top: 1px solid #dee2e6;
     }
 
-    /* Column Widths for better layout */
+    /* Column Widths */
     .universal-table .id-column { width: 5%; }
     .universal-table .title-column { width: 45%; }
     .universal-table .date-column { width: 25%; }
-    .universal-table .action-column { width: 25%; } /* Adjusted for 3 buttons */
+    .universal-table .action-column { width: 25%; }
 
     /* --- Enhanced Button Styles --- */
     .enhanced-btn {
@@ -236,58 +268,72 @@
         align-items: center;
         justify-content: center;
         gap: 0.5rem;
-        transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+        transition: all var(--transition-timing);
         box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1), 0 1px 3px rgba(0, 0, 0, 0.08);
     }
+    
     .enhanced-btn:hover {
-        transform: translateY(-2px);
+        transform: var(--button-hover-pulse);
         box-shadow: 0 7px 14px rgba(0, 0, 0, 0.1), 0 3px 6px rgba(0, 0, 0, 0.08);
     }
-    /* Specific style for the "View Details" button */
-    .btn-view-details {
-        background: linear-gradient(45deg, #17a2b8, #117a8b); /* Info blue */
+
+    /* Specific button color gradients */
+    .btn-info {
+        background: linear-gradient(45deg, var(--info-color), #117a8b);
         color: white;
     }
-    .btn-view-details:hover {
+    
+    .btn-info:hover {
         background: linear-gradient(45deg, #117a8b, #0e6f7f);
+    }
+
+    .btn-primary {
+        background: linear-gradient(45deg, var(--primary-color), #0a58ca);
         color: white;
     }
-    /* Delete button style */
-    .delete-jd-btn {
-        background: linear-gradient(45deg, #dc3545, #b31d2b);
+
+    .btn-primary:hover {
+        background: linear-gradient(45deg, #0a58ca, #0848a6);
+    }
+
+    .btn-warning {
+        background: linear-gradient(45deg, var(--warning-color), #e0a800);
+        color: #212529;
+    }
+    
+    .btn-warning:hover {
+        background: linear-gradient(45deg, #e0a800, #c69500);
+    }
+
+    .btn-danger {
+        background: linear-gradient(45deg, var(--danger-color), #b31d2b);
         color: white;
     }
-    .delete-jd-btn:hover {
+    
+    .btn-danger:hover {
         background: linear-gradient(45deg, #b31d2b, #8c1622);
     }
+    
+    .btn-view-details {
+        background: linear-gradient(45deg, var(--info-color), #117a8b);
+        color: white;
+    }
+    
+    .btn-view-details:hover {
+        background: linear-gradient(45deg, #117a8b, #0e6f7f);
+    }
+
     .universal-btn {
         font-weight: 600;
         border-radius: 0.5rem;
     }
-    /* New button for "Create Job Description" */
-    .btn-info {
-        background: linear-gradient(45deg, #17a2b8, #117a8b);
-        color: white;
-    }
-    .btn-info:hover {
-        background: linear-gradient(45deg, #117a8b, #0e6f7f);
-        color: white;
-    }
-    /* New style for Edit button */
-    .btn-warning {
-        background: linear-gradient(45deg, #ffc107, #e0a800);
-        color: #212529;
-    }
-    .btn-warning:hover {
-        background: linear-gradient(45deg, #e0a800, #c69500);
-        color: #212529;
-    }
 
-    /* Hover effects for title links */
+    /* Link hover effects for title */
     .hover-underline-effect {
         position: relative;
         text-decoration: none;
     }
+
     .hover-underline-effect::after {
         content: '';
         position: absolute;
@@ -300,50 +346,40 @@
         transform-origin: bottom right;
         transition: transform 0.25s ease-out;
     }
+
     .hover-underline-effect:hover::after {
         transform: scaleX(1);
         transform-origin: bottom left;
     }
 
-    /* Animation utility classes */
-    .animate-hover-scale {
-        transition: transform 0.2s ease-in-out;
-    }
-    .animate-hover-scale:hover {
-        transform: scale(var(--button-hover-scale));
-    }
-    .animate-hover-pulse {
-        transition: transform 0.2s ease-in-out;
-    }
-    .animate-hover-pulse:hover {
-        transform: var(--button-hover-pulse);
-    }
-
-    /* Responsive adjustments */
+    /* --- Responsive Adjustments --- */
     @media (max-width: 767px) {
         .header-actions {
             flex-direction: column;
             align-items: stretch;
+            padding: 1rem;
         }
+        
         .header-actions .search-bar {
             max-width: 100%;
         }
+        
         .header-actions .d-flex.gap-3 {
             flex-direction: column;
             width: 100%;
+            gap: 0.75rem !important;
         }
+        
         .header-actions .d-flex.gap-3 .btn {
             width: 100%;
         }
+        
         .universal-table td.text-center.d-flex {
             flex-direction: column;
             gap: 0.5rem;
-            padding: 0.75rem; /* Adjust padding for stacked buttons */
+            padding: 0.75rem;
         }
-        .universal-table td.text-center.d-flex .btn {
-            width: 100%;
-        }
-        /* Show button text on small screens when stacked */
+
         .universal-table td.text-center.d-flex .d-none.d-lg-inline {
             display: inline !important;
         }
@@ -356,103 +392,128 @@
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script>
     $(document).ready(function() {
+        // Cache jQuery selectors for performance
         const $tableBody = $('#jobDescriptionsTable tbody');
-        const $allRows = $tableBody.find('tr');
-        const $noJDsMessage = $('#noJDsMessage'); // This is for client-side search, not initial load
         const $searchInput = $('#searchInput');
-        const $jobDescriptionsTableCard = $('#jobDescriptionsTableCard'); // Reference to the card containing the table
-        const $noJobDescriptionsServerMessage = $('#noJobDescriptionsServerMessage'); // Reference to the server-side message
+        const $jobDescriptionsTableCard = $('#jobDescriptionsTableCard');
+        const $noJobDescriptionsServerMessage = $('#noJobDescriptionsServerMessage');
+        const $noJDsMessage = $('#noJDsMessage');
+        const $deleteJdModal = $('#deleteJdModal');
+        const $customAlertModal = $('#customAlertModal');
+        const hasJDsFromServer = {{ job_descriptions|length }} > 0;
 
-
-        // Function to filter JDs based on search query (client-side only for current page)
+        // --- Initial State Check and Display ---
+        if (hasJDsFromServer) {
+            $jobDescriptionsTableCard.show();
+            $noJobDescriptionsServerMessage.hide();
+        } else {
+            $jobDescriptionsTableCard.hide();
+            $noJobDescriptionsServerMessage.show();
+        }
+        
+        // --- Client-side Search and Filter Functionality ---
         const filterJDs = () => {
             const searchQuery = $searchInput.val().toLowerCase();
             let counter = 1;
             let foundJDs = false;
-
-            $allRows.each(function() {
+            
+            // Re-select rows on each keyup to ensure we're working with the current DOM state
+            $tableBody.find('tr').each(function() {
                 const rowText = $(this).text().toLowerCase();
 
                 if (rowText.includes(searchQuery)) {
                     $(this).show();
-                    $(this).find('td:first-child').text(counter++); // Update row IDs
+                    $(this).find('td:first-child').text(counter++);
                     foundJDs = true;
                 } else {
                     $(this).hide();
                 }
             });
-
+            
             if (!foundJDs) {
-                $noJDsMessage.show(); // Show client-side "no results"
-                $('#jobDescriptionsTable').hide(); // Hide the table itself
+                $noJDsMessage.show();
+                $('#jobDescriptionsTable').hide();
             } else {
-                $noJDsMessage.hide(); // Hide client-side "no results"
-                $('#jobDescriptionsTable').show(); // Show the table itself
+                $noJDsMessage.hide();
+                $('#jobDescriptionsTable').show();
             }
         };
 
-        // Event listener for search input
-        $searchInput.on('keyup', function() {
-            filterJDs();
-        });
+        // Bind the filter function to the search input
+        $searchInput.on('keyup', filterJDs);
 
-        // Delete button functionality (AJAX call)
-        $('.delete-jd-btn').on('click', function() {
+        // --- Delete Confirmation Modal & AJAX ---
+        $tableBody.on('click', '.delete-jd-btn', function() {
             const jdId = $(this).data('jd-id');
             const jdTitle = $(this).data('jd-title');
+            
             $('#jdTitleToDelete').text(jdTitle);
             $('#confirmDeleteBtn').data('jd-id', jdId);
-            $('#deleteJdModal').modal('show');
+            $deleteJdModal.modal('show');
         });
 
-        $('#confirmDeleteBtn').on('on:click', function() { // Corrected 'on:click' to 'click'
+        // Corrected event handler for delete confirmation button
+        $('#confirmDeleteBtn').on('click', function() {
             const jdId = $(this).data('jd-id');
-            const csrfToken = $('input[name="csrfmiddlewaretoken"]').val(); 
+            const csrfToken = $('input[name="csrfmiddlewaretoken"]').val();
 
             $.ajax({
                 url: `/delete-jd/${jdId}/`,
                 type: 'POST',
-                data: {
-                    csrfmiddlewaretoken: csrfToken
-                },
+                data: { csrfmiddlewaretoken: csrfToken },
                 success: function(response) {
                     if (response.success) {
-                        location.reload(); // Reload page to update the table and IDs
+                        $deleteJdModal.modal('hide');
+                        showCustomAlert('Success', 'Job description deleted successfully.', 'success', () => {
+                            location.reload();
+                        });
                     } else {
                         const errorMessage = response.error || 'An unknown error occurred.';
-                        $('#deleteJdModal').modal('hide');
-                        showCustomAlert('Error', 'Error deleting job description: ' + errorMessage);
+                        $deleteJdModal.modal('hide');
+                        showCustomAlert('Error', 'Error deleting job description: ' + errorMessage, 'danger');
                     }
                 },
-                error: function(xhr, status, error) {
-                    $('#deleteJdModal').modal('hide');
+                error: function(xhr) {
+                    $deleteJdModal.modal('hide');
+                    let errorMessage = 'An error occurred. Please try again.';
                     if (xhr.status === 403) {
-                         showCustomAlert('Error', 'Access Forbidden: CSRF token missing or incorrect. Please refresh the page and try again.');
-                    } else {
-                        showCustomAlert('Error', 'An error occurred. Please try again.');
+                        errorMessage = 'Access Forbidden: CSRF token missing or incorrect. Please refresh the page.';
                     }
+                    showCustomAlert('Error', errorMessage, 'danger');
                 }
             });
         });
 
-        // Custom alert function (replaces native alert)
-        function showCustomAlert(title, message) {
-            $('#customAlertModalLabel').text(title);
-            $('#customAlertMessage').text(message);
-            $('#customAlertModal').modal('show');
-            $('#customAlertModal').on('hidden.bs.modal', function () {
-                $(this).remove();
-            });
-        }
+        // --- Custom Alert Modal Function ---
+        function showCustomAlert(title, message, type = 'info', callback = null) {
+            const modalHeader = $customAlertModal.find('.modal-header');
+            const modalTitle = $('#customAlertModalLabel');
+            const modalMessage = $('#customAlertMessage');
+            const modalButton = $customAlertModal.find('.btn');
+            
+            modalTitle.text(title);
+            modalMessage.text(message);
+            modalHeader.removeClass().addClass('modal-header border-0 rounded-top-3');
+            modalButton.removeClass().addClass('btn universal-btn');
 
-        // Initial state on page load: check if server-provided job_descriptions is empty
-        if ({{ job_descriptions|length }} === 0) {
-            $jobDescriptionsTableCard.hide(); // Hide the table card
-            $noJobDescriptionsServerMessage.show(); // Show the server-side "no JDs" message
-        } else {
-            $jobDescriptionsTableCard.show(); // Show the table card
-            $noJobDescriptionsServerMessage.hide(); // Hide the server-side "no JDs" message
-            filterJDs(); // Apply initial client-side filter if search input has value
+            if (type === 'success') {
+                modalHeader.addClass('bg-success text-white');
+                modalButton.addClass('btn-success');
+            } else if (type === 'danger') {
+                modalHeader.addClass('bg-danger text-white');
+                modalButton.addClass('btn-danger');
+            } else {
+                modalHeader.addClass('bg-warning text-dark');
+                modalButton.addClass('btn-warning');
+            }
+            
+            $customAlertModal.modal('show');
+            
+            $customAlertModal.off('hidden.bs.modal').on('hidden.bs.modal', function() {
+                if (callback && typeof callback === 'function') {
+                    callback();
+                }
+            });
         }
     });
 </script>

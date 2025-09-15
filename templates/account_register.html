@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Dashboard</title>
+<style>
+body { font-family: sans-serif; margin: 2rem; }
+.container { max-width: 800px; margin: 0 auto; }
+.header { display: flex; justify-content: space-between; align-items: center; }
+.user-list { margin-top: 2rem; }
+.user-list table { width: 100%; border-collapse: collapse; }
+.user-list th, .user-list td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+.user-list th { background-color: #f2f2f2; }
+.form-container { margin-top: 2rem; border: 1px solid #ccc; padding: 1rem; border-radius: 8px; }
+.form-container h2 { margin-top: 0; }
+.logout-btn { padding: 0.5rem 1rem; background-color: #dc3545; color: white; text-decoration: none; border-radius: 5px; }
+.message { padding: 1rem; margin-bottom: 1rem; border-radius: 5px; }
+.success { background-color: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+.error { background-color: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+</style>
+</head>
+<body>
+<div class="container">
+<div class="header">
+{% if current_role == 'superadmin' %}
+<h1>Superadmin Dashboard</h1>
+{% elif current_role == 'admin' %}
+<h1>Admin Dashboard</h1>
+{% endif %}
+<a href="{% url 'signout' %}" class="logout-btn">Sign Out</a>
+</div>
+
+    {% if messages %}
+        {% for message in messages %}
+            <div class="message {{ message.tags }}">
+                {{ message }}
+            </div>
+        {% endfor %}
+    {% endif %}
+
+    <div class="form-container">
+        <h2>Create New User</h2>
+        <form action="{% url 'create_user' %}" method="post">
+            {% csrf_token %}
+            <p>
+                <label for="username">Username:</label>
+                <input type="text" name="username" id="username" required>
+            </p>
+            <p>
+                <label for="password">Password:</label>
+                <input type="password" name="password" id="password" required>
+            </p>
+            <p>
+                <label for="role">Role:</label>
+                <select name="role" id="role">
+                    {% for value, label in available_roles %}
+                        <option value="{{ value }}">{{ label }}</option>
+                    {% endfor %}
+                </select>
+            </p>
+            <button type="submit">Create User</button>
+        </form>
+    </div>
+
+    <div class="user-list">
+        <h2>All Users</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>Username</th>
+                    <th>Email</th>
+                    <th>Role</th>
+                    <th>Date Joined</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for user in users %}
+                <tr>
+                    <td>{{ user.username }}</td>
+                    <td>{{ user.email }}</td>
+                    <td>{{ user.get_role_display }}</td>
+                    <td>{{ user.date_joined|date:"F j, Y" }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+</body>
+</html>

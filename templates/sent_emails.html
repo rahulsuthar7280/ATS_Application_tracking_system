@@ -1,0 +1,185 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Sent Emails{% endblock %}
+{% block page_heading %}Sent Emails{% endblock %}
+
+{% block content %}
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" xintegrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
+<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" rel="stylesheet">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap">
+
+<style>
+    :root {
+        --primary-color: #007bff; /* A classic, professional blue */
+        --secondary-color: #6c757d; /* Gray */
+        --background-color: #f8f9fa; /* A very light gray, softer than current */
+        --card-bg-color: #ffffff; /* White */
+        --border-color: #e9ecef; /* Lighter border color for a softer look */
+        --shadow-color: rgba(0, 0, 0, 0.08); /* A slightly more pronounced shadow for depth */
+        --text-color-primary: #343a40; /* Dark Gray */
+    }
+
+    body {
+        font-family: 'Montserrat', sans-serif;
+        background-color: var(--background-color);
+        color: var(--text-color-primary);
+        line-height: 1.6;
+    }
+
+    .container-layout {
+        padding-top: 4rem;
+        padding-bottom: 4rem;
+    }
+
+    .table-responsive-custom {
+        border-radius: 12px;
+        overflow-x: auto;
+        box-shadow: 0 4px 15px var(--shadow-color);
+        border: 1px solid var(--border-color);
+    }
+
+    .table-striped > tbody > tr:nth-of-type(odd) > * {
+        background-color: #f2f2f2;
+    }
+    
+    .table thead th {
+        background-color: var(--primary-color);
+        color: #fff;
+        border-color: var(--primary-color);
+        font-weight: 600;
+        vertical-align: middle;
+        text-align: center;
+        padding: 1rem 1.5rem;
+    }
+
+    .table td {
+        vertical-align: middle;
+        text-align: center;
+        padding: 1rem 1.5rem;
+        border-top: 1px solid var(--border-color);
+    }
+
+    .table-hover tbody tr:hover {
+        background-color: #e9ecef;
+    }
+
+    .email-subject {
+        color: var(--primary-color);
+        font-weight: 600;
+        text-align: left;
+    }
+
+    .modal-content {
+        border-radius: 12px;
+        border: none;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+    }
+
+    .modal-header {
+        border-bottom: 1px solid var(--border-color);
+    }
+
+    .btn-primary-custom, .btn-secondary-custom {
+        padding: 0.75rem 1.8rem;
+        font-weight: 600;
+        border-radius: 8px;
+        transition: all 0.3s ease;
+    }
+
+    .btn-primary-custom {
+        background-color: var(--primary-color);
+        border-color: var(--primary-color);
+    }
+
+    .btn-primary-custom:hover {
+        background-color: #0069d9;
+        border-color: #0062cc;
+        transform: translateY(-2px);
+    }
+    
+    .btn-secondary-custom {
+        background-color: var(--secondary-color);
+        border-color: var(--secondary-color);
+        color: white;
+    }
+
+    .btn-secondary-custom:hover {
+        background-color: #5a6268;
+        border-color: #545b62;
+        transform: translateY(-2px);
+    }
+</style>
+
+<div class="container container-layout">
+    <h2 class="text-center section-title" style="color: var(--primary-color); font-weight: 700;">Sent Emails</h2>
+    <p class="text-center text-muted mb-5">
+        Here is a list of all the job description emails you have sent.
+    </p>
+
+    {% if sent_emails_list %}
+    <div class="table-responsive-custom">
+        <table class="table table-striped table-hover mb-0">
+            <thead>
+                <tr>
+                    <th scope="col">Subject</th>
+                    <th scope="col">Recipient(s)</th>
+                    <th scope="col">Sent Date</th>
+                    <th scope="col">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for email in sent_emails_list %}
+                <tr>
+                    <td class="text-start">
+                        <span class="email-subject">{{ email.subject }}</span>
+                    </td>
+                    <td>{{ email.recipient_emails }}</td>
+                    <td>{{ email.sent_at|date:"F d, Y P" }}</td>
+                    <td>
+                        <button type="button" class="btn btn-outline-primary" data-bs-toggle="modal" data-bs-target="#emailModal{{ email.id }}">
+                            <i class="fas fa-eye"></i> View
+                        </button>
+                    </td>
+                </tr>
+
+                <!-- Modal for full email content -->
+                <div class="modal fade" id="emailModal{{ email.id }}" tabindex="-1" aria-labelledby="emailModalLabel{{ email.id }}" aria-hidden="true">
+                    <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title" id="emailModalLabel{{ email.id }}">{{ email.subject }}</h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                            </div>
+                            <div class="modal-body">
+                                <p><strong>To:</strong> {{ email.recipient_emails }}</p>
+                                <hr>
+                                <div class="email-body-content">
+                                    {{ email.body|linebreaksbr }}
+                                </div>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary-custom" data-bs-dismiss="modal">Close</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <div class="alert alert-info text-center py-4 rounded-3" role="alert">
+        <i class="fas fa-info-circle me-2"></i> You have not sent any emails yet.
+    </div>
+    {% endif %}
+
+    <div class="text-center mt-5">
+        <a href="{% url 'send_job_description' %}" class="btn btn-primary-custom">
+            <i class="fas fa-plus me-2"></i> Send New Email
+        </a>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" xintegrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
+{% endblock %}

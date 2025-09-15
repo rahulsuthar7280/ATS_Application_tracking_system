@@ -1,0 +1,824 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Email Dashboard{% endblock %}
+
+{% block head_extra %}
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+{% endblock %}
+
+{% block content %}
+<style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+    
+    /* === Unified Color Palette === */
+    :root {
+        --primary-blue: #0d6efd;
+        --secondary-blue: #0a58ca;
+        --white-background: #FFFFFF;
+        --light-gray: #f8f9fa;
+        --border-color: #dee2e6;
+        --text-color: #212529;
+        --muted-text: #6c757d;
+        --shadow: rgba(0, 0, 0, 0.08);
+    }
+    
+    /* === Dark Mode Theme === */
+    body.dark-mode {
+        --primary-blue: #5ba3f7;
+        --secondary-blue: #4a8fdb;
+        --white-background: #1e1e1e;
+        --light-gray: #2c2c2c;
+        --border-color: #3e3e3e;
+        --text-color: #e9ecef;
+        --muted-text: #b0b0b0;
+        --shadow: rgba(255, 255, 255, 0.05);
+    }
+    
+    body {
+        font-family: 'Inter', 'Segoe UI', 'Roboto', 'Helvetica Neue', Arial, sans-serif;
+        background-color: var(--light-gray);
+        color: var(--text-color);
+        transition: background-color 0.4s ease-in-out, color 0.4s ease-in-out;
+        overflow-x: hidden;
+    }
+    
+    .container-fluid.email-app {
+        height: 100vh;
+        max-height: 100vh;
+        display: flex;
+        flex-direction: row;
+        padding: 0;
+        gap: 1rem;
+        padding: 1rem;
+    }
+    
+    .panel {
+        background-color: var(--white-background);
+        border: 1px solid var(--border-color);
+        border-radius: 0.5rem;
+        box-shadow: 0 6px 20px var(--shadow);
+        overflow-y: hidden;
+        transition: background-color 0.4s ease-in-out, color 0.4s ease-in-out, box-shadow 0.2s;
+    }
+    
+    /* === Sidebar Styling === */
+    .email-sidebar {
+        width: 70px;
+        min-width: 70px;
+        flex-shrink: 0;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        padding: 1rem 0;
+        transition: width 0.3s ease-in-out;
+    }
+    
+    .email-sidebar:hover {
+        width: 250px;
+    }
+
+    .sidebar-nav-link {
+        color: var(--text-color);
+        padding: 0.75rem 0;
+        margin-bottom: 0.5rem;
+        font-weight: 500;
+        border-radius: 0.5rem;
+        transition: background-color 0.3s ease-in-out, color 0.3s ease-in-out;
+        text-decoration: none;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        width: 100%;
+    }
+    
+    .sidebar-nav-link:hover,
+    .sidebar-nav-link.active {
+        background-color: var(--light-gray);
+        color: var(--primary-blue);
+        transform: scale(1.05);
+    }
+    
+    .email-sidebar:hover .sidebar-nav-link {
+        flex-direction: row;
+        align-items: center;
+        gap: 1rem;
+        padding: 0.75rem 1rem;
+        transform: none;
+    }
+
+    .email-sidebar:hover .sidebar-nav-link i {
+        font-size: 1rem;
+        min-width: 20px;
+        margin-bottom: 0;
+    }
+    
+    .sidebar-nav-link i {
+        font-size: 1.25rem;
+        margin-bottom: 0.25rem;
+        transition: font-size 0.3s ease-in-out;
+    }
+    
+    /* === Email List Panel === */
+    .email-list-panel {
+        width: 350px;
+        min-width: 350px;
+        flex-shrink: 0;
+    }
+
+    .list-header {
+        padding: 1rem 1.5rem;
+        font-size: 1.5rem;
+        font-weight: 600;
+        border-bottom: 1px solid var(--border-color);
+        margin: 0;
+    }
+    
+    .list-group {
+        border-radius: 0;
+        height: calc(100% - 66px);
+        overflow-y: auto;
+    }
+
+    .email-list-item {
+        background-color: transparent;
+        border-bottom: 1px solid var(--border-color);
+        border-radius: 0;
+        padding: 1.25rem;
+        cursor: pointer;
+        transition: background-color 0.2s, transform 0.2s;
+        text-decoration: none;
+        display: flex;
+        align-items: center;
+    }
+
+    .email-list-item:hover {
+        background-color: var(--light-gray);
+        transform: translateY(-2px);
+    }
+    
+    .email-list-item.active {
+        background-color: var(--light-gray);
+        border-left: 4px solid var(--primary-blue);
+        padding-left: 1.0rem;
+    }
+
+    .email-list-item .unread-dot {
+        width: 10px;
+        height: 10px;
+        background-color: var(--primary-blue);
+        border-radius: 50%;
+        flex-shrink: 0;
+        margin-right: 1.25rem;
+    }
+
+    .email-list-item h6 {
+        font-weight: 600;
+        color: var(--text-color);
+    }
+    
+    .email-list-item.read h6 {
+        font-weight: 400;
+        color: var(--muted-text);
+    }
+    
+    .email-list-item p,
+    .email-list-item small {
+        color: var(--muted-text);
+        margin-bottom: 0;
+    }
+
+    /* === Email Content Panel === */
+    .email-content-panel {
+        flex-grow: 1;
+        position: relative;
+        display: flex;
+        flex-direction: column;
+        height: 100%;
+        padding: 0;
+    }
+    
+    .email-detail-header {
+        position: sticky;
+        top: 0;
+        z-index: 10;
+        background-color: var(--white-background);
+        border-bottom: 1px solid var(--border-color);
+        padding: 1.5rem 2rem;
+        margin-bottom: 0;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 1rem;
+        box-shadow: 0 2px 5px var(--shadow);
+    }
+
+    .email-body-scroll-container {
+        flex-grow: 1;
+        overflow-y: auto;
+        padding: 2rem;
+    }
+
+    .email-body-content {
+        line-height: 1.7;
+    }
+    
+    .email-body-content p {
+        margin-bottom: 1rem;
+    }
+
+    .email-action-bar {
+        position: sticky;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        z-index: 10;
+        background-color: var(--white-background);
+        padding: 1rem 2rem;
+        border-top: 1px solid var(--border-color);
+        box-shadow: 0 -2px 5px var(--shadow);
+        display: flex;
+        justify-content: flex-end;
+        gap: 10px;
+    }
+
+    .floating-compose-btn {
+        position: fixed;
+        bottom: 30px;
+        right: 30px;
+        z-index: 20;
+        width: 60px;
+        height: 60px;
+        border-radius: 50%;
+        font-size: 1.5rem;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        box-shadow: 0 8px 16px rgba(0, 0, 0, 0.25);
+        transition: transform 0.3s ease;
+    }
+
+    .floating-compose-btn:hover {
+        transform: scale(1.1);
+    }
+    
+    /* === Mobile Responsiveness === */
+    .d-none-mobile {
+        display: none;
+    }
+    
+    #back-to-list-btn {
+        display: none; /* Hidden by default */
+    }
+
+    @media (max-width: 991.98px) {
+        .container-fluid.email-app {
+            flex-direction: column;
+            padding: 0;
+            gap: 0;
+        }
+
+        .panel {
+            box-shadow: none;
+            border-radius: 0;
+        }
+        
+        .email-sidebar {
+            width: 100%;
+            height: auto;
+            border-bottom: 1px solid var(--border-color);
+            padding: 1rem;
+            flex-direction: row;
+            justify-content: space-around;
+            align-items: center;
+        }
+
+        .email-sidebar:hover {
+            width: 100%;
+        }
+        
+        .floating-compose-btn {
+            display: none !important;
+        }
+        
+        #back-to-list-btn {
+            display: inline-block;
+        }
+
+        .email-list-panel,
+        .email-content-panel {
+            min-width: 100%;
+            width: 100%;
+            padding: 0;
+        }
+        
+        .email-list-panel.d-none-mobile,
+        .email-content-panel.d-none-mobile {
+            display: none !important;
+        }
+        
+        .email-list-panel.d-block-mobile,
+        .email-content-panel.d-block-mobile {
+            display: block !important;
+        }
+        
+        .email-content-panel {
+            padding: 1rem;
+        }
+    }
+</style>
+
+<div class="toast-container position-fixed bottom-0 end-0 p-3">
+    {% for message in messages %}
+    <div class="toast show align-items-center text-white bg-{{ message.tags }} border-0" role="alert" aria-live="assertive" aria-atomic="true">
+        <div class="d-flex">
+            <div class="toast-body">
+                {{ message }}
+            </div>
+            <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+
+<div class="container-fluid email-app">
+    <div class="email-sidebar panel">
+        <button id="compose-btn" class="btn btn-primary d-none d-lg-flex rounded-pill mb-3" style="width: 90%;">
+            <i class="fa-solid fa-feather-pointed me-2"></i><span>Compose</span>
+        </button>
+        <div class="d-flex justify-content-between align-items-center mb-3 d-lg-none w-100 px-3">
+            <h5 class="fw-bold mb-0">Menu</h5>
+            <button id="mobile-compose-btn" class="btn btn-primary btn-sm rounded-pill fw-bold shadow-sm">
+                <i class="fa-solid fa-plus me-2"></i> Compose
+            </button>
+        </div>
+        
+        <nav class="nav flex-column mb-auto w-100">
+            <a class="sidebar-nav-link" id="inbox-link" href="#" data-tab="inbox-pane">
+                <i class="fa-solid fa-inbox"></i> <span>Inbox</span>
+            </a>
+            <a class="sidebar-nav-link active" id="sent-link" href="#" data-tab="sent-pane">
+                <i class="fa-solid fa-paper-plane"></i> <span>Sent</span>
+            </a>
+            <a class="sidebar-nav-link" id="drafts-link" href="#" data-tab="drafts-pane">
+                <i class="fa-solid fa-file-lines"></i> <span>Drafts</span>
+            </a>
+            <a class="sidebar-nav-link" id="config-link" href="#" data-tab="config-pane">
+                <i class="fa-solid fa-gear"></i> <span>Email Config</span>
+            </a>
+        </nav>
+        <div class="mt-4 text-center">
+            <button id="theme-toggle" class="btn btn-link text-decoration-none">
+                <i class="fa-solid fa-moon"></i>
+            </button>
+        </div>
+    </div>
+
+    <div id="email-list-panel" class="email-list-panel panel">
+        <h2 class="list-header" id="list-panel-title">Sent</h2>
+        
+        <div id="inbox-pane" class="tab-pane-content" style="display:none;">
+            {% if error_message %}
+            <div class="alert alert-warning rounded-0 border-0" role="alert">
+                {{ error_message }}
+            </div>
+            {% else %}
+            <div class="list-group">
+                {% for email in inbox_emails %}
+                <a href="#" class="list-group-item email-list-item d-flex align-items-center {% if not email.is_read %}fw-bold unread{% endif %}"
+                    data-type="inbox"
+                    data-from="{{ email.from }}"
+                    data-to="{{ email.recipient_emails }}"
+                    data-subject="{{ email.subject }}"
+                    data-full-body="{{ email.body }}"
+                    data-date="{{ email.date|date:'Y-m-d' }}"
+                    data-is-read="{{ email.is_read|yesno:'true,false' }}">
+                    {% if not email.is_read %}<div class="unread-dot"></div>{% endif %}
+                    <div class="w-100 ps-2">
+                        <div class="d-flex w-100 justify-content-between">
+                            <h6 class="mb-1 fw-bold">{{ email.subject }}</h6>
+                            <small class="text-muted">{{ email.date|date:"M d, Y" }}</small>
+                        </div>
+                        <p class="mb-1 text-muted">From: {{ email.from }}</p>
+                        <small class="text-muted d-block">{{ email.body|truncatechars:100 }}</small>
+                    </div>
+                </a>
+                {% empty %}
+                <p class="text-center text-muted mt-3">Your inbox is empty.</p>
+                {% endfor %}
+            </div>
+            {% endif %}
+        </div>
+        
+        <div id="sent-pane" class="tab-pane-content" style="display:block;">
+            <div class="list-group">
+                {% for email in sent_emails_list %}
+                <a href="#" class="list-group-item email-list-item d-flex align-items-center"
+                    data-type="sent"
+                    data-to="{{ email.recipient_emails }}"
+                    data-subject="{{ email.subject }}"
+                    data-full-body="{{ email.body }}"
+                    data-date="{{ email.sent_at|date:'Y-m-d' }}"
+                    data-is-read="true">
+                    <div class="w-100">
+                        <div class="d-flex w-100 justify-content-between">
+                            <h6 class="mb-1 fw-bold">{{ email.subject }}</h6>
+                            <small class="text-muted">{{ email.sent_at|date:"M d, Y" }}</small>
+                        </div>
+                        <p class="mb-1 text-muted">To: {{ email.recipient_emails|truncatechars:40 }}</p>
+                        <small class="text-muted d-block">{{ email.body|truncatechars:100 }}</small>
+                    </div>
+                </a>
+                {% empty %}
+                <p class="text-center text-muted mt-3">You have not sent any emails yet.</p>
+                {% endfor %}
+            </div>
+        </div>
+        
+        <div id="drafts-pane" class="tab-pane-content" style="display:none;">
+            <div class="list-group">
+                {% for draft in drafts %}
+                <a href="{% url 'edit_draft' draft.id %}" class="list-group-item email-list-item d-flex align-items-center">
+                    <div class="w-100">
+                        <div class="d-flex w-100 justify-content-between">
+                            <h6 class="mb-1 fw-bold">{{ draft.subject }}</h6>
+                            <small class="text-muted">{{ draft.last_modified|date:"M d, Y" }}</small>
+                        </div>
+                        <p class="mb-1 text-muted">To: {{ draft.recipient_emails }}</p>
+                        <small class="text-muted d-block">{{ draft.body|truncatechars:100 }}</small>
+                    </div>
+                </a>
+                {% empty %}
+                <p class="text-center text-muted mt-3">You have no saved drafts.</p>
+                {% endfor %}
+            </div>
+        </div>
+        
+        <div id="config-pane" class="tab-pane-content" style="display: none;">
+            </div>
+    </div>
+    
+    <div id="email-content-panel" class="email-content-panel panel d-none d-lg-block">
+        <div id="initial-view" class="p-4">
+            <h2 class="card-title mb-4">Welcome</h2>
+            <p>Select an email from the list or click 'Compose' to get started.</p>
+        </div>
+        
+        <div id="email-detail-view" style="display:none;">
+            <div class="email-detail-header">
+                <button id="back-to-list-btn" class="btn btn-sm btn-light d-lg-none me-2"><i class="fa-solid fa-arrow-left"></i></button>
+                <div>
+                    <h4 id="detail-subject" class="mb-0"></h4>
+                    <div class="text-muted small">
+                        <strong id="detail-from-to"></strong>
+                        <span id="detail-date" class="d-block"></span>
+                    </div>
+                </div>
+                <div class="text-end text-muted small">
+                </div>
+            </div>
+            <div class="email-body-scroll-container">
+                <div class="email-body-content" id="detail-body"></div>
+            </div>
+            <div class="email-action-bar d-flex justify-content-end gap-2">
+                <button id="reply-btn" class="btn btn-primary"><i class="fa-solid fa-reply"></i> Reply</button>
+                <button id="reply-all-btn" class="btn btn-primary" style="display: none;"><i class="fa-solid fa-reply-all"></i> Reply All</button>
+                <button id="forward-btn" class="btn btn-secondary"><i class="fa-solid fa-share"></i> Forward</button>
+                <button id="delete-btn" class="btn btn-danger"><i class="fa-solid fa-trash-can"></i> Delete</button>
+            </div>
+        </div>
+        
+        <div id="compose-email-view" style="display:none;" class="p-4">
+            <h3 class="card-title mb-4" id="compose-title">Send New Email</h3>
+            <form id="send-email-form" method="post" action="{% url 'send_job_description' %}">
+                {% csrf_token %}
+                <div class="mb-3">
+                    <label for="recipient-emails" class="form-label">To</label>
+                    <input type="text" class="form-control" id="recipient-emails" name="recipient_emails" placeholder="e.g., recipient1@example.com; recipient2@example.com" required>
+                </div>
+                <div class="mb-3">
+                    <label for="email-subject" class="form-label">Subject</label>
+                    <input type="text" class="form-control" id="email-subject" name="email_subject" placeholder="Enter subject" required>
+                </div>
+                <div class="mb-3">
+                    <label for="job-description-select" class="form-label">Attach Job Description</label>
+                    <select class="form-select" id="job-description-select" name="job_description">
+                        <option value="">Select a job description (Optional)</option>
+                        {% for job in job_descriptions %}
+                            <option value="{{ job.id }}">{{ job.title }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="mb-3">
+                    <label for="email-body" class="form-label">Body</label>
+                    <textarea class="form-control" id="email-body" name="email_body" rows="8" placeholder="Enter email body" required></textarea>
+                </div>
+                <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                    <button type="submit" class="btn btn-primary">Send</button>
+                </div>
+            </form>
+        </div>
+
+        <div id="config-panel" style="display: none;" class="p-4">
+            <h3 class="card-title mb-4">Email Configuration</h3>
+            <form id="email-config-form" method="post" action="{% url 'configure_email' %}">
+                {% csrf_token %}
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label for="email_host" class="form-label">SMTP Host</label>
+                        <input type="text" class="form-control" id="email_host" name="email_host" value="{{ config.email_host|default:'' }}" required>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label for="email_port" class="form-label">SMTP Port</label>
+                        <input type="number" class="form-control" id="email_port" name="email_port" value="{{ config.email_port|default:'' }}" required>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label for="imap_host" class="form-label">IMAP Host</label>
+                        <input type="text" class="form-control" id="imap_host" name="imap_host" value="{{ config.imap_host|default:'' }}" required>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label for="imap_port" class="form-label">IMAP Port</label>
+                        <input type="number" class="form-control" id="imap_port" name="imap_port" value="{{ config.imap_port|default:'' }}" required>
+                    </div>
+                </div>
+                <div class="mb-3">
+                    <label for="email_host_user" class="form-label">Email Address (Username)</label>
+                    <input type="email" class="form-control" id="email_host_user" name="email_host_user" value="{{ config.email_host_user|default:'' }}" required>
+                </div>
+                <div class="mb-3">
+                    <label for="email_host_password" class="form-label">Password/App Password</label>
+                    <input type="password" class="form-control" id="email_host_password" name="email_host_password" value="{{ config.email_host_password|default:'' }}" required>
+                </div>
+                <div class="mb-3">
+                    <label for="email_from" class="form-label">From Email Address</label>
+                    <input type="email" class="form-control" id="email_from" name="email_from" value="{{ config.email_from|default:'' }}" required>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Security Protocol</label>
+                    <div>
+                        <div class="form-check form-check-inline">
+                            <input class="form-check-input" type="radio" name="security_protocol" id="tls" value="tls" {% if config.email_use_tls %}checked{% endif %}>
+                            <label class="form-check-label" for="tls">TLS</label>
+                        </div>
+                        <div class="form-check form-check-inline">
+                            <input class="form-check-input" type="radio" name="security_protocol" id="ssl" value="ssl" {% if config.email_use_ssl %}checked{% endif %}>
+                            <label class="form-check-label" for="ssl">SSL</label>
+                        </div>
+                    </div>
+                </div>
+                <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                    <button type="submit" class="btn btn-primary">Save Configuration</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<button id="floating-compose-btn" class="btn btn-primary floating-compose-btn d-lg-none">
+    <i class="fa-solid fa-plus"></i>
+</button>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        // Theme Toggle Functionality
+        const body = document.body;
+        const themeToggleBtn = document.getElementById('theme-toggle');
+
+        function setTheme(isDarkMode) {
+            body.classList.toggle('dark-mode', isDarkMode);
+            themeToggleBtn.innerHTML = `<i class="fa-solid fa-${isDarkMode ? 'sun' : 'moon'}"></i>`;
+        }
+
+        const savedTheme = localStorage.getItem('theme');
+        if (savedTheme === 'dark') {
+            setTheme(true);
+        } else if (savedTheme === 'light') {
+            setTheme(false);
+        } else if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+            setTheme(true);
+        }
+
+        themeToggleBtn.addEventListener('click', () => {
+            const isDarkMode = !body.classList.contains('dark-mode');
+            setTheme(isDarkMode);
+            localStorage.setItem('theme', isDarkMode ? 'dark' : 'light');
+        });
+
+        // UI View Management
+        const emailListPanel = document.getElementById('email-list-panel');
+        const emailContentPanel = document.getElementById('email-content-panel');
+        const initialView = document.getElementById('initial-view');
+        const emailDetailView = document.getElementById('email-detail-view');
+        const composeEmailView = document.getElementById('compose-email-view');
+        const configPanel = document.getElementById('config-panel');
+        const listPanelTitle = document.getElementById('list-panel-title');
+        const composeTitle = document.getElementById('compose-title');
+        
+        // This variable keeps track of the currently active email list item to apply the 'active' class
+        let activeListItem = null;
+
+        function showContentPanel(panel) {
+            initialView.style.display = 'none';
+            emailDetailView.style.display = 'none';
+            composeEmailView.style.display = 'none';
+            configPanel.style.display = 'none';
+            panel.style.display = 'block';
+
+            if (window.innerWidth < 992) {
+                emailListPanel.classList.add('d-none-mobile');
+                emailContentPanel.classList.add('d-block-mobile');
+            }
+        }
+
+        function resetComposeForm() {
+            document.getElementById('recipient-emails').value = '';
+            document.getElementById('email-subject').value = '';
+            document.getElementById('email-body').value = '';
+        }
+
+        // Tab and View Toggling
+        const navLinks = document.querySelectorAll('.sidebar-nav-link');
+        const tabPanes = document.querySelectorAll('.tab-pane-content');
+
+        navLinks.forEach(link => {
+            link.addEventListener('click', (e) => {
+                e.preventDefault();
+                navLinks.forEach(item => item.classList.remove('active'));
+                link.classList.add('active');
+                
+                tabPanes.forEach(pane => pane.style.display = 'none');
+                const targetTab = link.getAttribute('data-tab');
+                const listPane = document.getElementById(targetTab);
+                
+                if (targetTab === 'config-pane') {
+                    emailListPanel.style.display = 'none'; 
+                    emailContentPanel.classList.remove('d-none-mobile');
+                    emailContentPanel.classList.add('d-block-mobile');
+                    showContentPanel(configPanel);
+                } else {
+                    emailListPanel.style.display = 'block';
+                    if (listPane) {
+                        listPane.style.display = 'block';
+                        listPanelTitle.textContent = link.textContent.trim();
+                        showContentPanel(initialView);
+                        // Reset active list item when changing tabs
+                        if (activeListItem) {
+                            activeListItem.classList.remove('active');
+                            activeListItem = null;
+                        }
+                    }
+                }
+            });
+        });
+        
+        // Show Compose View
+        document.querySelectorAll('#compose-btn, #floating-compose-btn, #mobile-compose-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                resetComposeForm();
+                composeTitle.textContent = 'Send New Email';
+                showContentPanel(composeEmailView);
+                if (activeListItem) {
+                    activeListItem.classList.remove('active');
+                    activeListItem = null;
+                }
+            });
+        });
+
+        // Show Email Details View
+        document.querySelectorAll('.email-list-item').forEach(item => {
+            item.addEventListener('click', (e) => {
+                e.preventDefault();
+                
+                // Remove active class from previous item
+                if (activeListItem) {
+                    activeListItem.classList.remove('active');
+                }
+                // Add active class to the clicked item
+                activeListItem = item;
+                activeListItem.classList.add('active');
+                
+                const type = item.dataset.type;
+                const subject = item.dataset.subject;
+                const date = item.dataset.date;
+                const fullBody = item.dataset.fullBody;
+                const from = item.dataset.from || '';
+                const to = item.dataset.to || '';
+                const isRead = item.dataset.isRead;
+                
+                const detailSubject = document.getElementById('detail-subject');
+                const detailFromTo = document.getElementById('detail-from-to');
+                const detailDate = document.getElementById('detail-date');
+                const detailBody = document.getElementById('detail-body');
+                const replyBtn = document.getElementById('reply-btn');
+                const replyAllBtn = document.getElementById('reply-all-btn');
+                
+                // Mark email as read visually
+                if (isRead === 'false') {
+                    item.classList.add('read');
+                    item.classList.remove('fw-bold', 'unread');
+                    const unreadDot = item.querySelector('.unread-dot');
+                    if (unreadDot) unreadDot.style.display = 'none';
+                }
+
+                detailSubject.textContent = subject;
+                detailDate.textContent = date;
+                detailBody.innerHTML = fullBody.replace(/\n/g, '<br>');
+
+                if (type === 'inbox') {
+                    detailFromTo.innerHTML = `<strong>From:</strong> ${from}`;
+                    replyBtn.style.display = 'inline-block';
+                    replyAllBtn.style.display = to.split(';').length > 1 ? 'inline-block' : 'none';
+                    emailDetailView.dataset.from = from;
+                    emailDetailView.dataset.to = to;
+                } else if (type === 'sent') {
+                    detailFromTo.innerHTML = `<strong>To:</strong> ${to}`;
+                    replyBtn.style.display = 'none';
+                    replyAllBtn.style.display = 'none';
+                    emailDetailView.dataset.to = to;
+                    emailDetailView.dataset.from = from;
+                }
+                emailDetailView.dataset.subject = subject;
+
+                showContentPanel(emailDetailView);
+            });
+        });
+
+        // Back button for mobile
+        document.getElementById('back-to-list-btn').addEventListener('click', () => {
+            emailContentPanel.classList.remove('d-block-mobile');
+            emailContentPanel.classList.add('d-none-mobile');
+            emailListPanel.classList.add('d-block-mobile');
+            emailListPanel.classList.remove('d-none-mobile');
+            showContentPanel(initialView);
+        });
+
+        // Reply, Reply All, Forward Functionality
+        function handleReplyForward(mode) {
+            const subject = emailDetailView.dataset.subject;
+            const from = emailDetailView.dataset.from;
+            const to = emailDetailView.dataset.to;
+            const body = document.getElementById('detail-body').innerHTML;
+
+            resetComposeForm();
+            composeTitle.textContent = `Send ${mode.charAt(0).toUpperCase() + mode.slice(1)}`;
+
+            let newSubject = subject;
+            let newRecipient = '';
+            let newBody = `
+            <br>
+            <br>
+            --- On ${emailDetailView.dataset.date}, ${from} wrote: ---
+            <br>
+            <br>
+            ${body}`;
+
+            if (mode === 'reply') {
+                newSubject = subject.toLowerCase().startsWith('re:') ? subject : `Re: ${subject}`;
+                newRecipient = from;
+            } else if (mode === 'replyAll') {
+                newSubject = subject.toLowerCase().startsWith('re:') ? subject : `Re: ${subject}`;
+                newRecipient = `${from};${to}`;
+            } else if (mode === 'forward') {
+                newSubject = subject.toLowerCase().startsWith('fw:') ? subject : `Fw: ${subject}`;
+                newBody = `
+                <br>
+                <br>
+                --- Forwarded message ---
+                <br>
+                <br>
+                <strong>Subject:</strong> ${subject}
+                <br>
+                <strong>Date:</strong> ${emailDetailView.dataset.date}
+                <br>
+                <strong>From:</strong> ${from}
+                <br>
+                <strong>To:</strong> ${to}
+                <br>
+                <br>
+                ${body}`;
+            }
+
+            document.getElementById('recipient-emails').value = newRecipient;
+            document.getElementById('email-subject').value = newSubject;
+            document.getElementById('email-body').value = newBody;
+
+            showContentPanel(composeEmailView);
+        }
+
+        document.getElementById('reply-btn').addEventListener('click', () => handleReplyForward('reply'));
+        document.getElementById('reply-all-btn').addEventListener('click', () => handleReplyForward('replyAll'));
+        document.getElementById('forward-btn').addEventListener('click', () => handleReplyForward('forward'));
+        
+        // Placeholder for Delete functionality
+        document.getElementById('delete-btn').addEventListener('click', () => {
+            alert('Delete functionality not yet implemented.');
+        });
+    });
+</script>
+
+{% endblock %}

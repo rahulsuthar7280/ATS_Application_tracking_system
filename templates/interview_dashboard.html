@@ -78,11 +78,13 @@
                                 <div class="d-flex justify-content-between align-items-center mt-3">
                                     <span class="badge rounded-pill custom-badge-pending">Pending</span>
                                     <span class="badge rounded-pill custom-badge-ai">{{ candidate.hiring_recommendation|default:"N/A" }}</span>
-                                    <a href="{% url 'interview_detail' candidate.id %}" class="btn btn-sm btn-primary custom-btn-card">
+                                    <a href="{% url 'candidate_profile' candidate.id %}" class="btn btn-sm btn-primary custom-btn-card">
                                         <i class="bi bi-arrow-right-short"></i>
                                     </a>
                                 </div>
                             </div>
+                        <br>
+
                         {% endfor %}
                     {% else %}
                         <div class="text-center text-muted p-4">
@@ -117,6 +119,8 @@
                                     </a>
                                 </div>
                             </div>
+                        <br>
+
                         {% endfor %}
                     {% else %}
                         <div class="text-center text-muted p-4">
@@ -157,6 +161,8 @@
                                     </a>
                                 </div>
                             </div>
+                        <br>
+
                         {% endfor %}
                     {% else %}
                         <div class="text-center text-muted p-4">

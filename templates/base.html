@@ -3,25 +3,28 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>HR Talent Scout - {% block title %}{% endblock %}</title>
+    <title>AI Talent Finder - {% block title %}{% endblock %}</title>
 
-    <!-- Bootstrap CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" crossorigin="anonymous">
-    <!-- Font Awesome for icons -->
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
-    <!-- Google Fonts -->
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
 
     <style>
-        /* ------------------------------
-           Your Original CSS (kept fully)
-        ------------------------------ */
+        :root {
+            --sidebar-bg: #2d3748;
+            --sidebar-hover: #4a5568;
+            --sidebar-text: #e2e8f0;
+            --sidebar-active: #4c51bf;
+            --header-bg: #1a202c;
+            --content-bg: #f7fafc;
+            --footer-bg: #e2e8f0;
+            --primary-color: #4c51bf;
+        }
+
         body {
-            font-family: 'Inter', sans-serif;
-            background-color: #f8f9fa;
+            font-family: 'Poppins', sans-serif;
+            background-color: var(--content-bg);
             margin: 0;
         }
 
@@ -32,9 +35,9 @@
 
         /* Sidebar */
         .app-sidebar {
-            width: 260px;
-            background: #1e293b;
-            color: white;
+            width: 280px;
+            background: var(--sidebar-bg);
+            color: var(--sidebar-text);
             display: flex;
             flex-direction: column;
             position: fixed;
@@ -43,107 +46,166 @@
             left: 0;
             z-index: 1030;
             transition: transform 0.3s ease-in-out;
+            box-shadow: 2px 0 5px rgba(0, 0, 0, 0.1);
         }
 
         .app-sidebar .sidebar-header {
-            padding: 20px;
+            padding: 30px 20px 20px;
             text-align: center;
+            flex-shrink: 0; /* Prevents the header from shrinking */
         }
 
-       
-
+        .sidebar-logo {
+            width: 120px;
+            height: 120px;
+            margin-bottom: 10px;
+            object-fit: cover;
+        }
+        
         .sidebar-title {
-            font-size: 1.3rem;
+            font-size: 1.5rem;
             font-weight: 700;
             color: white;
+            letter-spacing: 1px;
         }
 
         .sidebar-nav {
             flex-grow: 1;
+            padding: 20px 0;
+            overflow-y: auto; /* This line makes the navigation field scrollable */
+            -webkit-overflow-scrolling: touch;
+        }
+        
+        /* Custom scrollbar for webkit browsers */
+        .sidebar-nav::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .sidebar-nav::-webkit-scrollbar-track {
+            background: var(--sidebar-bg);
+        }
+
+        .sidebar-nav::-webkit-scrollbar-thumb {
+            background-color: var(--sidebar-hover);
+            border-radius: 4px;
+            border: 2px solid var(--sidebar-bg);
+        }
+
+        .sidebar-nav::-webkit-scrollbar-thumb:hover {
+            background-color: #5a647d;
         }
 
         .sidebar-nav .nav-item {
             display: flex;
             align-items: center;
-            padding: 12px 20px;
-            color: #d1d5db;
+            padding: 14px 20px;
+            color: var(--sidebar-text);
             text-decoration: none;
-            transition: all 0.2s ease;
+            transition: all 0.3s ease;
         }
 
-        .sidebar-nav .nav-item:hover,
-        .sidebar-nav .nav-item.active {
-            background-color: #374151;
+        .sidebar-nav .nav-item:hover {
+            background-color: var(--sidebar-hover);
             color: white;
+            border-left: 4px solid var(--primary-color);
         }
 
+        .sidebar-nav .nav-item.active {
+            background-color: var(--sidebar-active);
+            color: white;
+            font-weight: 600;
+            border-left: 4px solid #fff;
+        }
+        
         .sidebar-nav .nav-icon {
-            margin-right: 12px;
+            font-size: 1.1rem;
+            margin-right: 15px;
+            width: 25px;
+            text-align: center;
         }
 
         /* Header */
         .app-header {
-            height: 65px;
-            background: #0f172a;
+            height: 70px;
+            background: var(--header-bg);
+            color: white;
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 0 20px;
+            padding: 0 25px;
             position: fixed;
             top: 0;
-            left: 260px;
+            left: 280px;
             right: 0;
             z-index: 1020;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            transition: left 0.3s ease-in-out;
         }
 
-        .header-icon {
-            font-size: 1.3rem;
+        .header-icon-link {
             color: white;
+            font-size: 1.2rem;
             margin-left: 20px;
+            position: relative;
+            transition: color 0.2s ease;
         }
 
-        .header-right {
-            display: flex;
-            align-items: center;
+        .header-icon-link:hover {
+            color: var(--primary-color);
         }
 
         /* Notification badge */
         .notification-badge {
             position: absolute;
-            top: 3px;
-            right: 3px;
-            background: red;
+            top: -5px;
+            right: -10px;
+            background: #e53e3e;
             color: white;
             font-size: 0.7rem;
-            padding: 2px 6px;
-            border-radius: 50%;
+            padding: 2px 7px;
+            border-radius: 12px;
+            min-width: 20px;
+            text-align: center;
         }
 
         /* Main content */
         .main-content-wrapper {
-            margin-left: 260px;
-            margin-top: 65px;
+            margin-left: 280px;
+            margin-top: 70px;
             flex-grow: 1;
             display: flex;
             flex-direction: column;
+            transition: margin-left 0.3s ease-in-out;
+            min-height: calc(100vh - 70px);
         }
 
         .page-content {
             flex-grow: 1;
-            padding: 20px;
+            padding: 30px;
         }
 
         /* Footer */
         .app-footer {
-            background: #f1f5f9;
-            padding: 12px;
+            background: var(--footer-bg);
+            padding: 15px;
             text-align: center;
             font-size: 0.9rem;
             color: #6b7280;
+            border-top: 1px solid #cbd5e0;
+        }
+        
+        .footer-link {
+            color: #4a5568;
+            text-decoration: none;
+            transition: color 0.2s ease;
+        }
+        
+        .footer-link:hover {
+            color: var(--primary-color);
         }
 
         /* Mobile responsiveness */
-        @media (max-width: 768px) {
+        @media (max-width: 991.98px) {
             .app-sidebar {
                 transform: translateX(-100%);
             }
@@ -152,88 +214,91 @@
             }
             .app-header {
                 left: 0;
+                padding: 0 15px;
             }
             .main-content-wrapper {
                 margin-left: 0;
             }
             .sidebar-overlay {
                 display: none;
-            }
-            .sidebar-overlay.show {
-                display: block;
                 position: fixed;
                 top: 0;
                 left: 0;
                 right: 0;
                 bottom: 0;
-                background: rgba(0,0,0,0.5);
+                background: rgba(0,0,0,0.6);
                 z-index: 1025;
             }
+            .sidebar-overlay.show {
+                display: block;
+            }
         }
-
+        
         /* Modal message styling */
         .modal-body .alert {
             border: none;
             box-shadow: none;
             padding: 0.75rem 1rem;
             margin: 0.5rem 0;
+            text-align: left;
         }
     </style>
 </head>
 <body>
     <div class="app-container">
-        <!-- Sidebar -->
-        <aside class="app-sidebar" >
-            <div class="sidebar-header" style="margin-top: 50px;">
-                <img src="https://placehold.co/45x45/007bff/ffffff?text=AI" alt="Logo" class="sidebar-logo" style="width: 100px; height: 100px;">
-            </div>
-            <!-- <br> -->
-            <div class="sidebar-header" style="font-size: 25px;">
+        <aside class="app-sidebar">
+            <div class="sidebar-header">
+                <img src="https://placehold.co/100x100/4c51bf/ffffff?text=AI" alt="Logo" class="sidebar-logo">
+                <br>
                 <span class="sidebar-title">AI Talent Finder</span>
             </div>
-            <!-- <br> -->
+            
             <nav class="sidebar-nav">
                 <a href="{% url 'dashboard' %}" class="nav-item {% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}">
-                    <i class="fas fa-chart-line nav-icon"></i>
+                    <i class="fas fa-chart-bar nav-icon"></i>
                     <span class="nav-text">Dashboard</span>
                 </a>
                 <a href="{% url 'resume_analysis' %}" class="nav-item {% if request.resolver_match.url_name == 'resume_analysis' %}active{% endif %}">
-                    <i class="fas fa-search nav-icon"></i>
+                    <i class="fas fa-file-invoice nav-icon"></i>
                     <span class="nav-text">Manual Resume Analysis</span>
                 </a>
-                <!-- <a href="{% url 'initiate_call_interview' %}" class="nav-item {% if request.resolver_match.url_name == 'initiate_call_interview' %}active{% endif %}">
-                    <i class="fas fa-phone-alt nav-icon"></i>
-                    <span class="nav-text">Initiate Call Interview</span>
-                </a> -->
                 <a href="{% url 'interviews' %}" class="nav-item {% if request.resolver_match.url_name == 'interviews' %}active{% endif %}">
                     <i class="fas fa-headset nav-icon"></i>
                     <span class="nav-text">Interview Status</span>
                 </a>
                 <a href="{% url 'records' %}" class="nav-item {% if request.resolver_match.url_name == 'records' %}active{% endif %}">
-                    <i class="fas fa-users nav-icon"></i>
+                    <i class="fas fa-user-friends nav-icon"></i>
                     <span class="nav-text">All Candidate's Data</span>
                 </a>
-               
                 <a href="{% url 'show_unread_emails' %}" class="nav-item {% if request.resolver_match.url_name == 'show_unread_emails' %}active{% endif %}">
-                    <i class="fas fa-envelope-open-text nav-icon"></i>
+                    <i class="fas fa-inbox nav-icon"></i>
                     <span class="nav-text">Incoming Applications</span>
                 </a>
                 <a href="{% url 'all_job_descriptions' %}" class="nav-item {% if request.resolver_match.url_name == 'all_job_descriptions' %}active{% endif %}">
-                    <i class="fas fa-envelope-open-text nav-icon"></i>
+                    <i class="fas fa-clipboard-list nav-icon"></i>
                     <span class="nav-text">All Job Descriptions</span>
                 </a>
-                 <a href="{% url 'top_recommendations' %}" class="nav-item {% if request.resolver_match.url_name == 'top_recommendations' %}active{% endif %}">
-                    <i class="fas fa-medal nav-icon"></i>
+                <a href="{% url 'top_recommendations' %}" class="nav-item {% if request.resolver_match.url_name == 'top_recommendations' %}active{% endif %}">
+                    <i class="fas fa-star nav-icon"></i>
                     <span class="nav-text">Top Recommendations</span>
                 </a>
-                 <a href="{% url 'send_job_description' %}" class="nav-item {% if request.resolver_match.url_name == 'top_recommendations' %}active{% endif %}">
-                    <i class="fas fa-medal nav-icon"></i>
-                    <span class="nav-text">Send Job Description</span>
+                <a href="{% url 'email_dashboard' %}" class="nav-item {% if request.resolver_match.url_name == 'email_dashboard' %}active{% endif %}">
+                    <i class="fas fa-envelope-open-text nav-icon"></i>
+                    <span class="nav-text">Mail Information</span>
                 </a>
-                <a href="" class="nav-item {% if request.resolver_match.url_name == 'ai_assistant' %}active{% endif %}">
+                <!-- <a href="" class="nav-item {% if request.resolver_match.url_name == 'post_job_description' %}active{% endif %}">
+                    <i class="fas fa-bullhorn nav-icon"></i>
+                    <span class="nav-text">Post Job Description</span>
+                </a> -->
+                <a href="{% url 'file_manager' %}" class="nav-item {% if request.resolver_match.url_name == 'file_manager' %}active{% endif %}">
                     <i class="fas fa-robot nav-icon"></i>
-                    <span class="nav-text">AI Assistant</span>
+                    <span class="nav-text">File Manager </span>
                 </a>
+                <a href="{% url 'career_portal' %}" class="nav-item {% if request.resolver_match.url_name == 'career_portal' %}active{% endif %}">
+                    <i class="fas fa-robot nav-icon"></i>
+                    <span class="nav-text">Career Portal </span>
+                </a>
+                
                 {% if user.is_authenticated %}
                     {% if user.role == 'admin' or user.role == 'superadmin' %}
                         <a href="{% url 'admin_dashboard' %}" class="nav-item {% if request.resolver_match.url_name == 'admin_dashboard' %}active{% endif %}">
@@ -251,27 +316,23 @@
             </nav>
         </aside>
 
-        <!-- Main Wrapper -->
         <div class="main-content-wrapper">
-            <!-- Header -->
             <header class="app-header">
-                <div class="header-left">
-                    <button class="menu-toggle d-md-none" aria-label="Toggle navigation">
+                <div class="header-left d-flex align-items-center">
+                    <button class="menu-toggle btn btn-link text-white d-lg-none" aria-label="Toggle navigation">
                         <i class="fas fa-bars"></i>
                     </button>
-                    <a href="{% url 'home' %}" class="header-logo-mobile d-md-none d-flex align-items-center justify-content-center">
-                        <img src="https://placehold.co/40x40/007bff/ffffff?text=AI" alt="Logo">
-                    </a>
+                    <h5 class="mb-0 ms-3 d-none d-md-block">AI-Powered Recruitment & Applicant Tracking System</h5>
                 </div>
-                <div class="header-right">
+                <div class="header-right d-flex align-items-center">
                     {% if user.is_authenticated %}
-                        <span class="text-white me-2 d-none d-md-block"><b style="font-size: 22px;">Hello, {{ user.username }}</b></span>
-                        <a href="#" class="header-icon-link notification-icon-wrapper">
-                            <i class="fas fa-bell header-icon"></i>
+                        <span class="text-white me-3 d-none d-md-block" style="font-size: 1.1rem; font-weight: 500;">Hello, {{ user.username }}</span>
+                        <a href="#" class="header-icon-link notification-icon-wrapper" aria-label="Notifications">
+                            <i class="fas fa-bell"></i>
                             <span class="notification-badge">3</span>
                         </a>
-                        <a href="{% url 'signout' %}" class="header-icon-link" title="Sign Out">
-                            <i class="fas fa-sign-out-alt header-icon"></i>
+                        <a href="{% url 'signout' %}" class="header-icon-link" title="Sign Out" aria-label="Sign Out">
+                            <i class="fas fa-sign-out-alt"></i>
                         </a>
                     {% else %}
                         <a href="{% url 'signin' %}" class="btn btn-outline-light me-2">Sign In</a>
@@ -280,7 +341,6 @@
                 </div>
             </header>
 
-            <!-- ✅ Modal for Django Messages -->
             <div class="modal fade" id="messageModal" tabindex="-1" aria-labelledby="messageModalLabel" aria-hidden="true">
               <div class="modal-dialog modal-dialog-centered">
                 <div class="modal-content text-center">
@@ -302,17 +362,15 @@
               </div>
             </div>
 
-            <!-- Content -->
             <main class="page-content">
                 {% block content %}
-                <h1>Welcome to HR Talent Scout!</h1>
+                <h1>Welcome to AI Talent Finder!</h1>
                 {% endblock %}
             </main>
 
-            <!-- Footer -->
             <footer class="app-footer">
                 <div class="footer-content">
-                    &copy; 2024 HR Talent Scout. All rights reserved.
+                    &copy; 2024 AI Talent Finder. All rights reserved.
                     <span class="footer-separator">|</span>
                     <a href="#" class="footer-link" target="_blank">Privacy Policy</a>
                     <span class="footer-separator">|</span>
@@ -322,10 +380,8 @@
         </div>
     </div>
 
-    <!-- Overlay for mobile -->
-    <div class="sidebar-overlay d-md-none"></div>
+    <div class="sidebar-overlay d-lg-none"></div>
 
-    <!-- Bootstrap Bundle -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 
     {% block extra_js %}{% endblock %}
@@ -345,7 +401,17 @@
             if (menuToggle) menuToggle.addEventListener('click', toggleSidebar);
             if (sidebarOverlay) sidebarOverlay.addEventListener('click', toggleSidebar);
 
-            // ✅ Auto-show modal if messages exist
+            // Close sidebar when a navigation item is clicked on mobile
+            const navItems = document.querySelectorAll('.sidebar-nav .nav-item');
+            navItems.forEach(item => {
+                item.addEventListener('click', () => {
+                    if (window.innerWidth < 992) {
+                        toggleSidebar();
+                    }
+                });
+            });
+
+            // Auto-show modal if messages exist
             {% if messages %}
                 var messageModal = new bootstrap.Modal(document.getElementById('messageModal'));
                 messageModal.show();
