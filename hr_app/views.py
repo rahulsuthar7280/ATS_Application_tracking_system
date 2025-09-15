@@ -52,7 +52,7 @@ from .services import llm_call
 from hr_app import services
 from django.core.files.uploadedfile import SimpleUploadedFile
 # import win32com.client
-import pythoncom
+# import pythoncom
 import string
 from django.contrib.auth.hashers import make_password
 from django.shortcuts import render, redirect
