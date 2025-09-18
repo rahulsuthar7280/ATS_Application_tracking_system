@@ -120,3 +120,4 @@ selenium
 webdriver-manager
 PyPDF2
 python-docx
+sentence_transformers
