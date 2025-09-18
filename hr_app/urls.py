@@ -90,16 +90,25 @@ urlpatterns = [
     path('share/<int:pk>/', views.share_career, name='share_career'),
     path('careers/<int:pk>/', views.career_detail, name='career_detail'),
 
-    path('basic-ats/<int:application_id>/', views.basic_ats_analysis, name='basic_ats_analysis'),
+    # path('basic-ats/<int:application_id>/<int:job_description_id>/', views.basic_ats_analysis, name='basic_ats_analysis'),
+    # path('basic-ats/<int:application_id>/', views.basic_ats_analysis, name='basic_ats_analysis'),
+    # path('advance-ats/<int:application_id>/', views.advance_ats_analysis, name='advance_ats_analysis'),
+    path('basic-ats/<int:application_id>/<int:job_description_id>/', views.basic_ats_analysis, name='basic_ats_analysis'),
+
     path('advance-ats/<int:application_id>/', views.advance_ats_analysis, name='advance_ats_analysis'),
 
 
     path('file_manager/', views.file_manager_view, name='file_manager'),
-    path('folder/<int:folder_id>/', views.file_manager_view, name='browse_folder'),
-    path('create-folder/', views.create_folder_view, name='create_folder'),
-    path('upload-file/', views.upload_file_view, name='upload_file'),
-
+    path('browse/<int:folder_id>/', views.file_manager_view, name='browse_folder'),
+    path('create_folder/', views.create_folder_view, name='create_folder'),
+    path('delete_folder/<int:folder_id>/', views.delete_folder_view, name='delete_folder'),
+    path('edit_folder/<int:folder_id>/', views.edit_folder_view, name='edit_folder'),
+    path('delete_document/<int:document_id>/', views.delete_document_view, name='delete_document'),
+    path('upload_file/', views.upload_file_view, name='upload_file'),
+    path('ai_sort/', views.ai_auto_sort_view, name='ai_auto_sort'),
 ]
 
 if settings.DEBUG:
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+
+    

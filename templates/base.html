@@ -250,7 +250,7 @@
             <div class="sidebar-header">
                 <img src="https://placehold.co/100x100/4c51bf/ffffff?text=AI" alt="Logo" class="sidebar-logo">
                 <br>
-                <span class="sidebar-title">VHiMS</span>
+                <span class="sidebar-title">ABC</span>
             </div>
             
             <nav class="sidebar-nav">
@@ -260,7 +260,7 @@
                 </a>
                 <a href="{% url 'resume_analysis' %}" class="nav-item {% if request.resolver_match.url_name == 'resume_analysis' %}active{% endif %}">
                     <i class="fas fa-file-invoice nav-icon"></i>
-                    <span class="nav-text">Manual Resume Analysis</span>
+                    <span class="nav-text">Manual Analysis</span>
                 </a>
                 <a href="{% url 'interviews' %}" class="nav-item {% if request.resolver_match.url_name == 'interviews' %}active{% endif %}">
                     <i class="fas fa-headset nav-icon"></i>
@@ -322,7 +322,7 @@
                     <button class="menu-toggle btn btn-link text-white d-lg-none" aria-label="Toggle navigation">
                         <i class="fas fa-bars"></i>
                     </button>
-                    <h5 class="mb-0 ms-3 d-none d-md-block"> Visionary Hire Infera Matrix System</h5>
+                    <h5 class="mb-0 ms-3 d-none d-md-block"> ABC Infera Matrix System</h5>
                 </div>
                 <div class="header-right d-flex align-items-center">
                     {% if user.is_authenticated %}

@@ -51,101 +51,104 @@ class User(AbstractUser):
     def __str__(self):
         return self.username
 
-class CandidateAnalysis(models.Model):
-    # Existing fields (ensure these are present and match your current model)
-    user = models.ForeignKey(User, on_delete=models.CASCADE)
-    full_name = models.CharField(max_length=255, null=True, blank=True)
-    job_role = models.CharField(max_length=255, null=True, blank=True)
-    phone_no = models.CharField(max_length=50, null=True, blank=True)
-    hiring_recommendation = models.CharField(max_length=50, null=True, blank=True)
-    suggested_salary_range = models.CharField(max_length=100, null=True, blank=True)
-    interview_questions = models.TextField(null=True, blank=True) # Stores JSON string
+# class CandidateAnalysis(models.Model):
+#     # Existing fields (ensure these are present and match your current model)
+#     user = models.ForeignKey(User, on_delete=models.CASCADE)
+#     full_name = models.CharField(max_length=255, null=True, blank=True)
+#     job_role = models.CharField(max_length=255, null=True, blank=True)
+#     phone_no = models.CharField(max_length=50, null=True, blank=True)
+#     hiring_recommendation = models.CharField(max_length=50, null=True, blank=True)
+#     suggested_salary_range = models.CharField(max_length=100, null=True, blank=True)
+#     interview_questions = models.TextField(null=True, blank=True) # Stores JSON string
 
-    # This field was previously storing the entire summary, now it's optional
-    # You can keep it if you want a redundant full summary, or remove it if all sub-components are separate
-    analysis_summary = models.TextField(null=True, blank=True) # Stores JSON string of the full summary
+#     # This field was previously storing the entire summary, now it's optional
+#     # You can keep it if you want a redundant full summary, or remove it if all sub-components are separate
+#     analysis_summary = models.TextField(null=True, blank=True) # Stores JSON string of the full summary
 
-    experience_match = models.CharField(max_length=50, null=True, blank=True)
-    overall_experience = models.CharField(max_length=50, null=True, blank=True)
-    current_company_name = models.CharField(max_length=255, null=True, blank=True)
-    current_company_address = models.CharField(max_length=255, null=True, blank=True)
+#     experience_match = models.CharField(max_length=50, null=True, blank=True)
+#     overall_experience = models.CharField(max_length=50, null=True, blank=True)
+#     current_company_name = models.CharField(max_length=255, null=True, blank=True)
+#     current_company_address = models.CharField(max_length=255, null=True, blank=True)
 
-    # Fields that were causing the "unexpected keyword argument" error
-    fitment_verdict = models.CharField(max_length=50, null=True, blank=True)
-    aggregate_score = models.CharField(max_length=50, null=True, blank=True)
+#     # Fields that were causing the "unexpected keyword argument" error
+#     fitment_verdict = models.CharField(max_length=50, null=True, blank=True)
+#     aggregate_score = models.CharField(max_length=50, null=True, blank=True)
 
-    # NEW FIELDS FOR FINAL DECISION AND SALARY
-    final_decision = models.CharField(max_length=50, null=True, blank=True)
-    final_salary = models.IntegerField(null=True, blank=True) # Using IntegerField for salary
+#     # NEW FIELDS FOR FINAL DECISION AND SALARY
+#     final_decision = models.CharField(max_length=50, null=True, blank=True)
+#     final_salary = models.IntegerField(null=True, blank=True) # Using IntegerField for salary
 
-    # Fields extracted from candidate_fitment_analysis
-    strategic_alignment = models.TextField(null=True, blank=True)
-    quantifiable_impact = models.TextField(null=True, blank=True)
-    potential_gaps_risks = models.TextField(null=True, blank=True)
-    comparable_experience = models.TextField(null=True, blank=True) # Note: this was `comparable_experience_analysis` in LLM response
+#     # Fields extracted from candidate_fitment_analysis
+#     strategic_alignment = models.TextField(null=True, blank=True)
+#     quantifiable_impact = models.TextField(null=True, blank=True)
+#     potential_gaps_risks = models.TextField(null=True, blank=True)
+#     comparable_experience = models.TextField(null=True, blank=True) # Note: this was `comparable_experience_analysis` in LLM response
 
-    # Other top-level complex fields that need JSON dumping
-    scoring_matrix_json = models.TextField(null=True, blank=True) # Stores JSON string
-    bench_recommendation_json = models.TextField(null=True, blank=True) # Stores JSON string
-    alternative_role_recommendations_json = models.TextField(null=True, blank=True) # Stores JSON string
-    automated_recruiter_insights_json = models.TextField(null=True, blank=True) # Stores JSON string
-
-    # Fields extracted from analysis_summary (NEWLY ADDED IN VIEWS.PY)
-    candidate_overview = models.TextField(null=True, blank=True)
-    technical_prowess_json = models.TextField(null=True, blank=True) # Stores JSON string
-    project_impact_json = models.TextField(null=True, blank=True) # Stores JSON string
-    education_certifications_json = models.TextField(null=True, blank=True) # Stores JSON string
-    overall_rating_summary = models.CharField(max_length=50, null=True, blank=True) # Renamed to avoid conflict
-    conclusion_summary = models.TextField(null=True, blank=True) # Renamed to avoid conflict
-    bland_call_id = models.CharField(max_length=100, blank=True, null=True)
-    interview_status = models.CharField(max_length=50, null=True, blank=True, default='Pending')
-    resume_file_path = models.CharField(max_length=255, null=True, blank=True)
-
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
+#     # Other top-level complex fields that need JSON dumping
+#     scoring_matrix_json = models.TextField(null=True, blank=True) # Stores JSON string
+#     bench_recommendation_json = models.TextField(null=True, blank=True) # Stores JSON string
+#     alternative_role_recommendations_json = models.TextField(null=True, blank=True) # Stores JSON string
+#     automated_recruiter_insights_json = models.TextField(null=True, blank=True) # Stores JSON string
     
-    DECISION_CHOICES = [
-        ('shortlisted', 'Shortlisted'),
-        ('selected', 'Selected'),
-        ('not_selected', 'Not Selected'),
-    ]
+#     ai_summary = models.TextField(blank=True, null=True)
+#     confidence_score = models.IntegerField(blank=True, null=True)
+#     suggested_questions = models.TextField(blank=True, null=True)
+#     # Fields extracted from analysis_summary (NEWLY ADDED IN VIEWS.PY)
+#     candidate_overview = models.TextField(null=True, blank=True)
+#     technical_prowess_json = models.TextField(null=True, blank=True) # Stores JSON string
+#     project_impact_json = models.TextField(null=True, blank=True) # Stores JSON string
+#     education_certifications_json = models.TextField(null=True, blank=True) # Stores JSON string
+#     overall_rating_summary = models.CharField(max_length=50, null=True, blank=True) # Renamed to avoid conflict
+#     conclusion_summary = models.TextField(null=True, blank=True) # Renamed to avoid conflict
+#     bland_call_id = models.CharField(max_length=100, blank=True, null=True)
+#     interview_status = models.CharField(max_length=50, null=True, blank=True, default='Pending')
+#     resume_file_path = models.CharField(max_length=255, null=True, blank=True)
+
+#     created_at = models.DateTimeField(auto_now_add=True)
+#     updated_at = models.DateTimeField(auto_now=True)
     
-    final_decision = models.CharField(
-        max_length=20,
-        choices=DECISION_CHOICES,
-        default='Pending',
-        blank=True,
-        null=True
-    )
+#     DECISION_CHOICES = [
+#         ('shortlisted', 'Shortlisted'),
+#         ('selected', 'Selected'),
+#         ('not_selected', 'Not Selected'),
+#     ]
     
-    final_salary = models.DecimalField(
-        max_digits=10, 
-        decimal_places=2,
-        blank=True,
-        null=True
-    )
-    ANALYSIS_TYPES = (
-        ('Manual', 'Manual ATS Analysis'),
-        ('Basic', 'Basic ATS Analysis'),
-        ('Advance', 'Advanced ATS Analysis'),
-    )
-    analysis_type = models.CharField(
-        max_length=10, 
-        choices=ANALYSIS_TYPES, 
-        default='Manual', 
-        help_text="Type of resume analysis (Basic or Advanced)."
-    )
-
-
-
-    def __str__(self):
-        return self.full_name
-
-
-class When:
+#     final_decision = models.CharField(
+#         max_length=20,
+#         choices=DECISION_CHOICES,
+#         default='Pending',
+#         blank=True,
+#         null=True
+#     )
     
-    def __init__(self, hiring_recommendation, then):
-        pass
+#     final_salary = models.DecimalField(
+#         max_digits=10, 
+#         decimal_places=2,
+#         blank=True,
+#         null=True
+#     )
+#     ANALYSIS_TYPES = (
+#         ('Manual', 'Manual ATS Analysis'),
+#         ('Basic', 'Basic ATS Analysis'),
+#         ('Advance', 'Advanced ATS Analysis'),
+#     )
+#     analysis_type = models.CharField(
+#         max_length=10, 
+#         choices=ANALYSIS_TYPES, 
+#         default='Manual', 
+#         help_text="Type of resume analysis (Basic or Advanced)."
+#     )
+
+
+
+#     def __str__(self):
+#         return self.full_name
+
+
+# class When:
+    
+#     def __init__(self, hiring_recommendation, then):
+#         pass
 
 from django.db import models
 
@@ -267,9 +270,12 @@ class JobDescriptionDocument(models.Model):
     job_description = models.TextField(help_text="The full, detailed description of the job role.", null=True, blank=True)
 
     # Original file field, now optional
-    file = models.FileField(storage=job_description_storage, 
-                             help_text="The uploaded job description file (optional if created via text).",
-                             null=True, blank=True)
+    file = models.FileField(
+        upload_to="job_descriptions/",
+        storage=job_description_storage,
+        help_text="The uploaded job description file (optional if created via text).",
+        null=True, blank=True
+    )
     uploaded_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
@@ -466,25 +472,177 @@ class Apply_career(models.Model):
         return f"Career from {self.first_name} {self.last_name} for {self.career.title}"
 
 
-# This function determines the upload path based on the associated Folder object
+
+
 def document_upload_path(instance, filename):
     folder_name = instance.folder.name
     # os.path.join handles path construction for different operating systems
     return os.path.join('documents', folder_name, filename)
 
 class Folder(models.Model):
-    name = models.CharField(max_length=255, unique=True)
+    # Link each folder to a specific user
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='folders')
+    name = models.CharField(max_length=255)
     created_at = models.DateTimeField(auto_now_add=True)
+    
+    # Add a unique constraint for the folder name per user
+    class Meta:
+        unique_together = ('user', 'name')
     
     def __str__(self):
         return self.name
 
 class Document(models.Model):
-    # This is the foreign key relationship
+    # Link each document to a specific user
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='documents')
+    
+    # This is the foreign key relationship to Folder
     folder = models.ForeignKey(Folder, on_delete=models.CASCADE, related_name='documents')
     
     file = models.FileField(upload_to=document_upload_path)
     uploaded_at = models.DateTimeField(auto_now_add=True)
     
+    # Add this property to return only the file name
+    @property
+    def file_name_only(self):
+        return os.path.basename(self.file.name)
+    
     def __str__(self):
         return self.file.name
+
+
+class CareerAdvanceAnalysis(models.Model):
+    # Link to the incoming application
+    application = models.ForeignKey(Apply_career, on_delete=models.CASCADE, related_name='advanced_analysis')
+    
+    # Fields from the JSON response
+    candidate_name = models.CharField(max_length=255, blank=True)
+    role_evaluated = models.CharField(max_length=255, blank=True)
+    summary_verdict = models.CharField(max_length=50, blank=True)
+    rationale = models.TextField(blank=True)
+    
+    # Gap Analysis - Stored as JSONField for flexibility
+    gap_analysis = models.JSONField(default=list)
+    
+    # Stability Summary - Stored as JSONField
+    stability_summary = models.JSONField(default=dict)
+    
+    # Scorecard - Stored as JSONField
+    scorecard = models.JSONField(default=dict)
+    
+    # Alerts - Stored as JSONField
+    alerts = models.JSONField(default=dict)
+    
+    # Bench Decision - Stored as JSONField
+    bench_decision = models.JSONField(default=dict)
+
+    # You can add a timestamp to track when the analysis was performed
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"Advanced Analysis for {self.candidate_name} on {self.created_at.strftime('%Y-%m-%d')}"
+
+    class Meta:
+        # To ensure only one advanced analysis per application
+        unique_together = ('application',)
+        db_table = 'career_advance_analysis' # Use the specified table name
+
+class CandidateAnalysis(models.Model):
+    # Link to the incoming application (only one analysis per application)
+    application = models.OneToOneField(
+    Apply_career,
+    on_delete=models.CASCADE,
+    null=True,  # allow NULL
+    blank=True  
+    )
+    # application = models.ForeignKey(
+    #     Apply_career,
+    #     on_delete=models.CASCADE,
+    #     related_name="analyses"
+    # )
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    full_name = models.CharField(max_length=255, null=True, blank=True)
+    job_role = models.CharField(max_length=255, null=True, blank=True)
+    phone_no = models.CharField(max_length=50, null=True, blank=True)
+    hiring_recommendation = models.CharField(max_length=50, null=True, blank=True)
+    suggested_salary_range = models.CharField(max_length=100, null=True, blank=True)
+    interview_questions = models.TextField(null=True, blank=True)  # Stores JSON string
+
+    analysis_summary = models.TextField(null=True, blank=True)  # Stores JSON string
+
+    experience_match = models.CharField(max_length=50, null=True, blank=True)
+    overall_experience = models.CharField(max_length=50, null=True, blank=True)
+    current_company_name = models.CharField(max_length=255, null=True, blank=True)
+    current_company_address = models.CharField(max_length=255, null=True, blank=True)
+
+    fitment_verdict = models.CharField(max_length=50, null=True, blank=True)
+    aggregate_score = models.CharField(max_length=50, null=True, blank=True)
+
+    DECISION_CHOICES = [
+        ('shortlisted', 'Shortlisted'),
+        ('selected', 'Selected'),
+        ('not_selected', 'Not Selected'),
+        ('pending', 'Pending'),
+    ]
+
+    final_decision = models.CharField(
+        max_length=20,
+        choices=DECISION_CHOICES,
+        default='pending',
+        blank=True,
+        null=True
+    )
+
+    final_salary = models.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        blank=True,
+        null=True
+    )
+
+    strategic_alignment = models.TextField(null=True, blank=True)
+    quantifiable_impact = models.TextField(null=True, blank=True)
+    potential_gaps_risks = models.TextField(null=True, blank=True)
+    comparable_experience = models.TextField(null=True, blank=True)
+
+    scoring_matrix_json = models.TextField(null=True, blank=True)
+    bench_recommendation_json = models.TextField(null=True, blank=True)
+    alternative_role_recommendations_json = models.TextField(null=True, blank=True)
+    automated_recruiter_insights_json = models.TextField(null=True, blank=True)
+
+    ai_summary = models.TextField(blank=True, null=True)
+    confidence_score = models.IntegerField(blank=True, null=True)
+    suggested_questions = models.TextField(blank=True, null=True)
+
+    candidate_overview = models.TextField(null=True, blank=True)
+    technical_prowess_json = models.TextField(null=True, blank=True)
+    project_impact_json = models.TextField(null=True, blank=True)
+    education_certifications_json = models.TextField(null=True, blank=True)
+    overall_rating_summary = models.CharField(max_length=50, null=True, blank=True)
+    conclusion_summary = models.TextField(null=True, blank=True)
+    bland_call_id = models.CharField(max_length=100, blank=True, null=True)
+    interview_status = models.CharField(max_length=50, null=True, blank=True, default='Pending')
+    resume_file_path = models.CharField(max_length=255, null=True, blank=True)
+
+    ANALYSIS_TYPES = (
+        ('Manual', 'Manual ATS Analysis'),
+        ('Basic', 'Basic ATS Analysis'),
+        ('Advance', 'Advanced ATS Analysis'),
+    )
+    analysis_type = models.CharField(
+        max_length=10,
+        choices=ANALYSIS_TYPES,
+        default='Manual',
+        help_text="Type of resume analysis (Basic or Advanced)."
+    )
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        """Always return a safe string for admin display"""
+        if self.full_name:
+            return self.full_name
+        if hasattr(self.application, "full_name") and self.application.full_name:
+            return self.application.full_name
+        return f"CandidateAnalysis #{self.pk}"

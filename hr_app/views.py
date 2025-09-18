@@ -1,6 +1,7 @@
 # Django core imports
 from email.message import EmailMessage
 import time
+import PyPDF2
 from django.http import HttpResponse, JsonResponse, HttpResponseBadRequest
 from django.views.decorators.csrf import csrf_protect, csrf_exempt
 from django.views.decorators.http import require_POST
@@ -14,6 +15,7 @@ from django.contrib.auth import login, logout, authenticate
 from django.contrib.auth.decorators import login_required, user_passes_test
 from django.template.defaulttags import register
 from django.db.models import Q, Case, When, IntegerField
+import docx
 import google.generativeai as genai
 # Standard libraries
 import os
@@ -47,7 +49,7 @@ from hr_app.admin import User
 navigation_logger = logging.getLogger('hr_app_navigation') #
 # Local imports
 from .forms import ResumeUploadForm, FinalDecisionForm, PhoneNumberForm, CustomUserCreationForm, CustomAuthenticationForm
-from .models import Application, Apply_career, CandidateAnalysis, CareerPage, Document, DraftEmail, Folder, JobDescriptionDocument, SentEmail
+from .models import Application, Apply_career, CandidateAnalysis, CareerAdvanceAnalysis, CareerPage, Document, DraftEmail, Folder, JobDescriptionDocument, SentEmail
 from .services import llm_call
 from hr_app import services
 from django.core.files.uploadedfile import SimpleUploadedFile
@@ -76,6 +78,12 @@ import json
 import uuid
 from django.contrib.auth.decorators import user_passes_test
 from django.contrib.auth import get_user_model
+
+
+from django.shortcuts import get_object_or_404
+from sentence_transformers import SentenceTransformer, util
+import os
+
 
 User = get_user_model() # Get the currently active user model
 # Assuming these are already defined correctly
@@ -546,7 +554,7 @@ def candidate_profile_view(request, candidate_id):
     Fetches all related data including interview details and summary if available.
     Also handles POST requests for finalizing decision and salary, and interview status.
     """
-    candidate = get_object_or_404(CandidateAnalysis, id=candidate_id)
+    candidate = get_object_or_404(CandidateAnalysis, pk=candidate_id)
     
     call_details = None
     call_summary = None
@@ -588,19 +596,19 @@ def candidate_profile_view(request, candidate_id):
                     try:
                         candidate.save()
                         messages.success(request, f"Final decision, salary, and interview status saved successfully for {candidate.full_name}.")
-                        logging.info(f"Final decision, salary, and interview status saved for candidate {candidate.id}.")
+                        logging.info(f"Final decision, salary, and interview status saved for candidate {candidate.pk}.")
                     except Exception as e:
                         messages.error(request, f"Error saving final decision, salary, and interview status: {e}")
-                        logging.error(f"Error saving final decision, salary, and interview status for candidate {candidate.id}: {e}", exc_info=True)
+                        logging.error(f"Error saving final decision, salary, and interview status for candidate {candidate.pk}: {e}", exc_info=True)
             else:
                 candidate.final_salary = None # Set to None if empty
                 try:
                     candidate.save() # Save even if salary is None
                     messages.success(request, f"Final decision and interview status saved successfully for {candidate.full_name}.")
-                    logging.info(f"Final decision and interview status saved (salary cleared) for candidate {candidate.id}.")
+                    logging.info(f"Final decision and interview status saved (salary cleared) for candidate {candidate.pk}.")
                 except Exception as e:
                     messages.error(request, f"Error saving final decision and interview status: {e}")
-                    logging.error(f"Error saving final decision and interview status for candidate {candidate.id}: {e}", exc_info=True)
+                    logging.error(f"Error saving final decision and interview status for candidate {candidate.pk}: {e}", exc_info=True)
         
         elif form_type == 'initiate_interview_form':
             logging.info(f"POST request for initiate_interview_form received for candidate ID: {candidate_id}")
@@ -904,7 +912,7 @@ def candidate_records_view(request):
     processed_candidates = []
     for candidate in candidates:
         candidate_data = {
-            'id': candidate.id,
+            'id': candidate.pk, # Changed .id to .pk
             'full_name': candidate.full_name,
             'job_role': candidate.job_role,
             'overall_experience': candidate.overall_experience,
@@ -926,14 +934,14 @@ def candidate_records_view(request):
             'final_decision': candidate.final_decision,
             'final_salary': candidate.final_salary
         }
-        final_decision_forms[candidate.id] = FinalDecisionForm(prefix=f'decision_{candidate.id}', initial=initial_data)
+        final_decision_forms[candidate.pk] = FinalDecisionForm(prefix=f'decision_{candidate.pk}', initial=initial_data) # Changed .id to .pk
 
     if request.method == 'POST':
         candidate_id = request.POST.get('candidate_id')
         if candidate_id:
             # Important: Filter the get_object_or_404 call by user as well for security
-            candidate = get_object_or_404(CandidateAnalysis, id=candidate_id, user=request.user)
-            form = FinalDecisionForm(request.POST, prefix=f'decision_{candidate.id}')
+            candidate = get_object_or_404(CandidateAnalysis, pk=candidate_id, user=request.user) # Changed id to pk
+            form = FinalDecisionForm(request.POST, prefix=f'decision_{candidate.pk}') # Changed .id to .pk
             
             if form.is_valid():
                 candidate.final_decision = form.cleaned_data['final_decision']
@@ -942,7 +950,7 @@ def candidate_records_view(request):
                 messages.success(request, f"Final decision updated for {candidate.full_name}.")
                 return redirect('records')
             else:
-                final_decision_forms[candidate.id] = form
+                final_decision_forms[candidate.pk] = form # Changed .id to .pk
                 messages.error(request, "Error updating final decision.")
         else:
             messages.error(request, "Invalid request to update record.")
@@ -1210,86 +1218,384 @@ except ImportError: #
     print("Please install it using: pip install pywin32") #
 
 
+#['AIzaSyC2q_aKXeBkyZYUsHlX6_djPyyUTq126pc','AIzaSyBqmZT97k_5zoNyG2FB0xGG7nPoKf6fPkA']
 
-
-GEMINI_API_KEY = "AIzaSyBgZUbdu3hIwP5hmOkwtgVKKFNtLXx9j0U"
+GEMINI_API_KEY = "AIzaSyBqmZT97k_5zoNyG2FB0xGG7nPoKf6fPkA"
 genai.configure(api_key=GEMINI_API_KEY)
+
 model = genai.GenerativeModel('gemini-2.5-flash')
 
 
 
 logger = logging.getLogger(__name__)
 
+
+
+try:
+    model = SentenceTransformer('sentence-transformers/all-MiniLM-L6-v2')
+except Exception as e:
+    print(f"Error loading SentenceTransformer model: {e}")
+    model = None
+
+# --- Existing Functions (Unchanged) ---
+def calculate_basic_ats_score(resume_content, job_description_text):
+    """
+    Calculates the keyword-based match percentage.
+    """
+    if not job_description_text or not resume_content:
+        return 0.0
+
+    job_keywords = set(job_description_text.lower().split())
+    resume_words = set(resume_content.lower().split())
+
+    common_keywords = job_keywords.intersection(resume_words)
+    keywords_found = [kw for kw in common_keywords if len(kw) > 3]
+
+    match_percentage = (len(keywords_found) / len(job_keywords)) * 100 if job_keywords else 0
+    return round(match_percentage, 2)
+
+def extract_text_from_pdf(resume_path):
+    try:
+        doc = fitz.open(resume_path)
+        text = ""
+        for page in doc:
+            text += page.get_text()
+        return text
+    except Exception as e:
+        print(f"Error extracting text from PDF: {e}")
+        return None
+
+def get_file_path(field_value):
+    """
+    Handles both FileField and string paths.
+    Converts them into a usable absolute path under MEDIA_ROOT.
+    """
+    if not field_value:
+        return None
+
+    if hasattr(field_value, "name"):
+        file_name = field_value.name
+    else:
+        file_name = str(field_value)
+
+    file_name = file_name.replace("media/", "").lstrip("/")
+    return os.path.normpath(os.path.join(settings.MEDIA_ROOT, file_name))
+
+# --- MODIFIED: show_unread_emails ---
+@login_required
+@login_required
 @login_required
 def show_unread_emails(request):
-    """
-    Retrieves records from the Apply_career model only for the logged-in user
-    and passes them to a template for display.
-    """
-    applications = Apply_career.objects.filter(user=request.user).order_by('-date_applied')
-    
-    # We also need to pass a list of available careers for the dropdown
-    careers = CareerPage.objects.all().order_by('title')
-    
+    emails = Apply_career.objects.all().order_by('-date_applied')
+    job_descriptions = JobDescriptionDocument.objects.all()
+
+    processed_emails = []
+    for email in emails:
+        advanced_analysis_exists = CandidateAnalysis.objects.filter(
+            application=email,
+            analysis_type='Advance'
+        ).exists()
+        email.advanced_analysis_exists = advanced_analysis_exists
+
+        matching_job_desc = job_descriptions.filter(title=email.career.title).first()
+        if matching_job_desc:
+            try:
+                analysis, created = CandidateAnalysis.objects.get_or_create(
+                    application=email,
+                    analysis_type='Basic',
+                    defaults={
+                        'user': request.user,
+                        'job_role': matching_job_desc.title,
+                        'aggregate_score': 0.0,
+                        'fitment_verdict': 'Pending'
+                    }
+                )
+
+                if created:
+                    resume_path = os.path.normpath(os.path.join(settings.MEDIA_ROOT, email.resume.name.replace("media/", "").lstrip("/")))
+                    resume_content = extract_text_from_pdf(resume_path)
+
+                    job_desc_text = ""
+                    if matching_job_desc.file:
+                        job_desc_text = extract_text_from_pdf(matching_job_desc.file.path)
+                    else:
+                        job_desc_text = matching_job_desc.description
+
+                    if model and resume_content and job_desc_text:
+                        jd_embedding = model.encode(job_desc_text, convert_to_tensor=True)
+                        resume_embedding = model.encode(resume_content, convert_to_tensor=True)
+                        similarity_score = util.cos_sim(jd_embedding, resume_embedding).item() * 100
+                        basic_score = round(similarity_score, 2)
+
+                        analysis.aggregate_score = basic_score
+                        analysis.save()
+                    else:
+                        basic_score = "N/A"
+                else:
+                    basic_score = analysis.aggregate_score
+
+                email.selected_job_desc_id = matching_job_desc.id
+                email.basic_ats_score = basic_score
+
+            except Exception as e:
+                print(f"Error during Basic ATS calculation: {e}")
+                email.selected_job_desc_id = None
+                email.basic_ats_score = "N/A"
+        else:
+            email.selected_job_desc_id = None
+            email.basic_ats_score = "N/A"
+
+        processed_emails.append(email)
+
     context = {
-        'emails': applications,
-        'careers': careers,
+        'emails': processed_emails,
+        'job_descriptions': job_descriptions,
     }
-    
+
     return render(request, 'show_application.html', context)
 
-@login_required
-def basic_ats_analysis(request, application_id):
-    """
-    Handles basic resume analysis for a given application.
-    This logic does not use an LLM.
-    """
-    if request.method == 'POST':
+# --- MODIFIED: basic_ats_analysis ---
+def basic_ats_analysis(request, application_id, job_description_id):
+    try:
+        application = get_object_or_404(Apply_career, pk=application_id)
+        job_description = get_object_or_404(JobDescriptionDocument, pk=job_description_id)
+        
+        # Check if an analysis record already exists for this application
         try:
-            application = get_object_or_404(Apply_career, pk=application_id, user=request.user)
-            
-            # --- Placeholder for Basic ATS Logic ---
-            # This is where you'd implement the logic to analyze the resume.
-            # For example, counting keywords, checking file size, or simple parsing.
-            
-            # For this example, we'll just return a mock analysis result.
-            analysis_result = {
-                'score': 85,
-                'match_percentage': 85.0,
-                'keywords_found': ['Python', 'Django', 'SQL'],
-                'comments': 'Strong match on keywords. Good fit for the role.'
+            existing_analysis = CandidateAnalysis.objects.get(application=application)
+            # If a record exists and has a score, return it immediately to avoid re-calculation
+            if existing_analysis.aggregate_score is not None:
+                match_percentage = existing_analysis.aggregate_score
+                return JsonResponse({'success': True, 'analysis': {'match_percentage': match_percentage}})
+        except CandidateAnalysis.DoesNotExist:
+            # Continue if no record exists
+            pass
+
+        jd_text = ""
+        jd_file_path = get_file_path(getattr(job_description, "file", None))
+        jd_text = extract_text_from_file(jd_file_path)
+
+        if getattr(job_description, "required_skills", None):
+            jd_text += " " + job_description.required_skills
+        if getattr(job_description, "preferred_skills", None):
+            jd_text += " " + job_description.preferred_skills
+        if getattr(job_description, "job_description", None):
+            jd_text += " " + job_description.job_description
+
+        if not jd_text.strip():
+            return JsonResponse({'success': False, 'error': 'Job description text is empty.'}, status=400)
+
+        resume_file_path = get_file_path(getattr(application, "resume", None))
+        if not resume_file_path or not os.path.exists(resume_file_path):
+            return JsonResponse({'success': False, 'error': 'Resume file not found.'}, status=400)
+
+        resume_text = extract_text_from_pdf(resume_file_path)
+        if not resume_text.strip():
+            return JsonResponse({'success': False, 'error': 'Resume text is empty.'}, status=400)
+
+        if model:
+            jd_embedding = model.encode(jd_text, convert_to_tensor=True)
+            resume_embedding = model.encode(resume_text, convert_to_tensor=True)
+            similarity_score = util.cos_sim(jd_embedding, resume_embedding).item() * 100
+            match_percentage = round(similarity_score, 2)
+        else:
+            match_percentage = 0.0
+
+        # The key fix: Use update_or_create with a single lookup key (the OneToOneField)
+        analysis_obj, created = CandidateAnalysis.objects.update_or_create(
+            application=application,
+            defaults={
+                'user': request.user,
+                'job_role': job_description.title,
+                'aggregate_score': match_percentage,
+                'fitment_verdict': 'Pending',
+                'analysis_type': 'Basic',  # This field will be updated on every click
             }
-            
-            # In a real application, you would save this result to a model.
-            
-            return JsonResponse({'success': True, 'analysis': analysis_result})
-        except Exception as e:
-            return JsonResponse({'success': False, 'error': str(e)}, status=400)
-    
-    return JsonResponse({'success': False, 'error': 'Invalid request method'}, status=405)
+        )
+        
+        analysis_data = {
+            'match_percentage': match_percentage,
+        }
 
+        return JsonResponse({'success': True, 'analysis': analysis_data})
 
-@login_required
+    except (Apply_career.DoesNotExist, JobDescriptionDocument.DoesNotExist):
+        return JsonResponse({'success': False, 'error': 'Application or Job Description not found.'}, status=404)
+
+    except Exception as e:
+        return JsonResponse({'success': False, 'error': str(e)}, status=500)
+# --- Existing Functions (Unchanged) ---
 def advance_ats_analysis(request, application_id):
     """
-    Handles advanced resume analysis using an LLM.
+    Performs advanced ATS analysis on a candidate's resume and saves the results to the database.
+    This function now handles both POST (generate) and GET (view) requests.
     """
-    if request.method == 'POST':
-        try:
-            application = get_object_or_404(Apply_career, pk=application_id, user=request.user)
+    try:
+        application = get_object_or_404(Apply_career, pk=application_id)
+        
+        # Handle GET request to view existing data
+        if request.method == 'GET':
+            try:
+                # Use .get() for OneToOneField relationships as there should be only one
+                existing_analysis = CandidateAnalysis.objects.get(application=application)
+                analysis_data = {
+                    "full_name": existing_analysis.full_name,
+                    "contact_number": existing_analysis.phone_no,
+                    "overall_experience": existing_analysis.overall_experience,
+                    "current_company_name": existing_analysis.current_company_name,
+                    "current_company_address": existing_analysis.current_company_address,
+                    "hiring_recommendation": existing_analysis.hiring_recommendation,
+                    "suggested_salary_range": existing_analysis.suggested_salary_range,
+                    "experience_match": existing_analysis.experience_match,
+                    "analysis_summary": json.loads(existing_analysis.analysis_summary) if existing_analysis.analysis_summary else {},
+                    "candidate_fitment_analysis": {
+                        "strategic_alignment": existing_analysis.strategic_alignment,
+                        "comparable_experience_analysis": existing_analysis.comparable_experience,
+                        "quantifiable_impact": existing_analysis.quantifiable_impact,
+                        "potential_gaps_risks": existing_analysis.potential_gaps_risks
+                    },
+                    "scoring_matrix": json.loads(existing_analysis.scoring_matrix_json) if existing_analysis.scoring_matrix_json else [],
+                    "aggregate_score": existing_analysis.aggregate_score,
+                    "fitment_verdict": existing_analysis.fitment_verdict,
+                    "bench_recommendation": json.loads(existing_analysis.bench_recommendation_json) if existing_analysis.bench_recommendation_json else {},
+                    "alternative_role_recommendations": json.loads(existing_analysis.alternative_role_recommendations_json) if existing_analysis.alternative_role_recommendations_json else {},
+                    "automated_recruiter_insights": json.loads(existing_analysis.automated_recruiter_insights_json) if existing_analysis.automated_recruiter_insights_json else {},
+                    "interview_questions": json.loads(existing_analysis.interview_questions) if existing_analysis.interview_questions else [],
+                }
+                return JsonResponse({'success': True, 'analysis': analysis_data})
+            except CandidateAnalysis.DoesNotExist:
+                return JsonResponse({'success': False, 'error': 'Analysis not found for this application.'}, status=404)
+        
+        # Handle POST request to generate new data
+        elif request.method == 'POST':
+            if not application.resume:
+                return JsonResponse({'success': False, 'error': 'Resume not uploaded for this application.'}, status=400)
             
-            llm_analysis = {
-                'ai_summary': "The candidate has 5 years of experience in Django and is proficient in database management. Their skills align well with the job description, especially in API development.",
-                'confidence_score': 0.95,
-                'suggested_questions': ["Can you describe a challenging project using Django?", "How do you handle database migrations?"],
-            }
+            resume_name = application.resume.name.replace("media/", "").lstrip("/")
+            resume_path = os.path.normpath(os.path.join(settings.MEDIA_ROOT, resume_name))
             
-            return JsonResponse({'success': True, 'analysis': llm_analysis})
-        except Exception as e:
-            return JsonResponse({'success': False, 'error': str(e)}, status=400)
+            if not os.path.exists(resume_path):
+                return JsonResponse({'success': False, 'error': f'Resume file not found on disk at: {resume_path}'}, status=404)
+            
+            resume_content = extract_text_from_pdf(resume_path)
+            if not resume_content:
+                return JsonResponse({'success': False, 'error': 'Failed to extract text from resume.'}, status=400)
+            
+            job_description_section = ""
+            job_title = "N/A"
+            experience_info = "Not Specified"
+            if application.career and application.career.description:
+                job_description_section = f"""**Job Description to Analyze:**\n{application.career.description}"""
+                job_title = application.career.title or "N/A"
+            
+            prompt = f"""
+            **YOUR RESPONSE MUST BE A SINGLE, VALID JSON OBJECT. NO OTHER TEXT, NO MARKDOWN FENCES (```json), NO EXPLANATIONS.**
+            You are an expert HR evaluator. Your primary goal is to provide a **comprehensive and complete JSON analysis** of the candidate's resume against the specified job role and requirements.
+            **Crucial Instruction: YOU MUST FILL ALL FIELDS IN THE JSON SCHEMA BELOW.**
+            If a piece of information is genuinely not found in the resume, explicitly state "Not Found" for string fields, "0/X" for scores, or an empty array `[]` for lists, but **DO NOT leave any field missing or null**.
+            **Salary Guidelines:**
+            - Less than 2 years experience: ₹15,000 to ₹25,000
+            - 2 to 5 years experience: ₹35,000 to ₹65,000
+            - More than 5 years experience: ₹50,000 to ₹80,000
+            **Candidate Resume to Analyze:**
+            {resume_content}
+            **Job Role:** {job_title}
+            **Desired Experience:** {experience_info}
+            {job_description_section}
+            **JSON Fields (REQUIRED - MUST BE PRESENT):**
+            - **full_name**: string (e.g., "John Doe" or "Not Found")
+            - **contact_number**: string (e.g., "+1-555-123-4567" or "Not Found")
+            - **overall_experience**: string (e.g., "5 years 3 months" or "Not Found")
+            - **current_company_name**: string (e.g., "Acme Corp" or "Not Found")
+            - **current_company_address**: string (e.g., "New York, NY" or "Not Found")
+            - **hiring_recommendation**: string ("Hire", "Marginally Fit", or "Reject")
+            - **suggested_salary_range**: string (e.g., "₹8 LPA - ₹12 LPA" or "Not Applicable (No Experience)")
+            - **experience_match**: string ("Good Match", "Underqualified", "Overqualified", or "No Resume Provided")
+            - **analysis_summary**: object containing:
+                - **candidate_overview**: string (detailed summary, use `\\n` for newlines)
+                - **technical_prowess**: object (e.g., {{"Languages": ["Python"], "Tools": ["Git"]}} or {{}} if none)
+                - **project_impact**: array of objects (each with "title", "company", "role", "achievements": ["string"] or [])
+                - **education_certifications**: object (e.g., {{"education": ["B.Sc. Computer Science"], "certifications": ["AWS Certified"]}} or {{"education": [], "certifications": []}})
+                - **overall_rating**: string (e.g., "4.5/5" or "Not Rated")
+                - **conclusion**: string (overall concluding remarks, use `\\n` for newlines)
+            - **candidate_fitment_analysis**: object containing:
+                - **strategic_alignment**: string
+                - **comparable_experience_analysis**: string
+                - **quantifiable_impact**: string
+                - **potential_gaps_risks**: string
+            - **scoring_matrix**: array of 5 objects (each with "dimension", "weight", "score", "justification")
+                - Ensure scores are in "x/Y" format.
+            - **aggregate_score**: string (e.g., "90/100" or "0/100")
+            - **fitment_verdict**: string ("SELECTED", "MARGINALLY FIT", or "REJECTED")
+            - **bench_recommendation**: object containing:
+                - **retain**: string ("Yes", "No", or "Maybe")
+                - **ideal_future_roles**: array of strings (e.g., ["Senior Data Scientist"] or [])
+                - **justification**: string
+            - **alternative_role_recommendations**: array of objects (each with "role", "explanation")
+            - **automated_recruiter_insights**: object containing:
+                - **red_flag_detection**: string (e.g., "Frequent job hopping" or "None detected")
+                - **growth_indicators**: string (e.g., "Consistent upskilling" or "Not evident")
+                - **cross_industry_potential**: string (e.g., "Transferable skills to finance" or "Limited")
+            - **interview_questions**: array of 7 relevant interview questions (strings).
+            """
+            
+            # Make the dynamic call to the generative model.
+            model = genai.GenerativeModel('gemini-1.5-flash')
+            response = model.generate_content(prompt)
+            
+            try:
+                clean_response = response.text.replace('```json', '').replace('```', '').strip()
+                llm_analysis = json.loads(clean_response)
+                
+                analysis_summary = llm_analysis.get('analysis_summary', {})
+                candidate_fitment = llm_analysis.get('candidate_fitment_analysis', {})
+                
+                # The OneToOneField is the lookup key. analysis_type is a detail field.
+                analysis_obj, created = CandidateAnalysis.objects.update_or_create(
+                    application=application,
+                    defaults={
+                        'user': request.user,
+                        'job_role': job_title,
+                        'resume_file_path': resume_path,
+                        'analysis_type': 'Advance', # This is a detail, not part of the unique lookup.
+                        'full_name': llm_analysis.get('full_name', 'Not Found'),
+                        'phone_no': llm_analysis.get('contact_number', 'Not Found'),
+                        'overall_experience': llm_analysis.get('overall_experience', 'Not Found'),
+                        'current_company_name': llm_analysis.get('current_company_name', 'Not Found'),
+                        'current_company_address': llm_analysis.get('current_company_address', 'Not Found'),
+                        'hiring_recommendation': llm_analysis.get('hiring_recommendation', 'Not Found'),
+                        'suggested_salary_range': llm_analysis.get('suggested_salary_range', 'Not Found'),
+                        'experience_match': llm_analysis.get('experience_match', 'Not Found'),
+                        'fitment_verdict': llm_analysis.get('fitment_verdict', 'Not Found'),
+                        'aggregate_score': llm_analysis.get('aggregate_score', '0/100'),
+                        'analysis_summary': json.dumps(analysis_summary),
+                        'candidate_overview': analysis_summary.get('candidate_overview', 'Not Found'),
+                        'technical_prowess_json': json.dumps(analysis_summary.get('technical_prowess', {})),
+                        'project_impact_json': json.dumps(analysis_summary.get('project_impact', [])),
+                        'education_certifications_json': json.dumps(analysis_summary.get('education_certifications', {})),
+                        'overall_rating_summary': analysis_summary.get('overall_rating', 'Not Rated'),
+                        'conclusion_summary': analysis_summary.get('conclusion', 'Not Found'),
+                        'strategic_alignment': candidate_fitment.get('strategic_alignment', 'Not Found'),
+                        'comparable_experience': candidate_fitment.get('comparable_experience_analysis', 'Not Found'),
+                        'quantifiable_impact': candidate_fitment.get('quantifiable_impact', 'Not Found'),
+                        'potential_gaps_risks': candidate_fitment.get('potential_gaps_risks', 'Not Found'),
+                        'scoring_matrix_json': json.dumps(llm_analysis.get('scoring_matrix', [])),
+                        'bench_recommendation_json': json.dumps(llm_analysis.get('bench_recommendation', {})),
+                        'alternative_role_recommendations_json': json.dumps(llm_analysis.get('alternative_role_recommendations', [])),
+                        'automated_recruiter_insights_json': json.dumps(llm_analysis.get('automated_recruiter_insights', {})),
+                        'interview_questions': json.dumps(llm_analysis.get('interview_questions', []))
+                    }
+                )
+
+                return JsonResponse({'success': True, 'analysis': llm_analysis})
+            
+            except (json.JSONDecodeError, ValueError) as e:
+                print(f"Error parsing LLM response: {e}")
+                return JsonResponse({'success': False, 'error': f'Failed to parse LLM analysis response. Error: {e}'}, status=500)
     
-    return JsonResponse({'success': False, 'error': 'Invalid request method'}, status=405)
-@csrf_exempt
+    except Exception as e:
+        print(f"An unexpected error occurred: {e}")
+        return JsonResponse({'success': False, 'error': f'An unexpected error occurred: {str(e)}'}, status=500)
 @require_POST
 def update_application_data(request):
     try:
@@ -1771,7 +2077,12 @@ def upload_job_description(request):
         if title and uploaded_file:
             # Check if the file is a PDF or DOCX (or other allowed types)
             if uploaded_file.content_type in ['application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', 'text/plain']:
-                job_description = JobDescriptionDocument(title=title, file=uploaded_file)
+                # Assign the user here!
+                job_description = JobDescriptionDocument(
+                    title=title,
+                    file=uploaded_file,
+                    user=request.user  # <--- Add this line
+                )
                 job_description.save()
                 messages.success(request, 'Job description uploaded successfully!')
                 return redirect('all_job_descriptions')
@@ -2978,7 +3289,7 @@ def career_detail(request, pk):
         # Perform a basic check for required fields
         if not all([first_name, last_name, email, resume_file]):
             # You might want to add error messages to the context here
-            return render(request, 'career_detail.html', {'career': career_page})
+            return render(request, 'career_detail.html', {'career': career_page, 'error': 'Please fill out all required fields.'})
         
         # Handle file uploads and create the file path
         fs = FileSystemStorage()
@@ -2989,8 +3300,9 @@ def career_detail(request, pk):
         if cover_letter_file:
             cover_letter_filename = fs.save(cover_letter_file.name, cover_letter_file)
 
-        # Create and save a new Application instance
+        # Create and save a new Application instance, include the user field
         application = Apply_career.objects.create(
+            user=request.user,  # This is the authenticated user
             career=career_page,
             first_name=first_name,
             last_name=last_name,
@@ -3001,7 +3313,7 @@ def career_detail(request, pk):
             linkedin_url=linkedin_url
         )
         
-        return redirect('career_detail')
+        return redirect('career_detail', pk=career_page.pk)
     
     context = {
         'career': career_page,
@@ -3018,60 +3330,223 @@ def application_success(request):
 
 ##################### Create Folder ##################
 from django.db.models import Count
+@login_required # Protect this view from unauthenticated access
 def file_manager_view(request, folder_id=None):
     """
-    Displays either all folders or the contents of a specific folder.
+    Displays either all folders or the contents of a specific folder for the logged-in user.
     """
     selected_folder = None
-    folders_to_display = []
-    documents_to_display = []
     
-    # Use annotate to get the count of documents for each folder
-    all_folders = Folder.objects.annotate(
+    # Use annotate to get the count of documents for each folder, filtered by user
+    all_folders = Folder.objects.filter(user=request.user).annotate(
         document_count=Count('documents')
     ).order_by('name')
 
     if folder_id is not None:
         # State 2: Folder-Browse State
-        selected_folder = get_object_or_404(all_folders, id=folder_id)
+        selected_folder = get_object_or_404(all_folders, pk=folder_id, user=request.user) # Filter by user
         documents_to_display = selected_folder.documents.all()
+        return render(request, 'file_manager.html', {
+            'selected_folder': selected_folder,
+            'documents_to_display': documents_to_display,
+            'all_folders': all_folders
+        })
     else:
         # State 1: Home State
-        folders_to_display = all_folders
-        
-    context = {
-        'all_folders': all_folders, # For the upload form dropdown
-        'selected_folder': selected_folder, # The folder being browsed (or None)
-        'folders_to_display': folders_to_display, # The list of folders
-        'documents_to_display': documents_to_display, # The list of documents in the selected folder
-    }
+        return render(request, 'file_manager.html', {
+            'all_folders': all_folders,
+            'selected_folder': None
+        })
 
-    return render(request, 'file_manager.html', context)
+# --- Folder Management Views ---
 
+@login_required
 def create_folder_view(request):
-    # ... (no change to this view)
+    """
+    Handles POST request to create a new folder for the logged-in user.
+    """
     if request.method == 'POST':
         folder_name = request.POST.get('folder_name')
         if folder_name:
-            folder, created = Folder.objects.get_or_create(name=folder_name)
-            if created:
-                folder_path = os.path.join(settings.MEDIA_ROOT, 'documents', folder_name)
-                os.makedirs(folder_path, exist_ok=True)
+            # Check for existing folder with the same name for the current user
+            if Folder.objects.filter(user=request.user, name=folder_name).exists():
+                messages.warning(request, f"Folder '{folder_name}' already exists.")
+            else:
+                Folder.objects.create(user=request.user, name=folder_name)
+                messages.success(request, f"Folder '{folder_name}' created successfully.")
     return redirect('file_manager')
 
+@login_required
+def delete_folder_view(request, folder_id):
+    """
+    Handles POST request to delete a folder and its documents for the logged-in user.
+    """
+    if request.method == 'POST':
+        # Get the folder, making sure it belongs to the current user
+        folder = get_object_or_404(Folder, pk=folder_id, user=request.user)
+        folder.delete()
+        messages.success(request, f"Folder '{folder.name}' and all its contents have been deleted.")
+    return redirect('file_manager')
+
+@login_required
+def edit_folder_view(request, folder_id):
+    """
+    Handles POST request to rename a folder for the logged-in user.
+    """
+    if request.method == 'POST':
+        new_name = request.POST.get('new_name')
+        if new_name:
+            # Get the folder, ensuring it belongs to the current user
+            folder = get_object_or_404(Folder, pk=folder_id, user=request.user)
+            old_name = folder.name
+            folder.name = new_name
+            folder.save()
+            messages.success(request, f"Folder '{old_name}' renamed to '{new_name}'.")
+    return redirect('file_manager')
+
+# --- Document Management Views ---
+
+@login_required
+def delete_document_view(request, document_id):
+    """
+    Handles POST request to delete a document for the logged-in user.
+    """
+    if request.method == 'POST':
+        # Get the document, ensuring it belongs to the current user
+        document = get_object_or_404(Document, pk=document_id, user=request.user)
+        folder_id = document.folder.pk
+        document.delete()
+        messages.success(request, f"Document '{document.file.name}' has been deleted.")
+    return redirect('browse_folder', folder_id=folder_id)
+
+@login_required
 def upload_file_view(request):
-    # ... (no change to this view)
+    """
+    Handles POST request to upload files to a folder for the logged-in user.
+    """
     if request.method == 'POST':
         folder_id = request.POST.get('folder_id')
         files = request.FILES.getlist('file')
         try:
-            folder = Folder.objects.get(id=folder_id)
+            # Get the folder, ensuring it belongs to the current user
+            folder = Folder.objects.get(pk=folder_id, user=request.user)
             for file in files:
-                Document.objects.create(folder=folder, file=file)
+                # Create the document and associate it with the user and folder
+                Document.objects.create(folder=folder, file=file, user=request.user)
+            messages.success(request, f"{len(files)} file(s) uploaded successfully to '{folder.name}'.")
         except Folder.DoesNotExist:
-            pass
+            messages.error(request, "Folder not found.")
     return redirect('file_manager')
 
+# --- AI Auto-Sort Views ---
+# (The 'extract_text_from_file' and 'get_job_role_with_llm' functions remain unchanged as they don't directly handle user-specific data, but are called from a user-authenticated view)
 
-################################################
+def extract_text_from_file(file):
+    """
+    Extracts text from various file types.
+    """
+    file_content = ""
+    # file_name = file.name.lower()
+    file_name = str(file).lower()
+
+    
+    # Check if the file is a text file
+    if file_name.endswith('.txt'):
+        try:
+            file_content = file.read().decode('utf-8')
+        except UnicodeDecodeError:
+            file_content = file.read().decode('latin-1')
+    
+    # Check if the file is a PDF
+    elif file_name.endswith('.pdf'):
+        try:
+            reader = PyPDF2.PdfReader(file)
+            for page in reader.pages:
+                file_content += page.extract_text() or ''
+        except Exception as e:
+            print(f"Error reading PDF file: {e}")
+            file_content = ""
+
+    # Check if the file is a DOCX
+    elif file_name.endswith('.docx'):
+        try:
+            doc = docx.Document(file)
+            for para in doc.paragraphs:
+                file_content += para.text + '\n'
+        except Exception as e:
+            print(f"Error reading DOCX file: {e}")
+            file_content = ""
+
+    return file_content
+
+def get_job_role_with_llm(file_content):
+    """
+    Identifies a job role from file content using the Google Gemini LLM.
+    """
+    if not file_content:
+        return "Uncategorized"
+
+    prompt = (
+        "Analyze the following resume content and identify the primary job role. "
+        "Return only a single, capitalized job title or a general category. "
+        "If the role is not clearly defined, return 'Uncategorized'.\n\n"
+        "Example output: 'Python Developer', 'Data Scientist', 'Project Manager', 'Marketing Specialist', 'Uncategorized'\n\n"
+        "Resume Content:\n"
+        f"{file_content[:2000]}..."  # Truncate content to save tokens
+    )
+
+    try:
+        model = genai.GenerativeModel('gemini-1.5-flash') # Use an appropriate Gemini model
+        response = model.generate_content(prompt)
+        
+        llm_output = response.text.strip()
+        
+        # Basic cleaning of the LLM output to ensure it is a valid folder name
+        cleaned_name = re.sub(r'[^a-zA-Z0-9\s]', '', llm_output).strip()
+        if not cleaned_name or cleaned_name.lower() == "uncategorized":
+            return "Uncategorized"
+        
+        return cleaned_name
+        
+    except Exception as e:
+        print(f"Gemini API request failed: {e}")
+        return "Uncategorized"
+
+@login_required
+def ai_auto_sort_view(request):
+    """
+    Handles POST request to upload and automatically sort files using an LLM for the logged-in user.
+    """
+    if request.method == 'POST':
+        files = request.FILES.getlist('files')
+        if not files:
+            messages.error(request, "No files were selected for sorting.")
+            return redirect('file_manager')
+
+        successful_sorts = 0
+        for file in files:
+            try:
+                # 1. Read the file content
+                file_content = extract_text_from_file(file)
+                if not file_content:
+                    messages.warning(request, f"Could not extract text from file '{file.name}'. Skipping.")
+                    continue
+
+                # 2. Use LLM to determine the folder name
+                folder_name = get_job_role_with_llm(file_content)
+                
+                # 3. Get or create the folder, filtered by the current user
+                folder, created = Folder.objects.get_or_create(user=request.user, name=folder_name)
+
+                # 4. Save the file to the determined folder and link it to the user
+                Document.objects.create(folder=folder, file=file, user=request.user)
+                successful_sorts += 1
+
+            except Exception as e:
+                messages.error(request, f"Failed to process file {file.name}: {e}")
+                continue
+
+        messages.success(request, f"{successful_sorts} file(s) have been successfully sorted by AI.")
+    return redirect('file_manager')
+######################## Close Folder ########################
 

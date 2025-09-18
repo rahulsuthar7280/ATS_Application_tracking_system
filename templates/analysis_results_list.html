@@ -1,0 +1,37 @@
+{% extends 'base.html' %}
+{% block title %}Analysis Results{% endblock %}
+
+{% block page_heading %}Batch Analysis Results{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="row">
+        <div class="col-12">
+            <h2 class="mb-4">Successfully Analyzed Profiles</h2>
+            {% if analysis_results_list %}
+                <div class="list-group">
+                    {% for result in analysis_results_list %}
+                        <a href="{% url 'analysis_detail' candidate_id=result.id %}" class="list-group-item list-group-item-action mb-2">
+                            <div class="d-flex w-100 justify-content-between">
+                                <h5 class="mb-1">{{ result.full_name|default:"Candidate" }}</h5>
+                                <small class="text-muted">Verdict: <span class="badge 
+                                    {% if result.fitment_verdict == 'SELECTED' %}bg-success
+                                    {% elif result.fitment_verdict == 'MARGINALLY FIT' %}bg-warning text-dark
+                                    {% else %}bg-danger{% endif %}">
+                                    {{ result.fitment_verdict|default:"N/A" }}
+                                </span></small>
+                            </div>
+                            <p class="mb-1">Job Role: {{ result.job_role|default:"N/A" }}</p>
+                            <small>Overall Experience: {{ result.overall_experience|default:"N/A" }}</small>
+                        </a>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <div class="alert alert-info" role="alert">
+                    No analysis results to display. Please upload resumes to begin.
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

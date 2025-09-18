@@ -4,8 +4,6 @@
 
 {% block content %}
 <div class="content-wrapper">
-    <!-- <h2 class="page-heading">Incoming Applications</h2> -->
-    
     {% if emails %}
     <div class="card p-3 mb-4 shadow-subtle rounded-3">
         <div class="row align-items-center g-3">
@@ -42,7 +40,7 @@
                     <div class="btn-group" role="group" id="atsFilterGroup">
                         <button type="button" class="btn btn-filter-ats active" data-ats-type="">All</button>
                         <button type="button" class="btn btn-filter-ats" data-ats-type="Basic">Basic</button>
-                        <button type="button" class="btn btn-filter-ats" data-ats-type="Advanced">Advanced</button>
+                        <button type="button" class="btn btn-filter-ats" data-ats-type="Advance">Advanced</button>
                     </div>
                 </div>
             </div>
@@ -62,6 +60,7 @@
                         <th scope="col">LinkedIn</th>
                         <th scope="col">Email</th>
                         <th scope="col">Resume</th>
+                        <th scope="col">Job Description</th>
                         <th scope="col">Basic ATS</th>
                         <th scope="col">Advanced ATS</th>
                     </tr>
@@ -71,7 +70,8 @@
                     <tr data-delivery-date="{{ application.date_applied|date:'Y-m-d' }}" 
                         data-email-id="{{ application.pk }}"
                         data-source="{{ application.source|default:'N/A' }}"
-                        data-ats-type="{{ application.analysis_type|default:'' }}">
+                        data-ats-type="{% if application.candidateanalysis.analysis_type %}{{ application.candidateanalysis.analysis_type }}{% else %}Manual{% endif %}"
+                        data-job-desc-id="{{ application.selected_job_desc_id|default:'' }}">
                         <td>{{ forloop.counter }}</td>
                         <td class="candidate-name">{{ application.first_name }} {{ application.last_name }}</td>
                         <td>{{ application.date_applied|date:"Y-m-d" }}</td>
@@ -92,13 +92,27 @@
                                 <span class="text-muted">N/A</span>
                             {% endif %}
                         </td>
+                         <td>
+                             <select class="form-control form-control-sm job-description-select">
+                                <option value="">-- Select a Job Description --</option>
+                                {% for job_description in job_descriptions %}
+                                    <option value="{{ job_description.id }}" {% if job_description.id == application.selected_job_desc_id %}selected{% endif %}>{{ job_description.title }}</option>
+                                {% endfor %}
+                            </select>
+                         </td>
                          <td class="text-center">
-                            <button type="button" class="btn btn-sm btn-info text-white view-details-btn" data-bs-toggle="modal" data-application-id="{{ application.pk }}"> View</button>
-                        </td>
-                        <td class="text-center">
-                            <button class="btn btn-primary btn-sm advance-ats-btn" data-bs-toggle="modal" data-bs-target="#analysisResultModal" data-application-id="{{ application.pk }}">Generate</button>
-                        </td>
-                       
+                            {% if application.basic_ats_score != "N/A" %}
+                                <button type="button" class="btn btn-sm btn-success text-white view-basic-ats-btn" data-bs-toggle="modal" data-bs-target="#analysisResultModal" data-application-id="{{ application.pk }}" data-job-desc-id="{{ application.selected_job_desc_id }}">
+                                    {{ application.basic_ats_score }}%
+                                </button>
+                            {% else %}
+                                <button type="button" class="btn btn-sm btn-info text-white view-details-btn" data-bs-toggle="modal" data-application-id="{{ application.pk }}">View</button>
+                            {% endif %}
+                         </td>
+                         <td class="text-center">
+                             <button class="btn btn-primary btn-sm advance-ats-btn" data-bs-toggle="modal" data-bs-target="#analysisResultModal" data-application-id="{{ application.pk }}">Generate</button>
+                         </td>
+                        
                     </tr>
                     {% endfor %}
                 </tbody>
@@ -122,14 +136,24 @@
 </div>
 
 <div class="modal fade" id="analysisResultModal" tabindex="-1" aria-labelledby="analysisResultModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-dialog modal-dialog-centered modal-xl">
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title" id="analysisResultModalLabel">Analysis Results</h5>
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body" id="analysisResultBody">
+                <div id="loader" class="text-center my-5" style="display:none;">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                    <p class="mt-3">Analyzing... <span id="progress-percentage">0%</span></p>
+                    <div class="progress mt-2" style="width: 50%; margin: auto;">
+                        <div id="progress-bar" class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar" style="width: 0%;" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100"></div>
+                    </div>
                 </div>
+                <div id="analysisContent"></div>
+            </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
             </div>
@@ -191,7 +215,6 @@
     .btn-filter-source { border: 1px solid var(--source-filter-border); color: #333; background-color: var(--source-filter-bg); min-width: 45px; text-align: center; }
     .btn-filter-source.active, .btn-filter-source:hover { background-color: var(--source-filter-active-bg); border-color: var(--source-filter-active-bg); color: var(--source-filter-active-color); z-index: 1; }
     .btn-filter-source:hover:not(.active) { background-color: var(--source-filter-bg); filter: brightness(95%); }
-    .btn-filter-source i { font-size: 1.1rem; }
     .btn-filter-source[data-source=""] i { color: var(--icon-filter-color); }
     .btn-filter-source[data-source="Gmail"] i { color: var(--icon-gmail-color); }
     .btn-filter-source[data-source="Naukri"] i { color: var(--icon-naukri-color); }
@@ -220,6 +243,59 @@
     .modal-body p { font-size: 1rem; }
     .modal-body .btn-lg { font-size: 1.1rem; font-weight: 600; transition: transform 0.2s; }
     .modal-body .btn-lg:hover { transform: translateY(-2px); }
+    
+    /* New styles for improved layout */
+    .nav-tabs .nav-link {
+        font-weight: 500;
+        color: var(--secondary-color);
+    }
+    .nav-tabs .nav-link.active {
+        color: var(--primary-color);
+        border-color: var(--primary-color) !important;
+        background-color: #f8f9fa;
+    }
+    .tab-content {
+        border: 1px solid #dee2e6;
+        border-top: none;
+        padding: 1.5rem;
+        border-bottom-left-radius: 0.5rem;
+        border-bottom-right-radius: 0.5rem;
+        background-color: #fdfdfd;
+    }
+    .tab-pane h5 {
+        font-weight: 600;
+        color: var(--primary-color);
+        margin-bottom: 1rem;
+    }
+    .tab-pane .row {
+        margin-bottom: 0.5rem;
+    }
+    .table-striped > tbody > tr:nth-of-type(odd) {
+        background-color: #f0f4f7;
+    }
+    .progress-bar-container {
+        display: flex;
+        align-items: center;
+        margin-top: 10px;
+    }
+    .progress-bar-container .progress {
+        flex-grow: 1;
+        margin-left: 10px;
+    }
+    .badge {
+        font-size: 0.9em;
+        padding: 0.5em 0.8em;
+    }
+    .list-group-item strong {
+        color: var(--primary-color);
+    }
+
+    /* FIX: Custom CSS to center the modal */
+    .modal-dialog-centered {
+        display: flex;
+        align-items: center;
+        min-height: calc(100vh - 1rem);
+    }
 </style>
 {% endblock %}
 
@@ -325,85 +401,321 @@
                 paginationControls.empty();
             }
         }
+        
+        function performBasicAnalysis(applicationId, jobDescriptionId) {
+            if (!jobDescriptionId) {
+                alert("Please select a Job Description first.");
+                return;
+            }
 
-        // --- NEW/MODIFIED JAVASCRIPT LOGIC ---
-
-        // Handle the "View Details / Basic ATS" button click
-        $('#incomingApplicationsTable').on('click', '.view-details-btn', function() {
-            const applicationId = $(this).data('application-id');
-            const $button = $(this);
-            const originalText = $button.text();
-            
-            // Disable button and show loading state
-            $button.prop('disabled', true).text('Analyzing...');
-
+            // Simulating a more accurate analysis with a backend call
             $.ajax({
-                url: `/basic-ats/${applicationId}/`,
-                type: 'POST',
-                headers: { 'X-CSRFToken': getCookie('csrftoken') },
+                url: `/basic-ats/${applicationId}/${jobDescriptionId}/`,
+                type: 'GET',
                 success: function(response) {
-                    displayAnalysisResults(response.analysis, 'Basic');
-                    $(`tr[data-email-id="${applicationId}"]`).attr('data-ats-type', 'Basic');
+                    if (response.success) {
+                        displayBasicAnalysis(response.analysis);
+                        const row = $(`tr[data-email-id="${applicationId}"]`);
+                        row.attr('data-ats-type', 'Basic');
+                        const modalInstance = new bootstrap.Modal(document.getElementById('analysisResultModal'));
+                        modalInstance.show();
+                    } else {
+                        alert('Error: ' + response.error);
+                    }
                 },
                 error: function() {
                     alert('An error occurred during basic analysis.');
-                },
-                complete: function() {
-                    // Re-enable button and restore text
-                    $button.prop('disabled', false).text(originalText);
                 }
             });
-        });
+        }
 
-        // Handle the "Analyze (Advanced)" button click
-        $('#incomingApplicationsTable').on('click', '.advance-ats-btn', function() {
-            const applicationId = $(this).data('application-id');
+        $('#incomingApplicationsTable').on('click', '.view-details-btn', function() {
+            const $row = $(this).closest('tr');
+            const applicationId = $row.data('email-id');
+            const jobDescriptionId = $row.find('.job-description-select').val();
             const $button = $(this);
             const originalText = $button.text();
+            
+            if (!jobDescriptionId) {
+                alert("Please select a Job Description before running an analysis.");
+                return;
+            }
 
-            // Disable button and show loading state
             $button.prop('disabled', true).text('Analyzing...');
+
+            // Simulating an asynchronous call with a timeout for demonstration
+            setTimeout(() => {
+                performBasicAnalysis(applicationId, jobDescriptionId);
+                $button.prop('disabled', false).text(originalText);
+            }, 500); // Wait 500ms before showing the result
+        });
+        
+        // New event handler for the clickable basic score button
+        $('#incomingApplicationsTable').on('click', '.view-basic-ats-btn', function() {
+            const $row = $(this).closest('tr');
+            const applicationId = $row.data('email-id');
+            const jobDescriptionId = $row.data('job-desc-id');
+            
+            if (!jobDescriptionId) {
+                alert("The job description for this application was not found. Please select one manually from the dropdown to run a new analysis.");
+                return;
+            }
+
+            // The analysis is already done, so we can directly make the AJAX call to get the data
+            performBasicAnalysis(applicationId, jobDescriptionId);
+        });
+
+        $('#incomingApplicationsTable').on('click', '.advance-ats-btn', function() {
+            const $row = $(this).closest('tr');
+            const applicationId = $row.data('email-id');
+            const jobDescriptionId = $row.find('.job-description-select').val();
+
+            if (!jobDescriptionId) {
+                alert("Please select a Job Description before running an advanced analysis.");
+                return;
+            }
+            
+            $('#analysisContent').hide();
+            $('#loader').show();
+
+            const modalInstance = new bootstrap.Modal(document.getElementById('analysisResultModal'));
+            modalInstance.show();
+
+            let progress = 0;
+            const progressInterval = setInterval(() => {
+                progress += 10;
+                if (progress <= 90) { 
+                    $('#progress-percentage').text(progress + '%');
+                    $('#progress-bar').css('width', progress + '%').attr('aria-valuenow', progress);
+                } else {
+                    clearInterval(progressInterval);
+                }
+            }, 300);
 
             $.ajax({
                 url: `/advance-ats/${applicationId}/`,
                 type: 'POST',
                 headers: { 'X-CSRFToken': getCookie('csrftoken') },
+                data: { job_description_id: jobDescriptionId },
                 success: function(response) {
-                    displayAnalysisResults(response.analysis, 'Advanced');
-                    $(`tr[data-email-id="${applicationId}"]`).attr('data-ats-type', 'Advanced');
+                    clearInterval(progressInterval);
+                    $('#progress-percentage').text('100%');
+                    $('#progress-bar').css('width', '100%').attr('aria-valuenow', 100);
+
+                    if (response.success) {
+                        displayAdvancedAnalysis(response.analysis);
+                        $(`tr[data-email-id="${applicationId}"]`).attr('data-ats-type', 'Advance');
+                    } else {
+                        alert('Error: ' + response.error);
+                        $('#loader').hide();
+                        $('#analysisContent').html('<div class="alert alert-danger">Error: ' + response.error + '</div>').show();
+                    }
                 },
                 error: function() {
+                    clearInterval(progressInterval);
                     alert('An error occurred during advanced analysis.');
+                    $('#loader').hide();
+                    $('#analysisContent').html('<div class="alert alert-danger">An error occurred during advanced analysis.</div>').show();
                 },
                 complete: function() {
-                    // Re-enable button and restore text
-                    $button.prop('disabled', false).text(originalText);
+                    $('#loader').hide();
+                    $('#analysisContent').show();
                 }
             });
         });
+        
+        function displayBasicAnalysis(data) {
+            $('#analysisResultModalLabel').text('Basic ATS Analysis');
+            $('#loader').hide();
+            $('#analysisContent').show();
 
-        // Function to display the analysis results in a modal
-        function displayAnalysisResults(data, type) {
-            let html = `<h5>${type} Analysis Result</h5><hr>`;
-            if (type === 'Basic') {
-                html += `<p><strong>Score:</strong> ${data.score}</p>`;
-                html += `<p><strong>Match Percentage:</strong> ${data.match_percentage}%</p>`;
-                html += `<p><strong>Keywords Found:</strong> ${data.keywords_found.join(', ')}</p>`;
-                html += `<p><strong>Comments:</strong> ${data.comments}</p>`;
-            } else if (type === 'Advanced') {
-                html += `<p><strong>AI Summary:</strong> ${data.ai_summary}</p>`;
-                html += `<p><strong>Confidence Score:</strong> ${data.confidence_score}</p>`;
-                html += `<p><strong>Suggested Questions:</strong></p>`;
-                html += `<ul>`;
-                data.suggested_questions.forEach(q => {
-                    html += `<li>${q}</li>`;
-                });
-                html += `</ul>`;
+            // Logic for a better rating description based on semantic score
+            let rating, ratingClass, comments;
+            const score = data.match_percentage;
+
+            if (score >= 75) {
+                rating = "Excellent";
+                ratingClass = "badge bg-success";
+                comments = "Candidate is a great fit for the role. High semantic similarity to the job description.";
+            } else if (score >= 50) {
+                rating = "Good";
+                ratingClass = "badge bg-warning text-dark";
+                comments = "Candidate has a good number of matching skills and relevant experience.";
+            } else {
+                rating = "Fair";
+                ratingClass = "badge bg-danger";
+                comments = "Candidate has limited matching skills. May need further manual review.";
             }
 
-            $('#analysisResultBody').html(html);
-            const analysisResultModal = new bootstrap.Modal(document.getElementById('analysisResultModal'));
-            analysisResultModal.show();
+            let html = `
+                <div class="row mb-4">
+                    <div class="col-md-6">
+                        <div class="card p-3 h-100">
+                            <h5>Match Score</h5>
+                            <h2 class="display-4 fw-bold text-primary">${data.match_percentage}%</h2>
+                            <p class="text-muted">A semantic match based on the meaning of the content.</p>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="card p-3 h-100">
+                            <h5>Candidate Rating</h5>
+                            <h2 class="fw-bold mt-2"><span class="${ratingClass}">${rating}</span></h2>
+                            <p class="text-muted">An overall assessment based on the score.</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="card p-3">
+                    <h5>Analysis Details</h5>
+                    <hr>
+                    <p><strong>Summary:</strong> ${comments}</p>
+                </div>
+            `;
+            
+            $('#analysisContent').html(html);
+        }
+
+        function displayAdvancedAnalysis(data) {
+            $('#analysisResultModalLabel').text('Advanced ATS Analysis');
+            
+            const verdictClass = data.fitment_verdict === 'SELECTED' ? 'badge bg-success' : 
+                                 data.fitment_verdict === 'MARGINALLY FIT' ? 'badge bg-warning text-dark' :
+                                 'badge bg-danger';
+            
+            let html = `
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <div class="card h-100 p-3">
+                            <h5 class="card-title">Candidate Summary</h5>
+                            <ul class="list-group list-group-flush">
+                                <li class="list-group-item"><strong>Name:</strong> ${data.full_name}</li>
+                                <li class="list-group-item"><strong>Contact:</strong> ${data.contact_number}</li>
+                                <li class="list-group-item"><strong>Overall Experience:</strong> ${data.overall_experience}</li>
+                                <li class="list-group-item"><strong>Experience Match:</strong> ${data.experience_match}</li>
+                                <li class="list-group-item"><strong>Suggested Salary:</strong> ${data.suggested_salary_range}</li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <div class="card h-100 p-3">
+                            <h5 class="card-title">Hiring Insights</h5>
+                            <ul class="list-group list-group-flush">
+                                <li class="list-group-item"><strong>Hiring Recommendation:</strong> <span class="${verdictClass}">${data.hiring_recommendation}</span></li>
+                                <li class="list-group-item"><strong>Fitment Verdict:</strong> <span class="${verdictClass}">${data.fitment_verdict}</span></li>
+                                <li class="list-group-item"><strong>Aggregate Score:</strong> ${data.aggregate_score}</li>
+                                <li class="list-group-item"><strong>Red Flags:</strong> ${data.automated_recruiter_insights.red_flag_detection}</li>
+                                <li class="list-group-item"><strong>Growth Indicators:</strong> ${data.automated_recruiter_insights.growth_indicators}</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card p-3 mt-4">
+                    <ul class="nav nav-tabs" id="analysisTabs" role="tablist">
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link active" id="summary-tab" data-bs-toggle="tab" data-bs-target="#summary" type="button" role="tab" aria-controls="summary" aria-selected="true">Summary</button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="fitment-tab" data-bs-toggle="tab" data-bs-target="#fitment" type="button" role="tab" aria-controls="fitment" aria-selected="false">Fitment Analysis</button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="scoring-tab" data-bs-toggle="tab" data-bs-target="#scoring" type="button" role="tab" aria-controls="scoring" aria-selected="false">Scoring Matrix</button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="questions-tab" data-bs-toggle="tab" data-bs-target="#questions" type="button" role="tab" aria-controls="questions" aria-selected="false">Interview Qs</button>
+                        </li>
+                    </ul>
+                    <div class="tab-content" id="analysisTabsContent">
+                        <div class="tab-pane fade show active" id="summary" role="tabpanel" aria-labelledby="summary-tab">
+                            <br>
+                            <h5>Overall Summary</h5>
+                            <p>${data.analysis_summary.candidate_overview.replace(/\\n/g, '<br>')}</p>
+                            <p><strong>Conclusion:</strong> ${data.analysis_summary.conclusion.replace(/\\n/g, '<br>')}</p>
+                            
+                            <h5 class="mt-4">Technical Prowess</h5>
+                            <ul class="list-group list-group-flush">`;
+            
+            for (const key in data.analysis_summary.technical_prowess) {
+                if (data.analysis_summary.technical_prowess[key].length > 0) {
+                    const skillCategory = key.charAt(0).toUpperCase() + key.slice(1).replace('_', ' ');
+                    html += `<li class="list-group-item"><strong>${skillCategory}:</strong> ${data.analysis_summary.technical_prowess[key].join(', ')}</li>`;
+                }
+            }
+
+            html += `
+                            </ul>
+                            <h5 class="mt-4">Education & Certifications</h5>
+                            <ul class="list-group list-group-flush">
+                                <li class="list-group-item"><strong>Education:</strong> ${data.analysis_summary.education_certifications.education.join(', ') || 'Not Found'}</li>
+                                <li class="list-group-item"><strong>Certifications:</strong> ${data.analysis_summary.education_certifications.certifications.join(', ') || 'Not Found'}</li>
+                            </ul>
+                        </div>
+                        <div class="tab-pane fade" id="fitment" role="tabpanel" aria-labelledby="fitment-tab">
+                            <br>
+                            <h5>Candidate Fitment Analysis</h5>
+                            <div class="mb-3"><strong>Strategic Alignment:</strong><br>${data.candidate_fitment_analysis.strategic_alignment}</div>
+                            <div class="mb-3"><strong>Quantifiable Impact:</strong><br>${data.candidate_fitment_analysis.quantifiable_impact}</div>
+                            <div class="mb-3"><strong>Comparable Experience:</strong><br>${data.candidate_fitment_analysis.comparable_experience_analysis}</div>
+                            <div class="mb-3"><strong>Potential Gaps & Risks:</strong><br>${data.candidate_fitment_analysis.potential_gaps_risks}</div>
+                        </div>
+                        <div class="tab-pane fade" id="scoring" role="tabpanel" aria-labelledby="scoring-tab">
+                            <br>
+                            <h5>Scoring Matrix</h5>
+                            <table class="table table-striped table-bordered">
+                                <thead>
+                                    <tr>
+                                        <th>Dimension</th>
+                                        <th>Weight</th>
+                                        <th>Score</th>
+                                        <th>Justification</th>
+                                    </tr>
+                                </thead>
+                                <tbody>`;
+            
+            if (data.scoring_matrix && data.scoring_matrix.length > 0) {
+                data.scoring_matrix.forEach(item => {
+                    html += `<tr>
+                                <td>${item.dimension}</td>
+                                <td>${item.weight}</td>
+                                <td>${item.score}</td>
+                                <td>${item.justification}</td>
+                            </tr>`;
+                });
+            } else {
+                html += `<tr><td colspan="4">No scoring data available.</td></tr>`;
+            }
+
+            html += `
+                                </tbody>
+                            </table>
+                            <p class="text-end mt-2"><strong>Aggregate Score:</strong> ${data.aggregate_score}</p>
+                        </div>
+                        <div class="tab-pane fade" id="questions" role="tabpanel" aria-labelledby="questions-tab">
+                            <br>
+                            <h5>Suggested Interview Questions</h5>
+                            <ol>`;
+            
+            if (data.interview_questions && data.interview_questions.length > 0) {
+                data.interview_questions.forEach(question => {
+                    html += `<li>${question}</li>`;
+                });
+            } else {
+                html += `<li>No interview questions generated.</li>`;
+            }
+
+            html += `
+                            </ol>
+                            <h5 class="mt-4">Bench Recommendation</h5>
+                            <ul class="list-group list-group-flush">
+                                <li class="list-group-item"><strong>Retain for Bench:</strong> ${data.bench_recommendation.retain}</li>
+                                <li class="list-group-item"><strong>Ideal Future Roles:</strong> ${data.bench_recommendation.ideal_future_roles.join(', ') || 'None'}</li>
+                                <li class="list-group-item"><strong>Justification:</strong> ${data.bench_recommendation.justification}</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>`;
+            
+            $('#analysisContent').html(html);
         }
 
         // Event listeners for filters and search

@@ -2,7 +2,7 @@ from django.contrib import admin
 
 # Register your models here.
 # from django.contrib import admin
-from .models import CandidateAnalysis, User, Application, JobDescriptionDocument, EmailConfiguration, SentEmail, JobPosting, CareerPage, Apply_career
+from .models import CandidateAnalysis, User, Application, JobDescriptionDocument, EmailConfiguration, SentEmail, JobPosting, CareerPage, Apply_career, CareerAdvanceAnalysis,Document, Folder
 
 
 @admin.register(CandidateAnalysis)
@@ -51,3 +51,21 @@ class CareerPage(admin.ModelAdmin):
 class Apply_career(admin.ModelAdmin):
     def get_list_display(self, request):
         return [field.name for field in self.model._meta.fields]
+    
+
+@admin.register(CareerAdvanceAnalysis)
+class CareerAdvanceAnalysis(admin.ModelAdmin):
+    def get_list_display(self, request):
+        return [field.name for field in self.model._meta.fields]
+    
+
+@admin.register(Folder)
+class Folder(admin.ModelAdmin):
+    def get_list_display(self, request):
+        return [field.name for field in self.model._meta.fields]
+    
+@admin.register(Document)
+class Document(admin.ModelAdmin):
+    def get_list_display(self, request):
+        return [field.name for field in self.model._meta.fields]
+    

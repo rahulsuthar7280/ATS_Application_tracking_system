@@ -145,8 +145,11 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 # --- Custom Settings for API Keys (Hardcoded) ---
 # IMPORTANT: Replace these with your actual keys.
 # These are placeholder values.
+#['AIzaSyC2q_aKXeBkyZYUsHlX6_djPyyUTq126pc','AIzaSyBqmZT97k_5zoNyG2FB0xGG7nPoKf6fPkA','AIzaSyBQeaWpeQ3GFKC83Q5FT4V8d5SQ7VjhFB8']
+
 BLANDAI_API_KEY = "org_a019efcc3f79c013e83b1836faff92322a7b66bb42da6ba8bcef569f4c02565e23db71fa9b631c9e6caa69" # <<< STATIC KEY
-GOOGLE_API_KEY = "AIzaSyBQeaWpeQ3GFKC83Q5FT4V8d5SQ7VjhFB8" # <<< STATIC KEY
+GOOGLE_API_KEY = "AIzaSyBqmZT97k_5zoNyG2FB0xGG7nPoKf6fPkA" # <<< STATIC KEY
+# GOOGLE_API_KEY = "AIzaSyBgZUbdu3hIwP5hmOkwtgVKKFNtLXx9j0U" # <<< STATIC KEY
 AIRTABLE_API_KEY = "patwhAkF1gv4aTK4V.ce7696f952c6176b9c601a76c3750363653c931c63a3965946666dd001b0a63b" # <<< STATIC KEY
 AIRTABLE_BASE_ID = "app8swts0eepF8tdU" # <<< STATIC KEY
 
@@ -174,3 +177,8 @@ JOB_DESCRIPTION_UPLOAD_ROOT = os.path.join(MEDIA_ROOT, 'job_descriptions')
 JOB_DESCRIPTION_UPLOAD_URL = MEDIA_URL + 'job_descriptions/'
 # Outlook attachments will not be directly supported as explained
 X_FRAME_OPTIONS = 'SAMEORIGIN'
+
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+# settings.py
+TIME_ZONE = 'Asia/Kolkata'
+USE_TZ = True
