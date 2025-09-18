@@ -118,3 +118,4 @@ tools
 reportlab
 selenium
 webdriver-manager
+PyPDF2
