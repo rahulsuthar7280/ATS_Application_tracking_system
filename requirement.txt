@@ -119,4 +119,4 @@ reportlab
 selenium
 webdriver-manager
 PyPDF2
-docx
+python-docx
