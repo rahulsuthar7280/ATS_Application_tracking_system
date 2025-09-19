@@ -32,7 +32,7 @@ from urllib.parse import urljoin
 
 # Third-party libraries
 import requests
-import spacy
+# import spacy
 import docx2txt           # For Word documents
 import fitz               # For PDFs (PyMuPDF)
 import phonenumbers       # For phone number parsing
