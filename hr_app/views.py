@@ -81,7 +81,7 @@ from django.contrib.auth import get_user_model
 
 
 from django.shortcuts import get_object_or_404
-from sentence_transformers import SentenceTransformer, util
+# from sentence_transformers import SentenceTransformer, util
 import os
 
 
@@ -1231,11 +1231,11 @@ logger = logging.getLogger(__name__)
 
 
 
-try:
-    model = SentenceTransformer('sentence-transformers/all-MiniLM-L6-v2')
-except Exception as e:
-    print(f"Error loading SentenceTransformer model: {e}")
-    model = None
+# try:
+#     model = SentenceTransformer('sentence-transformers/all-MiniLM-L6-v2')
+# except Exception as e:
+#     print(f"Error loading SentenceTransformer model: {e}")
+#     model = None
 
 # --- Existing Functions (Unchanged) ---
 def calculate_basic_ats_score(resume_content, job_description_text):
