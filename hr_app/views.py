@@ -3222,45 +3222,217 @@ def post_jobs(request):
 
 
 ########################## Career page ###################
+# This view will only handle the initial GET request to render the page
 def list_careers(request):
     """
-    Displays the list of all career pages and handles the creation of a new one.
+    Displays the list of all career pages.
     """
-    if request.method == 'POST':
-        # Manually extract all fields from the POST request
-        title = request.POST.get('title')
-        description = request.POST.get('description')
-        location = request.POST.get('location')
-        job_type = request.POST.get('job_type')
-        salary = request.POST.get('salary')
-        responsibilities = request.POST.get('responsibilities')
-        qualifications = request.POST.get('qualifications')
-
-        # Create a new CareerPage object with all the collected data
-        CareerPage.objects.create(
-            title=title,
-            description=description,
-            location=location,
-            job_type=job_type,
-            salary=salary,
-            responsibilities=responsibilities,
-            qualifications=qualifications
-        )
-        return redirect('career_portal')
+    all_jobs = list(CareerPage.objects.all().values())
     
-    careers = CareerPage.objects.all()
-    # Assuming you also need locations and job types for the filters
+    jobs_json = json.dumps(all_jobs, default=str)
+    
     locations = CareerPage.objects.values_list('location', flat=True).distinct()
     job_types = CareerPage.objects.values_list('job_type', flat=True).distinct()
-
+    
     context = {
-        'careers': careers,
+        'jobs_data_json': jobs_json,
         'locations': locations,
         'job_types': job_types,
     }
+    
     return render(request, 'career_portal.html', context)
 
+@csrf_exempt
+@require_http_methods(["POST"])
+def create_job(request):
+    """
+    Handles the creation of a new job posting via a POST request from JavaScript.
+    """
+    try:
+        data = json.loads(request.body)
+        skills_str = json.dumps(data.get('skills', []))
+        
+        # Determine salary or stipend based on job type
+        job_type = data.get('jobType')
+        salary_value = data.get('salary')
+        
+        job = CareerPage.objects.create(
+            title=data.get('title'),
+            company=data.get('company'),
+            location=data.get('location'),
+            job_type=job_type,
+            experience=data.get('experienceLevel'),
+            salary=salary_value,
+            description=data.get('description'),
+            responsibilities=data.get('responsibilities'),
+            qualifications=data.get('qualifications'),
+            benefits=data.get('benefits'),
+            skills=skills_str,
+            is_active=data.get('is_active', True)
+        )
+        return JsonResponse({'id': job.id, 'success': True, 'message': 'Job created successfully.'}, status=201)
+    except (json.JSONDecodeError, KeyError) as e:
+        return JsonResponse({'success': False, 'message': 'Invalid data provided.'}, status=400)
 
+@csrf_exempt
+@require_http_methods(["PUT"])
+def update_job(request, job_id):
+    """
+    Handles the update of an existing job posting via a PUT request from JavaScript.
+    """
+    try:
+        job = get_object_or_404(CareerPage, pk=job_id)
+        data = json.loads(request.body)
+        
+        job.title = data.get('title', job.title)
+        job.company = data.get('company', job.company)
+        job.location = data.get('location', job.location)
+        job.job_type = data.get('jobType', job.job_type)
+        job.experience = data.get('experienceLevel', job.experience)
+        job.salary = data.get('salary', job.salary)
+        job.description = data.get('description', job.description)
+        job.responsibilities = data.get('responsibilities', job.responsibilities)
+        job.qualifications = data.get('qualifications', job.qualifications)
+        job.benefits = data.get('benefits', job.benefits)
+        
+        # Handle skills list, converting back to JSON string
+        skills_list = data.get('skills', [])
+        job.skills = json.dumps(skills_list)
+        
+        job.save()
+        
+        return JsonResponse({'id': job.id, 'success': True, 'message': 'Job updated successfully.'})
+    except (json.JSONDecodeError, KeyError) as e:
+        return JsonResponse({'success': False, 'message': 'Invalid data provided.'}, status=400)
+
+@csrf_exempt
+@require_http_methods(["DELETE"])
+def delete_job(request, job_id):
+    """
+    Handles the deletion of a job posting via a DELETE request from JavaScript.
+    """
+    job = get_object_or_404(CareerPage, pk=job_id)
+    job.delete()
+    return JsonResponse({'success': True, 'message': 'Job deleted successfully.'})
+
+@csrf_exempt
+@require_http_methods(["POST"])
+def toggle_job_status(request, job_id):
+    """
+    Toggles the active status of a job posting.
+    """
+    try:
+        data = json.loads(request.body)
+        is_active = data.get('is_active')
+        job = get_object_or_404(CareerPage, pk=job_id)
+        job.is_active = is_active
+        job.save()
+        return JsonResponse({'id': job.id, 'is_active': job.is_active, 'success': True, 'message': 'Status updated.'})
+    except (json.JSONDecodeError, KeyError) as e:
+        return JsonResponse({'success': False, 'message': 'Invalid data provided.'}, status=400)
+
+@csrf_exempt
+def apply_for_job(request, career_id):
+    """
+    Handles the application submission for a specific job.
+    """
+    if request.method == 'POST':
+        career = get_object_or_404(CareerPage, pk=career_id)
+        
+        first_name = request.POST.get('first_name')
+        last_name = request.POST.get('last_name')
+        email = request.POST.get('email')
+        phone = request.POST.get('phone')
+        linkedin_url = request.POST.get('linkedin_url')
+
+        experience = request.POST.get('experience')
+        current_ctc = request.POST.get('current_ctc')
+        expected_ctc = request.POST.get('expected_ctc')
+        qualification = request.POST.get('qualification')
+        notice_period = request.POST.get('notice_period')
+
+        resume_file = request.FILES.get('resume')
+        cover_letter_file = request.FILES.get('cover_letter')
+        
+        if not all([first_name, last_name, email, resume_file]):
+            return JsonResponse({'success': False, 'errors': 'Missing required fields'}, status=400)
+        
+        try:
+            application = Apply_career.objects.create(
+                user=request.user if request.user.is_authenticated else None,
+                career=career,
+                first_name=first_name,
+                last_name=last_name,
+                email=email,
+                phone=phone,
+                linkedin_url=linkedin_url,
+                experience=experience,
+                current_ctc=current_ctc,
+                expected_ctc=expected_ctc,
+                qualification=qualification,
+                notice_period=notice_period,
+                resume=resume_file,
+                cover_letter=cover_letter_file,
+            )
+            return JsonResponse({'success': True, 'message': 'Application submitted successfully'})
+        except Exception as e:
+            return JsonResponse({'success': False, 'errors': str(e)}, status=500)
+    
+    return HttpResponseBadRequest("Invalid request method")
+
+
+########################################################
+
+@require_http_methods(["POST", "DELETE"])
+def manage_job(request, job_id):
+    """
+    Handles editing and deleting a job posting.
+    """
+    job = get_object_or_404(CareerPage, pk=job_id)
+
+    if request.method == 'POST':
+        # Handle Edit functionality
+        # Update job fields from POST data
+        job.title = request.POST.get('job-title')
+        job.company = request.POST.get('company-name')
+        job.location = request.POST.get('specific-location')
+        job.job_type = request.POST.get('job-type')
+        job.experience = request.POST.get('experience-level')
+        job.description = request.POST.get('job-description')
+        job.about_company = request.POST.get('about-company')
+        job.skills = request.POST.get('skills')
+        job.benefits = request.POST.get('benefits')
+        job.application_link = request.POST.get('application-link')
+        
+        # Determine salary or stipend
+        if job.job_type == 'Internship':
+            salary_value = request.POST.get('stipend-amount') or 'N/A'
+        else:
+            min_salary = request.POST.get('min-salary')
+            max_salary = request.POST.get('max-salary')
+            if min_salary and max_salary:
+                salary_value = f'${min_salary} - ${max_salary}'
+            elif min_salary:
+                salary_value = f'From ${min_salary}'
+            elif max_salary:
+                salary_value = f'Up to ${max_salary}'
+            else:
+                salary_value = 'N/A'
+        job.salary = salary_value
+
+        # Handle logo update
+        if 'company-logo' in request.FILES:
+            job.company_logo = request.FILES['company-logo']
+        
+        job.save()
+        return JsonResponse({'message': 'Job updated successfully!'}, status=200)
+
+    elif request.method == 'DELETE':
+        # Handle Delete functionality
+        job.delete()
+        return JsonResponse({'message': 'Job deleted successfully!'}, status=200)
+    
+    return JsonResponse({'error': 'Invalid request method'}, status=400)
 # The other views (toggle_status, share_career, career_detail) remain unchanged
 def toggle_status(request, pk):
     career_page = get_object_or_404(CareerPage, pk=pk)

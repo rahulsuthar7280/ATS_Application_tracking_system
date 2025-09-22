@@ -437,41 +437,72 @@ class DraftEmail(models.Model):
 
 class CareerPage(models.Model):
     title = models.CharField(max_length=200)
+    company = models.CharField(max_length=100, default='Our Company')
+    
+    # Change from URLField to ImageField for file uploads
+    company_logo = models.ImageField(upload_to='company_logos/', blank=True, null=True)
+    # Add a URL field to keep track of old data or provide an alternative
+    # company_logo_url = models.URLField(max_length=200, blank=True, null=True)
+    
     date_posted = models.DateTimeField(auto_now_add=True)
     location = models.CharField(max_length=100)
     job_type = models.CharField(max_length=50)
+    experience = models.CharField(max_length=50, blank=True, null=True)
     salary = models.CharField(max_length=100)
     is_active = models.BooleanField(default=True)
     description = models.TextField()
-    responsibilities = models.TextField()
-    qualifications = models.TextField()
-
-    def __str__(self):
-        return self.title
+    about_company = models.TextField(blank=True, null=True)
+    skills = models.TextField(blank=True, help_text='Comma-separated skills')
+    benefits = models.TextField(blank=True, null=True)
+    application_link = models.URLField(max_length=500, default='#')
     
+    responsibilities = models.TextField(blank=True, null=True)
+    qualifications = models.TextField(blank=True, null=True)
+
     class Meta:
         ordering = ['-date_posted']
 
+    def __str__(self):
+        return self.title
+
+# This is your existing Apply_career model, with the new fields added
 class Apply_career(models.Model):
     # This foreign key links an application to a specific job posting
-    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='applications')
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='applications', blank=True, null=True)
     career = models.ForeignKey('CareerPage', on_delete=models.CASCADE, related_name='career')
     
     first_name = models.CharField(max_length=100)
     last_name = models.CharField(max_length=100)
     email = models.EmailField()
     phone = models.CharField(max_length=20, blank=True, null=True)
+    
+    # New Fields
+    experience = models.IntegerField(verbose_name='Total Experience in Years', blank=True, null=True)
+    current_ctc = models.CharField(max_length=50, verbose_name='Current CTC (Annual)', blank=True, null=True)
+    expected_ctc = models.CharField(max_length=50, verbose_name='Expected CTC (Annual)', blank=True, null=True)
+    qualification = models.CharField(max_length=255, verbose_name='Highest Qualification', blank=True, null=True)
+    notice_period = models.CharField(max_length=100, verbose_name='Notice Period', blank=True, null=True)
+    
     # File fields for resume and cover letter
     resume = models.FileField(upload_to='resumes/')
     cover_letter = models.FileField(upload_to='cover_letters/', blank=True, null=True)
+    
     linkedin_url = models.URLField(blank=True, null=True)
     
+    # Track the application status
+    STATUS_CHOICES = [
+        ('Pending', 'Pending Review'),
+        ('Reviewed', 'Reviewed'),
+        ('Interviewing', 'Interviewing'),
+        ('Rejected', 'Rejected'),
+        ('Hired', 'Hired'),
+    ]
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='Pending')
+
     date_applied = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
-        return f"Career from {self.first_name} {self.last_name} for {self.career.title}"
-
-
+        return f"Application from {self.first_name} {self.last_name} for {self.career.title}"
 
 
 def document_upload_path(instance, filename):
