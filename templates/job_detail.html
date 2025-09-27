@@ -5,8 +5,8 @@
     <meta charset="utf-8">
     <title>{{ job.title }} - Job Details</title>
     <meta content="width=device-width, initial-scale=1.0" name="viewport">
-    <meta content="{{ job.title }}" name="keywords">
-    <meta content="{{ job.description|striptags|truncatewords:20 }}" name="description">
+    <meta content="" name="keywords">
+    <meta content="" name="description">
 
     <link href="{% static 'img/favicon.ico' %}" rel="icon">
 
@@ -16,104 +16,179 @@
     
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.10.0/css/all.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.4.1/font/bootstrap-icons.css" rel="stylesheet">
+
     <link href="{% static 'lib/animate/animate.min.css' %}" rel="stylesheet">
     <link href="{% static 'lib/owlcarousel/assets/owl.carousel.min.css' %}" rel="stylesheet">
 
-    <style>
-        :root {
-            --primary-color: {{ theme_settings.theme_primary_color|default:'#00b2a9' }};
-            --secondary-color: {{ theme_settings.theme_secondary_color|default:'#eef2f6' }};
-            --background-color: {{ theme_settings.theme_background_color|default:'#f7f9fc' }};
-            --primary-text-color: {{ theme_settings.theme_primary_color_text|default:'#ffffff' }};
-            --secondary-text-color: {{ theme_settings.theme_secondary_color_text|default:'#1f2937' }};
-            --background-text-color: {{ theme_settings.theme_background_color_text|default:'#1f2937' }};
-        }
-
-        /* Override default Bootstrap colors with theme variables */
-        .btn-primary,
-        .btn-primary:hover,
-        .btn-primary:focus,
-        .btn-primary:active {
-            background-color: var(--primary-color) !important;
-            border-color: var(--primary-color) !important;
-            color: var(--primary-text-color) !important;
-        }
-        
-        .btn-secondary {
-            background-color: var(--secondary-color) !important;
-            border-color: var(--secondary-color) !important;
-            color: var(--secondary-text-color) !important;
-        }
-        
-        .text-primary { color: var(--primary-color) !important; }
-        .text-secondary { color: var(--secondary-color) !important; }
-        .bg-primary { background-color: var(--primary-color) !important; }
-        .bg-secondary { background-color: var(--secondary-color) !important; }
-        .bg-white { background-color: white !important; }
-
-        body {
-            color: var(--background-text-color);
-        }
-    </style>
-
     <link href="{% static 'css/bootstrap.min.css' %}" rel="stylesheet">
-    <link href="{% static 'css/style.css' %}" rel="stylesheet">
+
+    <link href="{% static 'css/career_mianpage.css' %}" rel="stylesheet">
+
+    <style>
+        /* Define colors using the Django context, falling back to Bootstrap default */
+        :root {
+            /* Django Variables mapped to CSS variables for primary color application */
+            --theme-primary: {{ theme_settings.theme_primary_color|default:'#1e3a8a' }};
+            --theme-secondary: {{ theme_settings.theme_secondary_color|default:'#eef2f6' }};
+            --theme-background: {{ theme_settings.theme_background_color|default:'#f7f9fc' }};
+            --theme-primary-text: {{ theme_settings.theme_primary_color_text|default:'#ffffff' }};
+            --theme-secondary-text: {{ theme_settings.theme_secondary_color_text|default:'#333333' }};
+            --theme-background-text: {{ theme_settings.theme_background_color_text|default:'#333333' }};
+        }
+
+        /* 1. FORCE ALL PRIMARY COLOR STYLES */
+        .text-primary, 
+        .navbar-brand h1, 
+        .fa.text-primary, 
+        .bi.text-primary {
+            color: var(--theme-primary) !important;
+        }
+
+        .btn-primary,
+        .bg-primary,
+        .back-to-top {
+            background-color: var(--theme-primary) !important;
+            border-color: var(--theme-primary) !important;
+            color: var(--theme-primary-text) !important; /* Use variable for text color */
+        }
+        
+        .btn-primary:hover, 
+        .btn-primary:focus, 
+        .btn-primary:active,
+        .back-to-top:hover {
+            /* Darken for hover effect */
+            filter: brightness(85%); 
+        }
+        
+        /* 2. FORCE SECONDARY COLOR STYLES (Used for light backgrounds and components) */
+        .bg-light, /* Used for job summary/company detail boxes */
+        .btn-secondary,
+        .container-xxxl.py-5.bg-dark.page-header, /* Overrides the page header background */
+        .container-fluid.bg-dark.footer /* Overrides the footer background */
+        {
+            background-color: var(--theme-secondary) !important;
+            border-color: var(--theme-secondary) !important;
+        }
+
+        /* Set text color for elements on the secondary (light) background */
+        .bg-light,
+        .container-xxxl.py-5.bg-dark.page-header h1,
+        .container-xxxl.py-5.bg-dark.page-header .breadcrumb li,
+        .container-fluid.bg-dark.footer * {
+            color: var(--theme-secondary-text) !important;
+        }
+        
+        .container-fluid.bg-dark.footer h5 {
+            color: var(--theme-primary) !important;
+        }
+
+        /* Keep the active breadcrumb primary color */
+        .container-xxxl.py-5.bg-dark.page-header .breadcrumb .active {
+             color: var(--theme-primary) !important; 
+        }
+        
+        /* 3. FORCE BACKGROUND COLOR STYLES */
+        body {
+            background-color: var(--theme-background) !important;
+            color: var(--theme-background-text) !important;
+        }
+
+        /* Handle spinner border color separately */
+        .spinner-border.text-primary {
+            border-color: currentColor;
+            border-right-color: var(--theme-primary) !important; 
+        }
+
+    </style>
+    
 </head>
 
 <body>
-    <div class="container-xxl bg-white p-0">
+    <div class="container-xxxl bg-white p-0">
         <div id="spinner" class="show bg-white position-fixed translate-middle w-100 vh-100 top-50 start-50 d-flex align-items-center justify-content-center">
             <div class="spinner-border text-primary" style="width: 3rem; height: 3rem;" role="status">
                 <span class="sr-only">Loading...</span>
             </div>
         </div>
-        <div class="container-xxl py-5 bg-primary hero-header mb-5">
-            <div class="container my-5 py-5">
-                <div class="row align-items-center">
-                    <div class="col-lg-6 text-center text-lg-start">
-                        {% if company_info.company_logo %}
-                            <img src="{{ company_info.company_logo.url }}" alt="{{ company_info.company_name }}" class="img-fluid rounded me-3 mb-4" style="max-height: 80px;">
-                        {% endif %}
-                        <h1 class="display-3 text-white animated slideInLeft mb-4">{{ job.title }}</h1>
-                        <p class="text-white animated slideInLeft mb-4 pb-2"><i class="fa fa-map-marker-alt me-2"></i>{{ job.location }}</p>
+
+        {% if messages %}
+            <div id="message-container" style="position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 1050; text-align: center;">
+                {% for message in messages %}
+                    <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                        {{ message }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
                     </div>
+                {% endfor %}
+            </div>
+        {% endif %}
+        <nav class="navbar navbar-expand-lg bg-white navbar-light shadow sticky-top p-0">
+            <a href="index.html" class="navbar-brand d-flex align-items-center text-center py-0 px-4 px-lg-5">
+                <img src="{{ company_info.company_logo.url }}" alt="{{ company_info.company_name }}" style="max-height: 50px;">
+                
+                
+                <h1 class="m-0 text-primary">{{ company_name.company_name }}</h1>
+              
+            </a>
+            <button type="button" class="navbar-toggler me-4" data-bs-toggle="collapse" data-bs-target="#navbarCollapse">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarCollapse">
+                <div class="navbar-nav ms-auto p-4 p-lg-0">
+                    
                 </div>
+                <a href="{% url 'career_mainpage' %}" class="btn btn-primary rounded-0 py-4 px-lg-5 d-none d-lg-block">Main Page<i class="fa fa-arrow-right ms-3"></i></a>
+            </div>
+        </nav>
+        <div class="container-xxxl py-5 bg-dark page-header mb-5">
+            <div class="container my-5 pt-5 pb-4" >
+                <h1 class="display-3 text-white mb-3 animated slideInDown" >{{ job.title }}</h1>
+                <nav aria-label="breadcrumb">
+                    <ol class="breadcrumb text-uppercase">
+                        <li class="breadcrumb-item"><a href="#">Home</a></li>
+                        <li class="breadcrumb-item"><a href="#">Pages</a></li>
+                        <li class="breadcrumb-item text-white active" aria-current="page">{{ job.title }}</li>
+                    </ol>
+                </nav>
             </div>
         </div>
-        <div class="container-xxl py-5 wow fadeInUp" data-wow-delay="0.1s">
+        <div class="container-xxxl py-5 wow fadeInUp" data-wow-delay="0.1s">
             <div class="container">
                 <div class="row gy-5 gx-4">
                     <div class="col-lg-8">
+
                         <div class="d-flex align-items-center mb-5">
-                            <img class="flex-shrink-0 img-fluid border rounded" 
-                                {% if company_info.company_logo %}
-                                    src="{{ company_info.company_logo.url }}"
-                                {% else %}
-                                    src="{% static 'img/com-logo-1.jpg' %}" 
-                                {% endif %}
-                                alt="{{ company_info.company_name }}" style="width: 80px; height: 80px;">
-                            <div class="text-start ps-4">
+                             {% if job.company_logo %}
+                                <img class="flex-shrink-0 img-fluid border rounded" src="{{ job.company_logo.url }}" alt="" style="width: 80px; height: 80px;">
+                            {% endif %}
+                            <div class="text-start">
                                 <h3 class="mb-3">{{ job.title }}</h3>
                                 <span class="text-truncate me-3"><i class="fa fa-map-marker-alt text-primary me-2"></i>{{ job.location }}</span>
                                 <span class="text-truncate me-3"><i class="far fa-clock text-primary me-2"></i>{{ job.job_type }}</span>
-                                <span class="text-truncate me-3"><i class="fa fa-tag text-primary me-2"></i>{{ job.category.name }}</span>
+                                <span class="text-truncate me-0"><i class="far fa-money-bill-alt text-primary me-2"></i>{{ job.salary }}</span>
                             </div>
                         </div>
 
                         <div class="mb-5">
                             <h4 class="mb-3">Job description</h4>
-                            <p>{{ job.description|linebreaks }}</p>
+                            <p>{{ job.description|linebreaksbr }}</p>
+                            
+                            {% if job.responsibilities %}
                             <h4 class="mb-3">Responsibility</h4>
-                            <p>{{ job.responsibilities|linebreaks }}</p>
+                            <p>{{ job.responsibilities|linebreaksbr }}</p>
+                            {% endif %}
+
+                            {% if job.qualifications %}
                             <h4 class="mb-3">Qualifications</h4>
-                            <p>{{ job.qualifications|linebreaks }}</p>
-                            {% if job.benefits %}
-                            <h4 class="mb-3">Benefits</h4>
-                            <p>{{ job.benefits|linebreaks }}</p>
+                            <p>{{ job.qualifications|linebreaksbr }}</p>
+                            {% endif %}
+
+                            {% if job.skills %}
+                            <h4 class="mb-3">Skills Required</h4>
+                            <p>{{ job.skills|linebreaksbr }}</p>
                             {% endif %}
                         </div>
         
-                        <div class="bg-light rounded p-5 wow slideInUp" data-wow-delay="0.1s">
+                        <div class="">
                             <h4 class="mb-4">Apply For The Job</h4>
                             <form method="post" enctype="multipart/form-data">
                                 {% csrf_token %}
@@ -153,7 +228,7 @@
                                     {% if form_settings.experience_enabled %}
                                     <div class="col-md-6">
                                         <div class="form-floating">
-                                            <input type="number" class="form-control" id="experience" name="experience" placeholder="Total Experience">
+                                            <input type="text" class="form-control" id="experience" name="experience" placeholder="Total Experience" pattern="[0-9]*" oninput="this.value = this.value.replace(/[^0-9]/g, '');">
                                             <label for="experience">Total Experience (in years)</label>
                                         </div>
                                     </div>
@@ -243,10 +318,11 @@
                             <p><i class="fa fa-angle-right text-primary me-2"></i>Location: {{ job.location }}</p>
                             <p><i class="fa fa-angle-right text-primary me-2"></i>Experience: {{ job.experience|default:"N/A" }}</p>
                         </div>
+
                         <div class="bg-light rounded p-5 wow slideInUp" data-wow-delay="0.1s">
                             <h4 class="mb-4">Company Details</h4>
                             {% if company_info.company_logo %}
-                                <img class="img-fluid rounded mb-4" src="{{ company_info.company_logo.url }}" alt="{{ company_info.company_name }}">
+                                <img class="img-fluid rounded mb-4" style="width: 50px;" src="{{ company_info.company_logo.url }}" alt="{{ company_info.company_name }}">
                             {% endif %}
                             <h5 class="mb-3">{{ company_info.company_name|default:"Company Name Not Set" }}</h5>
                             <p class="m-0">{{ company_info.address|default:"Address Not Set" }}</p>
@@ -257,7 +333,7 @@
                 </div>
             </div>
         </div>
-        <div class="container-fluid bg-dark text-white-50 footer wow fadeIn" data-wow-delay="0.1s">
+        <div class="container-fluid bg-dark text-white-50 footer pt-5 mt-5 wow fadeIn" data-wow-delay="0.1s">
             <div class="container py-5">
                 <div class="row g-5">
                     <div class="col-lg-3 col-md-6">
@@ -269,10 +345,7 @@
                         <a class="btn btn-link text-white-50" href="{{ company_info.terms_and_conditions_url|default:'#' }}">Terms & Condition</a>
                     </div>
                     <div class="col-lg-3 col-md-6">
-                        <h5 class="text-white mb-4">Quick Links</h5>
-                        <a class="btn btn-link text-white-50" href="#">Home</a>
-                        <a class="btn btn-link text-white-50" href="#">Jobs</a>
-                        <a class="btn btn-link text-white-50" href="#">Job Categories</a>
+                       
                     </div>
                     <div class="col-lg-3 col-md-6">
                         <h5 class="text-white mb-4">Contact</h5>
@@ -302,9 +375,9 @@
                     </div>
                     <div class="col-lg-3 col-md-6">
                         <h5 class="text-white mb-4">Newsletter</h5>
-                        <p>Subscribe to our newsletter for the latest job openings.</p>
+                        <p>Dolor et eos labore stet justo sed est sed</p>
                         <div class="position-relative mx-auto" style="max-width: 400px;">
-                            <input class="form-control bg-transparent w-100 py-3 ps-4 pe-5" type="text" placeholder="Your email">
+                            <input class="form-control bg-transparent w-100 py-3 ps-4 pe-5" type="text" placeholder="Your Email">
                             <button type="button" class="btn btn-primary py-2 position-absolute top-0 end-0 mt-2 me-2">SignUp</button>
                         </div>
                     </div>
@@ -337,6 +410,8 @@
     <script src="{% static 'lib/easing/easing.min.js' %}""></script>
     <script src="{% static 'lib/waypoints/waypoints.min.js' %}""></script>
     <script src="{% static 'lib/owlcarousel/owl.carousel.min.js' %}""></script>
+
     <script src="{% static 'js/main.js' %}""></script>
 </body>
+
 </html>

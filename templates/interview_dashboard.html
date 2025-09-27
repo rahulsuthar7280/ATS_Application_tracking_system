@@ -5,7 +5,7 @@
 {% block page_heading %}Interview Status{% endblock %}
 
 {% block content %}
-<div class="container py-4">
+<div class="container py-4" style="max-width: 100%;">
     <div class="card p-4 shadow-lg rounded-4 border-0 bg-white custom-main-card">
         <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap">
             <h2 class="h4 text-dark mb-0 me-3 fw-bold">Candidate Interview Pipeline</h2>
@@ -182,9 +182,9 @@
                 <p class="card-text mb-4 lead text-secondary">
                     To add candidates for interview, please go to the Resume Analysis page.
                 </p>
-                <a href="{% url 'resume_analysis' %}" class="btn custom-btn-primary-outline btn-lg rounded-pill px-5 py-3 shadow-sm">
+                <!-- <a href="{% url 'resume_analysis' %}" class="btn custom-btn-primary-outline btn-lg rounded-pill px-5 py-3 shadow-sm">
                     <i class="bi bi-file-earmark-text me-2"></i> Go to Resume Analysis
-                </a>
+                </a> -->
             </div>
         </div>
     {% endif %}
@@ -213,7 +213,7 @@
 
     body {
         background-color: var(--bg-main);
-        font-family: 'Poppins', sans-serif;
+        /* font-family: 'Poppins', sans-serif; */
     }
 
     /* Main Card */
@@ -248,8 +248,9 @@
     
     /* Kanban Board Layout */
     .kanban-board-container {
+        max-width: 1600px;
         display: flex;
-        gap: 1.5rem;
+        gap: 1.9rem;
         overflow-x: auto;
         padding-bottom: 1rem;
         -webkit-overflow-scrolling: touch;

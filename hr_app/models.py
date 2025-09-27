@@ -434,19 +434,43 @@ class DraftEmail(models.Model):
 
 #     class Meta:
 #         ordering = ['-date_posted']
+from django.core.exceptions import ValidationError
+class ThemeSettings(models.Model):
+    """Stores the global company name and theme colors (Singleton)."""
+    user = models.OneToOneField(
+        settings.AUTH_USER_MODEL, 
+        on_delete=models.CASCADE
+    ) 
+    # company_name = models.CharField(max_length=100, default='JobEntry')
+    
+    # --- Background Colors ---
+    theme_primary_color = models.CharField(max_length=7, default='#1e3a8a', help_text="Primary color for buttons and highlights.")
+    theme_secondary_color = models.CharField(max_length=7, default='#eef2f6', help_text="Secondary/light background color (e.g., footer).")
+    theme_background_color = models.CharField(max_length=7, default='#f7f9fc', help_text="Main page background color.")
+
+    # --- Text Colors for the corresponding backgrounds ---
+    theme_primary_color_text = models.CharField(max_length=7, default='#ffffff', help_text="Text color on Primary background (e.g., button text).")
+    theme_secondary_color_text = models.CharField(max_length=7, default='#333333', help_text="Text color on Secondary background (e.g., light sections/footer links).")
+    theme_background_color_text = models.CharField(max_length=7, default='#333333', help_text="Default text color on the main Background.")
+
+    def save(self, *args, **kwargs):
+        # Enforce singleton pattern: only one entry allowed (remove this if linked to User)
+        if not self.pk and ThemeSettings.objects.exists():
+            raise ValidationError('There can be only one ThemeSettings instance.')
+        super(ThemeSettings, self).save(*args, **kwargs)
+
+
 
 class CareerPage(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='job_postings')
+    category = models.ForeignKey('Category', on_delete=models.SET_NULL, null=True, blank=True, related_name='jobs')
     title = models.CharField(max_length=200)
     company = models.CharField(max_length=100, default='Our Company')
-    
-    # Change from URLField to ImageField for file uploads
     company_logo = models.ImageField(upload_to='company_logos/', blank=True, null=True)
-    # Add a URL field to keep track of old data or provide an alternative
-    # company_logo_url = models.URLField(max_length=200, blank=True, null=True)
-    
     date_posted = models.DateTimeField(auto_now_add=True)
     location = models.CharField(max_length=100)
     job_type = models.CharField(max_length=50)
+    category = models.CharField(max_length=50)
     experience = models.CharField(max_length=50, blank=True, null=True)
     salary = models.CharField(max_length=100)
     is_active = models.BooleanField(default=True)
@@ -455,9 +479,9 @@ class CareerPage(models.Model):
     skills = models.TextField(blank=True, help_text='Comma-separated skills')
     benefits = models.TextField(blank=True, null=True)
     application_link = models.URLField(max_length=500, default='#')
-    
     responsibilities = models.TextField(blank=True, null=True)
     qualifications = models.TextField(blank=True, null=True)
+    date_line = models.DateField(blank=True, null=True)
 
     class Meta:
         ordering = ['-date_posted']
@@ -465,11 +489,39 @@ class CareerPage(models.Model):
     def __str__(self):
         return self.title
 
+class CompanyInfo(models.Model):
+    user = models.OneToOneField(User, on_delete=models.CASCADE, unique=True, related_name='company_info')
+    company_name = models.CharField(max_length=200, default='Your Company Name')
+    address = models.CharField(max_length=255, blank=True, null=True)
+    phone_number = models.CharField(max_length=20, blank=True, null=True)
+    email = models.EmailField(blank=True, null=True)
+    about_us_url = models.URLField(max_length=200, blank=True, null=True)
+    contact_us_url = models.URLField(max_length=200, blank=True, null=True)
+    our_services_url = models.URLField(max_length=200, blank=True, null=True)
+    privacy_policy_url = models.URLField(max_length=200, blank=True, null=True)
+    terms_and_conditions_url = models.URLField(max_length=200, blank=True, null=True)
+    company_logo = models.ImageField(upload_to='company_logos/', blank=True, null=True) # New field
+
+    # Social media URLs
+    twitter_url = models.URLField(max_length=200, blank=True, null=True)
+    facebook_url = models.URLField(max_length=200, blank=True, null=True)
+    youtube_url = models.URLField(max_length=200, blank=True, null=True)
+    linkedin_url = models.URLField(max_length=200, blank=True, null=True)
+
+    class Meta:
+        verbose_name_plural = "Company Information"
+
+    def __str__(self):
+        return self.company_name
+
 # This is your existing Apply_career model, with the new fields added
 class Apply_career(models.Model):
+    """
+    Model for job applications submitted by users.
+    """
     # This foreign key links an application to a specific job posting
+    career = models.ForeignKey(CareerPage, on_delete=models.CASCADE)
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='applications', blank=True, null=True)
-    career = models.ForeignKey('CareerPage', on_delete=models.CASCADE, related_name='career')
     
     first_name = models.CharField(max_length=100)
     last_name = models.CharField(max_length=100)
@@ -501,9 +553,11 @@ class Apply_career(models.Model):
 
     date_applied = models.DateTimeField(auto_now_add=True)
 
+    # A generic JSON field to handle any additional fields added by the user
+    additional_data = models.JSONField(default=dict, blank=True)
+    
     def __str__(self):
         return f"Application from {self.first_name} {self.last_name} for {self.career.title}"
-
 
 def document_upload_path(instance, filename):
     folder_name = instance.folder.name
@@ -677,3 +731,74 @@ class CandidateAnalysis(models.Model):
         if hasattr(self.application, "full_name") and self.application.full_name:
             return self.application.full_name
         return f"CandidateAnalysis #{self.pk}"
+    
+
+
+class Category(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='categories')
+    ICON_CHOICES = [
+        ('fa-envelope-open-text', 'Marketing'),
+        ('fa-headset', 'Customer Service'),
+        ('fa-user-tie', 'Human Resource'),
+        ('fa-tasks', 'Project Management'),
+        ('fa-chart-line', 'Business Development'),
+        ('fa-handshake', 'Sales & Communication'),
+        ('fa-book-open', 'Teaching & Education'),
+        ('fa-pencil-ruler', 'Design & Creative'),
+    ]
+
+    name = models.CharField(max_length=100)
+    vacancy_count = models.IntegerField(default=0)
+    icon_class = models.CharField(
+        max_length=50,
+        choices=ICON_CHOICES,
+        default='fa-tasks'
+    ) 
+
+    def __str__(self):
+        return self.name
+
+class CareerJob(models.Model):
+    JOB_TYPES = [
+        ('FT', 'Full Time'),
+        ('PT', 'Part Time'),
+        ('FE', 'Featured'),
+    ]
+
+    title = models.CharField(max_length=200)
+    location = models.CharField(max_length=100)
+    job_type = models.CharField(max_length=2, choices=JOB_TYPES)
+    salary_range = models.CharField(max_length=50, default='$123 - $456')
+    date_line = models.DateField()
+    company_logo = models.ImageField(upload_to='company_logos/')
+    category = models.ForeignKey(Category, on_delete=models.CASCADE)
+
+    def __str__(self):
+        return self.title
+    
+
+class JobApplicationFormSettings(models.Model):
+    user = models.OneToOneField(User, on_delete=models.CASCADE, unique=True)
+    # Personal Details
+    first_name_enabled = models.BooleanField(default=True)
+    last_name_enabled = models.BooleanField(default=True)
+    email_enabled = models.BooleanField(default=True)
+    phone_enabled = models.BooleanField(default=True)
+
+    # Professional Details
+    experience_enabled = models.BooleanField(default=True)
+    current_ctc_enabled = models.BooleanField(default=True)
+    expected_ctc_enabled = models.BooleanField(default=True)
+    notice_period_enabled = models.BooleanField(default=True)
+    qualification_enabled = models.BooleanField(default=True)
+    linkedin_url_enabled = models.BooleanField(default=True)
+
+    # Documents
+    resume_enabled = models.BooleanField(default=True)
+    cover_letter_enabled = models.BooleanField(default=True)
+    
+    # A generic JSON field to handle any additional fields added by the user
+    additional_fields = models.JSONField(default=list)
+    
+    def __str__(self):
+        return f"Settings for {self.user.username}"

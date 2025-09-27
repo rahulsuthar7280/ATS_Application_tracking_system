@@ -1,0 +1,1224 @@
+{% extends 'base.html' %}
+
+
+{% block content %}
+{% load static %}
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <title>{% block title %}Career Page Settings{% endblock %}</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@500;600;700;800&family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+</head>
+
+<body class="bg-light-subtle">
+
+<style>
+    /* Dynamic theme variables are now set inline in the body tag to ensure correct scope and instant updates */
+    :root {
+        --primary-color: #3e4f47;
+        --primary-color-text:  #d6dcda;
+        --secondary-color: #eef2f6;
+        --secondary-color-text: #1f2937;
+        --page-main-bg: #0f57c4;
+        --page-main-bg-text:#1f2937;
+
+        /* Non-dynamic CSS properties */
+        --primary-hover-color: #74b098;
+        --card-bg: #ffffff;
+        --text-color-dark: #3e4f47;
+        --text-color-light: #6b7280;
+        --border-color: #e5e7eb;
+        --shadow-card: 0 10px 30px rgba(0, 0, 0, 0.08), 0 20px 50px rgba(0, 0, 0, 0.04);
+        --success-color: #18362c;
+        --success-hover-color: #b0b0b0;
+        --info-color: orangered;
+        --danger-color: #003626;
+        --glass-effect: rgba(255, 255, 255, 0.4);
+    }
+    
+    body {
+        background-color: var(--page-main-bg) !important;
+        background-image: radial-gradient(circle at 10% 20%, var(--page-main-bg) 0%, var(--secondary-color) 90%);
+        font-family: 'Poppins', sans-serif;
+        color: var(--page-main-bg-text);
+        font-size: 16px;
+        transition: background-image 0.5s ease-in-out;
+    }
+
+    h1, h2, h3, h4, h5, h6 {
+        font-family: 'Montserrat', sans-serif;
+        font-weight: 800;
+        color: var(--text-color-dark);
+    }
+
+    .universal-header {
+        position: sticky;
+        top: 0;
+        z-index: 1020;
+        background-color: var(--glass-effect);
+        backdrop-filter: blur(10px);
+        box-shadow: 0 2px 15px rgba(0, 0, 0, 0.05);
+        padding: 1rem 0;
+    }
+
+    .header-nav .nav-link {
+        font-weight: 600;
+        color: var(--text-color-dark);
+        position: relative;
+        padding: 10px 15px;
+        transition: color 0.3s ease, transform 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    }
+
+    .header-nav .nav-link:hover {
+        color: var(--primary-color);
+        transform: translateY(-2px);
+    }
+
+    .header-nav .nav-link.active {
+        color: var(--primary-color);
+    }
+
+    .header-nav .nav-link::after {
+        content: '';
+        position: absolute;
+        bottom: 0;
+        left: 50%;
+        width: 0;
+        height: 3px;
+        background-color: var(--primary-color);
+        transform: translateX(-50%);
+        transition: width 0.3s ease-out;
+    }
+
+    .header-nav .nav-link.active::after,
+    .header-nav .nav-link:hover::after {
+        width: 80%;
+    }
+
+    .form-container {
+        max-width: 1600px;
+        background-color: var(--card-bg);
+        border-radius: 10px;
+        box-shadow: var(--shadow-card);
+        padding: 0;
+        overflow: hidden;
+        backdrop-filter: blur(10px);
+        background-color: var(--glass-effect);
+        border: 1px solid rgba(255, 255, 255, 0.18);
+    }
+
+    .form-content {
+        padding: 40px;
+    }
+
+    .form-section {
+        display: none;
+        animation: fadeIn 0.8s ease-out both;
+    }
+
+    .form-section.active {
+        display: block;
+    }
+
+    .card {
+        border: 1px solid var(--border-color);
+        box-shadow: 0 5px 15px rgba(0,0,0,0.04);
+        margin-bottom: 30px;
+        border-radius: 10px;
+        transition: transform 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94), box-shadow 0.3s ease;
+    }
+
+    .card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 8px 25px rgba(0,0,0,0.08);
+    }
+
+    .card-header {
+        background-color: var(--secondary-color);
+        color: var(--text-color-dark);
+        padding: 20px 30px;
+        border-bottom: 1px solid var(--border-color);
+        border-top-left-radius: 11px;
+        border-top-right-radius: 11px;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        font-weight: 700;
+        transition: background-color 0.3s ease;
+    }
+
+    .btn-primary, .btn-success {
+        background-color: var(--primary-color);
+        border-color: var(--primary-color);
+        color: var(--primary-color-text);
+        font-weight: 600;
+        transition: all 0.3s ease;
+    }
+
+    .btn-primary:hover, .btn-success:hover {
+        background-color: var(--primary-hover-color);
+        border-color: var(--primary-hover-color);
+        box-shadow: 0 4px 12px rgba(136, 159, 223, 0.2);
+        transform: translateY(-2px);
+    }
+
+    .btn-success {
+        background-color: var(--success-color);
+        border-color: var(--success-color);
+    }
+
+    .btn-success:hover {
+        background-color: var(--success-hover-color);
+        border-color: var(--success-hover-color);
+    }
+
+    .field-row {
+        display: flex;
+        align-items: center;
+        gap: 20px;
+        margin-bottom: 25px;
+        padding: 15px;
+        background-color: #fcfdfe;
+        border-left: 3px solid var(--primary-color);
+        border-radius: 8px;
+        box-shadow: 0 1px 5px rgba(0,0,0,0.03);
+        transition: all 0.3s ease;
+    }
+
+    .field-row:hover {
+        background-color: #f5f8fb;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+    }
+
+    .form-control:focus, .form-select:focus {
+        border-color: var(--primary-color);
+        box-shadow: 0 0 0 0.3rem rgba(30, 58, 138, 0.15);
+        transform: scale(1.01);
+    }
+
+    .form-check-input:checked {
+        background-color: var(--primary-color);
+        border-color: var(--primary-color);
+        box-shadow: 0 0 0 0.2rem rgba(30, 58, 138, 0.2);
+    }
+
+    .table thead th {
+        font-weight: 700;
+        color: var(--text-color-dark);
+        background-color: var(--secondary-color);
+        border-bottom: 2px solid var(--border-color);
+    }
+
+    .table-hover tbody tr:hover {
+        background-color: var(--secondary-color);
+    }
+
+    @keyframes fadeIn {
+        from {
+            opacity: 0;
+            transform: translateY(20px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    /* Additional Styling for better look and feel */
+    .btn-group-custom {
+        display: flex;
+        gap: 10px;
+    }
+
+    .form-label-with-icon i {
+        min-width: 25px;
+        text-align: center;
+    }
+
+    .form-field-wrapper {
+        flex-grow: 1;
+    }
+
+    .badge-success {
+        background-color: var(--success-color);
+    }
+
+    .badge-danger {
+        background-color: var(--danger-color);
+    }
+</style>
+
+<nav class="navbar navbar-expand-lg navbar-light universal-header">
+    <div class="container-fluid">
+        <a class="navbar-brand fw-bold" href="#">
+            <i class="fas fa-cog  me-2"></i>
+            Career Settings
+        </a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse justify-content-end" id="navbarNav">
+            <ul class="navbar-nav header-nav">
+                <li class="nav-item">
+                    <a class="nav-link active" aria-current="page" href="#job-app-form" data-target="job-app-form">Job Application Form</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="#company-info-form" data-target="company-info-form">Company Info</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="#career-page-form" data-target="career-page-form">Job Listings</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="#category-form" data-target="category-form">Job Categories</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="#theme-form" data-target="theme-form">Theme Colors</a>
+                </li>
+            </ul>
+        </div>
+    </div>
+</nav>
+
+<div class="container-fluid py-5">
+    <div class="form-container mx-auto">
+        <div class="form-content">
+            {% for message in messages %}
+            <div class="alert alert-{{ message.tags }} alert-dismissible fade show mt-4" role="alert">
+                {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+            {% endfor %}
+
+            <div class="form-section active" id="job-app-form" role="tabpanel" aria-labelledby="job-app-form-tab">
+                <div class="mb-5 d-flex flex-wrap justify-content-between align-items-center">
+                    <div class="form-check d-flex align-items-center gap-2">
+                        <input class="form-check-input" type="checkbox" id="toggleAllFields" {% if form_settings.is_all_fields_enabled %}checked{% endif %} onchange="toggleAllFields(this)" aria-controls="job-app-form-fields">
+                        <!-- <label class="form-check-label" for="toggleAllFields" style="color: black;">Toggle All Fields</label> -->
+                        <label class="form-check-label" for="toggleAllFields" style="color: black;">Enable All Fields</label>
+                    </div>
+                    <div class="btn-group-custom">
+                        <button type="button" class="btn btn-sm btn-success" data-action="add-field">
+                            <i class="fa-solid fa-plus me-1"></i> Add Field
+                        </button>
+                        <button type="button" class="btn btn-sm btn-danger" data-action="remove-field">
+                            <i class="fa-solid fa-minus me-1"></i> Remove Field
+                        </button>
+                    </div>
+                </div>
+
+                <form method="post" enctype="multipart/form-data">
+                    {% csrf_token %}
+                    <input type="hidden" name="form_type" value="job_application">
+
+                    <div class="row" id="job-app-form-fields">
+                        <div class="col-12">
+                            <div class="card">
+                                <div class="card-header">
+                                    <i class="fas fa-user-circle"></i>
+                                    <h5>Personal Details</h5>
+                                </div>
+                                <div class="card-body">
+                                    <div class="row g-4">
+                                        <div class="col-lg-3 col-md-6">
+                                            <div class="field-row">
+                                                <div class="form-check">
+                                                    <input class="form-check-input individual-toggle" type="checkbox" name="first_name_enabled" {% if form_settings.first_name_enabled %}checked{% endif %}>
+                                                </div>
+                                                <div class="form-field-wrapper">
+                                                    <label for="id_first_name" class="form-label">First Name</label>
+                                                    <input type="text" class="form-control" id="id_first_name" name="first_name" {% if not form_settings.first_name_enabled %}disabled{% endif %} placeholder="e.g. John" {% if not form_settings.first_name_enabled %} value="" {% else %} value="{% if not form_settings.first_name_enabled %}Disabled Field{% endif %}" data-original-placeholder="e.g. John"{% endif %}>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="col-lg-3 col-md-6">
+                                            <div class="field-row">
+                                                <div class="form-check">
+                                                    <input class="form-check-input individual-toggle" type="checkbox" name="last_name_enabled" {% if form_settings.last_name_enabled %}checked{% endif %}>
+                                                </div>
+                                                <div class="form-field-wrapper">
+                                                    <label for="id_last_name" class="form-label">Last Name</label>
+                                                    <input type="text" class="form-control" id="id_last_name" name="last_name" {% if not form_settings.last_name_enabled %}disabled{% endif %} placeholder="e.g. Doe" {% if not form_settings.last_name_enabled %} value="" {% else %} value="{% if not form_settings.last_name_enabled %}Disabled Field{% endif %}" data-original-placeholder="e.g. Doe"{% endif %}>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="col-lg-3 col-md-6">
+                                            <div class="field-row">
+                                                <div class="form-check">
+                                                    <input class="form-check-input individual-toggle" type="checkbox" name="email_enabled" {% if form_settings.email_enabled %}checked{% endif %}>
+                                                </div>
+                                                <div class="form-field-wrapper">
+                                                    <label for="id_email" class="form-label">Email Address</label>
+                                                    <input type="email" class="form-control" id="id_email" name="email" {% if not form_settings.email_enabled %}disabled{% endif %} placeholder="e.g. john.doe@example.com" {% if not form_settings.email_enabled %} value="" {% else %} value="{% if not form_settings.email_enabled %}Disabled Field{% endif %}" data-original-placeholder="e.g. john.doe@example.com"{% endif %}>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="col-lg-3 col-md-6">
+                                            <div class="field-row">
+                                                <div class="form-check">
+                                                    <input class="form-check-input individual-toggle" type="checkbox" name="phone_enabled" {% if form_settings.phone_enabled %}checked{% endif %}>
+                                                </div>
+                                                <div class="form-field-wrapper">
+                                                    <label for="id_phone" class="form-label">Phone Number</label>
+                                                    <input type="tel" class="form-control" id="id_phone" name="phone" {% if not form_settings.phone_enabled %}disabled{% endif %} placeholder="e.g. +1 (123) 456-7890" {% if not form_settings.phone_enabled %} value="" {% else %} value="{% if not form_settings.phone_enabled %}Disabled Field{% endif %}" data-original-placeholder="e.g. +1 (123) 456-7890"{% endif %}>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-12">
+                            <div class="card">
+                                <div class="card-header">
+                                    <i class="fas fa-briefcase"></i>
+                                    <h5>Professional Details</h5>
+                                </div>
+                                <div class="card-body">
+                                    <div class="row g-4">
+                                        <div class="col-lg-4 col-md-6">
+                                            <div class="field-row">
+                                                <div class="form-check">
+                                                    <input class="form-check-input individual-toggle" type="checkbox" name="experience_enabled" {% if form_settings.experience_enabled %}checked{% endif %}>
+                                                </div>
+                                                <div class="form-field-wrapper">
+                                                    <label for="id_experience" class="form-label">Total Experience (in years)</label>
+                                                    <input type="number" class="form-control" id="id_experience" name="experience" {% if not form_settings.experience_enabled %}disabled{% endif %} placeholder="e.g. 5" {% if not form_settings.experience_enabled %} value="" {% else %} value="{% if not form_settings.experience_enabled %}Disabled Field{% endif %}" data-original-placeholder="e.g. 5"{% endif %}>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="col-lg-4 col-md-6">
+                                            <div class="field-row">
+                                                <div class="form-check">
+                                                    <input class="form-check-input individual-toggle" type="checkbox" name="current_ctc_enabled" {% if form_settings.current_ctc_enabled %}checked{% endif %}>
+                                                </div>
+                                                <div class="form-field-wrapper">
+                                                    <label for="id_current_ctc" class="form-label">Current CTC (Annual)</label>
+                                                    <input type="text" class="form-control" id="id_current_ctc" name="current_ctc" {% if not form_settings.current_ctc_enabled %}disabled{% endif %} placeholder="e.g. $50,000" {% if not form_settings.current_ctc_enabled %} value="" {% else %} value="{% if not form_settings.current_ctc_enabled %}Disabled Field{% endif %}" data-original-placeholder="e.g. $50,000"{% endif %}>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="col-lg-4 col-md-6">
+                                            <div class="field-row">
+                                                <div class="form-check">
+                                                    <input class="form-check-input individual-toggle" type="checkbox" name="expected_ctc_enabled" {% if form_settings.expected_ctc_enabled %}checked{% endif %}>
+                                                </div>
+                                                <div class="form-field-wrapper">
+                                                    <label for="id_expected_ctc" class="form-label">Expected CTC (Annual)</label>
+                                                    <input type="text" class="form-control" id="id_expected_ctc" name="expected_ctc" {% if not form_settings.expected_ctc_enabled %}disabled{% endif %} placeholder="e.g. $60,000" {% if not form_settings.expected_ctc_enabled %} value="" {% else %} value="{% if not form_settings.expected_ctc_enabled %}Disabled Field{% endif %}" data-original-placeholder="e.g. $60,000"{% endif %}>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="col-lg-4 col-md-6">
+                                            <div class="field-row">
+                                                <div class="form-check">
+                                                    <input class="form-check-input individual-toggle" type="checkbox" name="notice_period_enabled" {% if form_settings.notice_period_enabled %}checked{% endif %}>
+                                                </div>
+                                                <div class="form-field-wrapper">
+                                                    <label for="id_notice_period" class="form-label">Notice Period</label>
+                                                    <input type="text" class="form-control" id="id_notice_period" name="notice_period" {% if not form_settings.notice_period_enabled %}disabled{% endif %} placeholder="e.g. 30 days" {% if not form_settings.notice_period_enabled %} value="" {% else %} value="{% if not form_settings.notice_period_enabled %}Disabled Field{% endif %}" data-original-placeholder="e.g. 30 days"{% endif %}>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="col-lg-4 col-md-6">
+                                            <div class="field-row">
+                                                <div class="form-check">
+                                                    <input class="form-check-input individual-toggle" type="checkbox" name="qualification_enabled" {% if form_settings.qualification_enabled %}checked{% endif %}>
+                                                </div>
+                                                <div class="form-field-wrapper">
+                                                    <label for="id_qualification" class="form-label">Highest Qualification</label>
+                                                    <input type="text" class="form-control" id="id_qualification" name="qualification" {% if not form_settings.qualification_enabled %}disabled{% endif %} placeholder="e.g. Master's in CS" {% if not form_settings.qualification_enabled %} value="" {% else %} value="{% if not form_settings.qualification_enabled %}Disabled Field{% endif %}" data-original-placeholder="e.g. Master's in CS"{% endif %}>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="col-lg-4 col-md-6">
+                                            <div class="field-row">
+                                                <div class="form-check">
+                                                    <input class="form-check-input individual-toggle" type="checkbox" name="linkedin_url_enabled" {% if form_settings.linkedin_url_enabled %}checked{% endif %}>
+                                                </div>
+                                                <div class="form-field-wrapper">
+                                                    <label for="id_linkedin_url" class="form-label">LinkedIn Profile URL</label>
+                                                    <input type="url" class="form-control" id="id_linkedin_url" name="linkedin_url" {% if not form_settings.linkedin_url_enabled %}disabled{% endif %} placeholder="https://linkedin.com/in/johndoe" {% if not form_settings.linkedin_url_enabled %} value="" {% else %} value="{% if not form_settings.linkedin_url_enabled %}Disabled Field{% endif %}" data-original-placeholder="https://linkedin.com/in/johndoe"{% endif %}>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-12">
+                            <div class="card">
+                                <div class="card-header">
+                                    <i class="fas fa-folder-open"></i>
+                                    <h5>Documents</h5>
+                                </div>
+                                <div class="card-body">
+                                    <div class="row g-4">
+                                        <div class="col-lg-4 col-md-6">
+                                            <div class="field-row">
+                                                <div class="form-check">
+                                                    <input class="form-check-input individual-toggle" type="checkbox" name="resume_enabled" {% if form_settings.resume_enabled %}checked{% endif %}>
+                                                </div>
+                                                <div class="form-field-wrapper">
+                                                    <label for="id_resume" class="form-label">Resume (PDF, DOCX)</label>
+                                                    <input type="file" class="form-control" id="id_resume" name="resume" {% if not form_settings.resume_enabled %}disabled{% endif %}>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="col-lg-4 col-md-6">
+                                            <div class="field-row">
+                                                <div class="form-check">
+                                                    <input class="form-check-input individual-toggle" type="checkbox" name="cover_letter_enabled" {% if form_settings.cover_letter_enabled %}checked{% endif %}>
+                                                </div>
+                                                <div class="form-field-wrapper">
+                                                    <label for="id_cover_letter" class="form-label">Cover Letter (Optional)</label>
+                                                    <input type="file" class="form-control" id="id_cover_letter" name="cover_letter" {% if not form_settings.cover_letter_enabled %}disabled{% endif %}>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="col-12">
+                            <div class="card">
+                                <div class="card-header">
+                                    <i class="fas fa-plus-circle"></i>
+                                    <h5>Additional Fields</h5>
+                                </div>
+                                <div class="card-body">
+                                    <div class="row g-4" id="additional-fields">
+                                        {% for field in form_settings.additional_fields %}
+                                        <div class="col-lg-4 col-md-6" data-field-id="{{ forloop.counter }}">
+                                            <div class="field-row">
+                                                <div class="form-check">
+                                                    <input class="form-check-input individual-toggle" type="checkbox" name="additional_field_enabled_{{ forloop.counter }}" checked onchange="handleIndividualToggle(this)">
+                                                </div>
+                                                <div class="form-field-wrapper">
+                                                    <label class="form-label form-label-with-icon">
+                                                        <i class="{{ field.icon_class|default:'fas fa-edit' }}"></i> {{ field.name }}
+                                                    </label>
+                                                    <input type="text" class="form-control" name="additional_field_name_{{ forloop.counter }}" value="{{ field.name }}" placeholder="Enter Field Name">
+                                                    <input type="hidden" name="additional_field_type_{{ forloop.counter }}" value="{{ field.type }}">
+                                                    <input type="hidden" name="additional_field_icon_{{ forloop.counter }}" value="{{ field.icon_class }}">
+                                                </div>
+                                            </div>
+                                        </div>
+                                        {% endfor %}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="d-grid gap-2 mt-4">
+                        <button type="submit" class="btn btn-success btn-lg">Save Application Form Settings</button>
+                    </div>
+                </form>
+            </div>
+
+            <div class="form-section" id="company-info-form" role="tabpanel" aria-labelledby="company-info-form-tab">
+                <form method="post" enctype="multipart/form-data">
+                    {% csrf_token %}
+                    <input type="hidden" name="form_type" value="company_info">
+
+                    <div class="card">
+                        <div class="card-header">
+                            <i class="fas fa-info-circle"></i>
+                            <h5>Company Information</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="row g-4">
+                                {% with field_name="company_name" label="Company Name" placeholder="e.g. Acme Corp" type="text" required=True value=company_info.company_name %}
+                                <div class="col-lg-3 col-md-6">
+                                    <label for="id_company_name" class="form-label">Company Name</label>
+                                    <input type="text" class="form-control" id="id_company_name" name="company_name" value="{{ company_info.company_name|default:'' }}" placeholder="e.g. Acme Corp" required>
+                                </div>
+                                {% endwith %}
+                                <div class="col-lg-3 col-md-6">
+                                    <label for="id_company_logo" class="form-label">Company Logo</label>
+                                    <input type="file" class="form-control" id="id_company_logo" name="company_logo">
+                                    {% if company_info.company_logo %}
+                                    <img src="{{ company_info.company_logo.url }}" class="img-fluid mt-2 rounded" style="max-height: 100px;">
+                                    {% endif %}
+                                </div>
+                                                                {% with field_name="email" label="Email" placeholder="e.g. info@acmecorp.com" type="email" value=company_info.email %}
+                                <div class="col-lg-3 col-md-6">
+                                    <label for="id_email" class="form-label">Email</label>
+                                    <input type="email" class="form-control" id="id_email" name="email" value="{{ company_info.email|default:'' }}" placeholder="e.g. info@acmecorp.com">
+                                </div>
+                                {% endwith %}
+                                {% with field_name="phone_number" label="Phone Number" placeholder="e.g. +1 (123) 456-7890" type="tel" value=company_info.phone_number %}
+                                <div class="col-lg-3 col-md-6">
+                                    <label for="id_phone_number" class="form-label">Phone Number</label>
+                                    <input type="tel" class="form-control" id="id_phone_number" name="phone_number" value="{{ company_info.phone_number|default:'' }}" placeholder="e.g. +1 (123) 456-7890">
+                                </div>
+                                {% endwith %}
+
+                                {% with field_name="address" label="Address" placeholder="e.g. 123 Main St, Anytown" type="text" value=company_info.address %}
+                                <div class="col-lg-12 col-md-12">
+                                    <label for="id_address" class="form-label">Address</label>
+                                    <input type="text" class="form-control" id="id_address" name="address" value="{{ company_info.address|default:'' }}" placeholder="e.g. 123 Main St, Anytown">
+                                </div>
+                                {% endwith %}
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card mt-4">
+                        <div class="card-header">
+                            <i class="fas fa-link"></i>
+                            <h5>Footer Links & Social Media</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="row g-4">
+                                {% with field_name="about_us_url" label="About Us URL" placeholder="e.g. /about" type="url" value=company_info.about_us_url %}
+                                <div class="col-lg-4 col-md-6">
+                                    <label for="id_about_us_url" class="form-label">About Us URL</label>
+                                    <input type="url" class="form-control" id="id_about_us_url" name="about_us_url" value="{{ company_info.about_us_url|default:'' }}" placeholder="e.g. /about">
+                                </div>
+                                {% endwith %}
+                                {% with field_name="contact_us_url" label="Contact Us URL" placeholder="e.g. /contact" type="url" value=company_info.contact_us_url %}
+                                <div class="col-lg-4 col-md-6">
+                                    <label for="id_contact_us_url" class="form-label">Contact Us URL</label>
+                                    <input type="url" class="form-control" id="id_contact_us_url" name="contact_us_url" value="{{ company_info.contact_us_url|default:'' }}" placeholder="e.g. /contact">
+                                </div>
+                                {% endwith %}
+                                {% with field_name="our_services_url" label="Our Services URL" placeholder="e.g. /services" type="url" value=company_info.our_services_url %}
+                                <div class="col-lg-4 col-md-6">
+                                    <label for="id_our_services_url" class="form-label">Our Services URL</label>
+                                    <input type="url" class="form-control" id="id_our_services_url" name="our_services_url" value="{{ company_info.our_services_url|default:'' }}" placeholder="e.g. /services">
+                                </div>
+                                {% endwith %}
+                                {% with field_name="privacy_policy_url" label="Privacy Policy URL" placeholder="e.g. /privacy" type="url" value=company_info.privacy_policy_url %}
+                                <div class="col-lg-4 col-md-6">
+                                    <label for="id_privacy_policy_url" class="form-label">Privacy Policy URL</label>
+                                    <input type="url" class="form-control" id="id_privacy_policy_url" name="privacy_policy_url" value="{{ company_info.privacy_policy_url|default:'' }}" placeholder="e.g. /privacy">
+                                </div>
+                                {% endwith %}
+                                {% with field_name="terms_and_conditions_url" label="T&C URL" placeholder="e.g. /terms" type="url" value=company_info.terms_and_conditions_url %}
+                                <div class="col-lg-4 col-md-6">
+                                    <label for="id_terms_and_conditions_url" class="form-label">T&C URL</label>
+                                    <input type="url" class="form-control" id="id_terms_and_conditions_url" name="terms_and_conditions_url" value="{{ company_info.terms_and_conditions_url|default:'' }}" placeholder="e.g. /terms">
+                                </div>
+                                {% endwith %}
+                            </div>
+
+                            <hr class="my-4">
+
+                            <div class="row g-4">
+                                {% with field_name="twitter_url" label="Twitter URL" placeholder="e.g. https://twitter.com/acmecorp" type="url" value=company_info.twitter_url icon="fab fa-twitter" %}
+                                <div class="col-lg-4 col-md-6">
+                                    <label for="id_twitter_url" class="form-label">
+                                        <i class="fab fa-twitter"></i> Twitter URL
+                                    </label>
+                                    <input type="url" class="form-control" id="id_twitter_url" name="twitter_url" value="{{ company_info.twitter_url|default:'' }}" placeholder="e.g. https://twitter.com/acmecorp">
+                                </div>
+                                {% endwith %}
+                                {% with field_name="facebook_url" label="Facebook URL" placeholder="e.g. https://facebook.com/acmecorp" type="url" value=company_info.facebook_url icon="fab fa-facebook" %}
+                                <div class="col-lg-4 col-md-6">
+                                    <label for="id_facebook_url" class="form-label">
+                                        <i class="fab fa-facebook"></i> Facebook URL
+                                    </label>
+                                    <input type="url" class="form-control" id="id_facebook_url" name="facebook_url" value="{{ company_info.facebook_url|default:'' }}" placeholder="e.g. https://facebook.com/acmecorp">
+                                </div>
+                                {% endwith %}
+                                {% with field_name="youtube_url" label="YouTube URL" placeholder="e.g. https://youtube.com/acmecorp" type="url" value=company_info.youtube_url icon="fab fa-youtube" %}
+                                <div class="col-lg-4 col-md-6">
+                                    <label for="id_youtube_url" class="form-label">
+                                        <i class="fab fa-youtube"></i> YouTube URL
+                                    </label>
+                                    <input type="url" class="form-control" id="id_youtube_url" name="youtube_url" value="{{ company_info.youtube_url|default:'' }}" placeholder="e.g. https://youtube.com/acmecorp">
+                                </div>
+                                {% endwith %}
+                                {% with field_name="linkedin_url" label="LinkedIn URL" placeholder="e.g. https://linkedin.com/company/acmecorp" type="url" value=company_info.linkedin_url icon="fab fa-linkedin" %}
+                                <div class="col-lg-4 col-md-6">
+                                    <label for="id_linkedin_url" class="form-label">
+                                        <i class="fab fa-linkedin"></i> LinkedIn URL
+                                    </label>
+                                    <input type="url" class="form-control" id="id_linkedin_url" name="linkedin_url" value="{{ company_info.linkedin_url|default:'' }}" placeholder="e.g. https://linkedin.com/company/acmecorp">
+                                </div>
+                                {% endwith %}
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="d-grid gap-2 mt-4">
+                        <button type="submit" class="btn btn-primary btn-lg">Save Company Information</button>
+                    </div>
+                </form>
+            </div>
+
+            <div class="form-section" id="career-page-form" role="tabpanel" aria-labelledby="career-page-form-tab">
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <i class="fas fa-plus"></i>
+                        <h5>Post New Job</h5>
+                    </div>
+                    <div class="card-body">
+                        <form method="post">
+                            {% csrf_token %}
+                            <input type="hidden" name="form_type" value="career_page">
+
+                            <div class="row g-4">
+                                <div class="col-lg-6">
+                                    <label for="id_title" class="form-label">Job Title</label>
+                                    <input type="text" class="form-control" id="id_title" name="title" required placeholder="e.g. Senior Backend Developer">
+                                </div>
+                                <div class="col-lg-6">
+                                    <label for="id_company" class="form-label">Company (Optional)</label>
+                                    <input type="text" class="form-control" id="id_company" name="company" placeholder="Defaults to Company Info Name">
+                                </div>
+                                <div class="col-lg-3 col-md-6">
+                                    <label for="id_location" class="form-label">Location</label>
+                                    <input type="text" class="form-control" id="id_location" name="location" required placeholder="e.g. Remote, London, or NYC">
+                                </div>
+                                <div class="col-lg-3 col-md-6">
+                                    <label for="id_job_type" class="form-label">Job Type</label>
+                                    <select class="form-select" id="id_job_type" name="job_type" required>
+                                        <option value="Full Time">Full Time</option>
+                                        <option value="Part Time">Part Time</option>
+                                        <option value="Contract">Contract</option>
+                                        <option value="Internship">Internship</option>
+                                    </select>
+                                </div>
+                                <div class="col-lg-3 col-md-6">
+                                    <label for="id_category" class="form-label">Category</label>
+                                    <select class="form-select" id="id_category" name="category" required>
+                                        {% for category in categories %}
+                                        <option value="{{ category.name }}">{{ category.name }}</option>
+                                        {% empty %}
+                                        <option value="" disabled>No categories found. Add one in the Categories tab.</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                                <div class="col-lg-3 col-md-6">
+                                    <label for="id_experience" class="form-label">Experience (Years)</label>
+                                    <input type="text" class="form-control" id="id_experience" name="experience" placeholder="e.g. 5+ Years">
+                                </div>
+                                <div class="col-lg-6 col-md-6">
+                                    <label for="id_salary" class="form-label">Salary Range (Optional)</label>
+                                    <input type="text" class="form-control" id="id_salary" name="salary" placeholder="e.g. $100,000 - $120,000">
+                                </div>
+                                <div class="col-lg-3 col-md-6">
+                                    <label for="id_date_line" class="form-label">Application Date Line</label>
+                                    <input type="date" class="form-control" id="id_date_line" name="date_line">
+                                </div>
+                                <div class="col-lg-3 col-md-6">
+                                    <label for="id_is_active" class="form-label">Active Status</label>
+                                    <div class="form-check form-switch mt-2 p-0">
+                                        <input class="form-check-input ms-0" type="checkbox" id="id_is_active" name="is_active" checked>
+                                        <label class="form-check-label ps-4" for="id_is_active">
+                                            Publish Job
+                                        </label>
+                                    </div>
+                                </div>
+
+                                <div class="col-12">
+                                    <label for="id_description" class="form-label">Job Description</label>
+                                    <textarea class="form-control" id="id_description" name="description" rows="5" required placeholder="A brief overview of the role..."></textarea>
+                                </div>
+                                <div class="col-12">
+                                    <label for="id_responsibilities" class="form-label">Responsibilities (Use bullet points or separate lines)</label>
+                                    <textarea class="form-control" id="id_responsibilities" name="responsibilities" rows="5" placeholder="e.g., - Develop and maintain APIs"></textarea>
+                                </div>
+                                <div class="col-12">
+                                    <label for="id_qualifications" class="form-label">Qualifications (Use bullet points or separate lines)</label>
+                                    <textarea class="form-control" id="id_qualifications" name="qualifications" rows="5" placeholder="e.g., - 5+ years of experience"></textarea>
+                                </div>
+                                <div class="col-12">
+                                    <label for="id_benefits" class="form-label">Benefits (Use bullet points or separate lines)</label>
+                                    <textarea class="form-control" id="id_benefits" name="benefits" rows="5" placeholder="e.g., - Health Insurance, - Unlimited PTO"></textarea>
+                                </div>
+                            </div>
+
+                            <div class="d-grid gap-2 mt-4">
+                                <button type="submit" class="btn btn-primary btn-lg">Post Job</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+
+                <div class="card mt-5">
+                    <div class="card-header">
+                        <i class="fas fa-list-alt"></i>
+                        <h5>Active Job Listings ({{ jobs|length }})</h5>
+                    </div>
+                    <div class="card-body p-0">
+                        <div class="table-responsive">
+                            <table class="table table-hover align-middle">
+                                <thead>
+                                    <tr>
+                                        <th>Title</th>
+                                        <th>Category</th>
+                                        <th>Location / Type</th>
+                                        <th>Date Line</th>
+                                        <th>Status</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for job in jobs %}
+                                    <tr>
+                                        <td>
+                                            <div class="d-flex align-items-center">
+                                                <i class="{{ job.category.icon_class|default:'fas fa-briefcase' }} fa-lg me-3 text-primary"></i>
+                                                <div>
+                                                    <div class="fw-bold">{{ job.title }}</div>
+                                                    <small class="text-muted">{{ job.company|default:company_info.company_name }}</small>
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td>{{ job.category }}</td>
+                                        <td>
+                                            {{ job.location }}
+                                            <span class="badge bg-secondary ms-2">{{ job.job_type }}</span>
+                                        </td>
+                                        <td>{{ job.date_line|default:'N/A' }}</td>
+                                        <td>
+                                            {% if job.is_active %}
+                                            <span class="badge badge-success">Active</span>
+                                            {% else %}
+                                            <span class="badge badge-danger">Inactive</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            <a href="{% url 'edit_job' job.pk %}" class="btn btn-sm btn-info text-white"><i class="fas fa-edit"></i></a>
+                                            <a href="{% url 'delete_job' job.pk %}" class="btn btn-sm btn-danger" onclick="return confirm('Are you sure you want to delete this job?')"><i class="fas fa-trash"></i></a>
+                                        </td>
+                                    </tr>
+                                    {% empty %}
+                                    <tr>
+                                        <td colspan="6" class="text-center py-4">No job listings found. Post your first job above!</td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-section" id="category-form" role="tabpanel" aria-labelledby="category-form-tab">
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <i class="fas fa-plus"></i>
+                        <h5>Add New Category</h5>
+                    </div>
+                    <div class="card-body">
+                        <form method="post" class="row g-4 align-items-end">
+                            {% csrf_token %}
+                            <input type="hidden" name="form_type" value="category">
+
+                            <div class="col-md-2 col-lg-3">
+                                <label for="id_category_name" class="form-label">Category Name</label>
+                                <input type="text" class="form-control" id="id_category_name" name="category_name" required placeholder="e.g. Software Engineering">
+                            </div>
+                            <div class="col-md-3 col-lg-3">
+                                <label for="id_category_vacancy_count" class="form-label">Vacancy Count</label>
+                                <input type="text" class="form-control" id="id_category_vacancy_count" name="vacancy_count" required placeholder="Enter Number of Vacancy">
+                            </div>
+                            <div class="col-md-3 col-lg-3">
+                                <label for="id_icon_class" class="form-label">Category Icon</label>
+                                <select class="form-select" id="id_icon_class" name="icon_class">
+                                    {% for icon_class, icon_name in icon_choices %}
+                                    <option value="{{ icon_class }}">{{ icon_name }} ({{ icon_class }})</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="col-md-3 col-lg-3">
+                                <button type="submit" class="btn btn-primary w-100">Add Category</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+
+                <div class="card mt-5">
+                    <div class="card-header">
+                        <i class="fas fa-list-ul"></i>
+                        <h5>Existing Categories ({{ categories|length }})</h5>
+                    </div>
+                    <div class="card-body p-0">
+                        <div class="table-responsive">
+                            <table class="table table-hover align-middle">
+                                <thead>
+                                    <tr>
+                                        <th>Icon</th>
+                                        <th>Category Name</th>
+                                        <th>Vacancies</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% if categories %}
+                                    {% for category in categories %}
+                                    <tr>
+                                        <td><i class="fas {{ category.icon_class }}"></i></td>
+                                        <td>{{ category.name }}</td>
+                                        <td>{{ category.vacancy_count }}</td>
+                                        <td>
+                                            <a href="{% url 'edit_category' category.id %}" class="btn btn-sm btn-outline-secondary me-2">
+                                                <i class="fas fa-edit"></i> Edit
+                                            </a>
+                                            <form action="{% url 'delete_category' category.id %}" method="post" class="d-inline" onsubmit="return confirm('Are you sure you want to delete this category? This cannot be undone.');">
+                                                {% csrf_token %}
+                                                <button type="submit" class="btn btn-sm btn-outline-danger">
+                                                    <i class="fas fa-trash-alt"></i> Delete
+                                                </button>
+                                            </form>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                    {% else %}
+                                    <tr>
+                                        <td colspan="4" class="text-center text-muted">No categories created yet.</td>
+                                    </tr>
+                                    {% endif %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-section" id="theme-form" role="tabpanel" aria-labelledby="theme-form-tab">
+                <form method="post">
+                    {% csrf_token %}
+                    <input type="hidden" name="form_type" value="theme_settings">
+
+                    <div class="card">
+                        <div class="card-header">
+                            <i class="fas fa-paint-brush"></i>
+                            <h5>Customize Color Palette</h5>
+                        </div>
+                        <div class="card-body">
+                            <p class="text-muted mb-4">Changes here will instantly update the preview (and variables on this page), but won't be saved until you click 'Save Theme Settings'.</p>
+                            <div class="row g-4">
+                                <div class="col-lg-4 col-md-6">
+                                    <label for="id_primary_color" class="form-label">Primary Color (Accent)</label>
+                                    <div class="input-group">
+                                        <input type="color" class="form-control form-control-color" data-color-target="id_primary_color" value="{{ theme_settings.theme_primary_color|default:'#1e3a8a' }}">
+                                        <input type="text" class="form-control" id="id_primary_color" name="primary_color" value="{{ theme_settings.theme_primary_color|default:'#1e3a8a' }}" placeholder="#1e3a8a">
+                                    </div>
+                                    <small class="form-text text-muted">Used for buttons, links, and active elements.</small>
+                                </div>
+                                <div class="col-lg-4 col-md-6">
+                                    <label for="id_secondary_color" class="form-label">Secondary Color</label>
+                                    <div class="input-group">
+                                        <input type="color" class="form-control form-control-color" data-color-target="id_secondary_color" value="{{ theme_settings.theme_secondary_color|default:'#eef2f6' }}">
+                                        <input type="text" class="form-control" id="id_secondary_color" name="secondary_color" value="{{ theme_settings.theme_secondary_color|default:'#eef2f6' }}" placeholder="#eef2f6">
+                                    </div>
+                                    <small class="form-text text-muted">Used for subtle highlights and secondary backgrounds.</small>
+                                </div>
+                                <div class="col-lg-4 col-md-6">
+                                    <label for="id_background_color" class="form-label">Page Background Color</label>
+                                    <div class="input-group">
+                                        <input type="color" class="form-control form-control-color" data-color-target="id_background_color" value="{{ theme_settings.theme_background_color|default:'#f7f9fc' }}">
+                                        <input type="text" class="form-control" id="id_background_color" name="background_color" value="{{ theme_settings.theme_background_color|default:'#f7f9fc' }}" placeholder="#f7f9fc">
+                                    </div>
+                                    <small class="form-text text-muted">Main background color of the career page.</small>
+                                </div>
+                            </div>
+
+                            <hr class="my-5">
+
+                            <h5>Text Color Customization</h5>
+                            <div class="row g-4 mt-3">
+                                <div class="col-lg-4 col-md-6">
+                                    <label for="id_primary_color_text" class="form-label">Primary Text Color (on Primary BG)</label>
+                                    <div class="input-group">
+                                        <input type="color" class="form-control form-control-color" data-color-target="id_primary_color_text" value="{{ theme_settings.theme_primary_color_text|default:'#ffffff' }}">
+                                        <input type="text" class="form-control" id="id_primary_color_text" name="primary_color_text" value="{{ theme_settings.theme_primary_color_text|default:'#ffffff' }}" placeholder="#ffffff">
+                                    </div>
+                                    <small class="form-text text-muted">Text color used on primary colored elements (like buttons).</small>
+                                </div>
+                                <div class="col-lg-4 col-md-6">
+                                    <label for="id_secondary_color_text" class="form-label">Secondary Text Color (on Secondary BG)</label>
+                                    <div class="input-group">
+                                        <input type="color" class="form-control form-control-color" data-color-target="id_secondary_color_text" value="{{ theme_settings.theme_secondary_color_text|default:'#1f2937' }}">
+                                        <input type="text" class="form-control" id="id_secondary_color_text" name="secondary_color_text" value="{{ theme_settings.theme_secondary_color_text|default:'#1f2937' }}" placeholder="#1f2937">
+                                    </div>
+                                    <small class="form-text text-muted">Text color used on secondary colored elements.</small>
+                                </div>
+                                <div class="col-lg-4 col-md-6">
+                                    <label for="id_background_color_text" class="form-label">Background Text Color</label>
+                                    <div class="input-group">
+                                        <input type="color" class="form-control form-control-color" data-color-target="id_background_color_text" value="{{ theme_settings.theme_background_color_text|default:'#1f2937' }}">
+                                        <input type="text" class="form-control" id="id_background_color_text" name="background_color_text" value="{{ theme_settings.theme_background_color_text|default:'#1f2937' }}" placeholder="#1f2937">
+                                    </div>
+                                    <small class="form-text text-muted">Main text color on the page background.</small>
+                                </div>
+                            </div>
+
+                        </div>
+                    </div>
+
+                    <div class="d-grid gap-2 mt-4">
+                        <button type="submit" class="btn btn-success btn-lg">Save Theme Settings</button>
+                    </div>
+                </form>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0/dist/js/bootstrap.bundle.min.js"></script>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        // A utility function for tab switching
+        function switchTab(targetId) {
+            const navLinks = document.querySelectorAll('.header-nav .nav-link');
+            const sections = document.querySelectorAll('.form-section');
+
+            navLinks.forEach(link => link.classList.remove('active'));
+            const activeLink = document.querySelector(`[data-target="${targetId}"]`);
+            if (activeLink) {
+                activeLink.classList.add('active');
+            }
+
+            sections.forEach(section => {
+                section.classList.toggle('active', section.id === targetId);
+            });
+
+            history.pushState(null, null, '#' + targetId);
+        }
+
+        // Tab Switching Logic
+        const navLinks = document.querySelectorAll('.header-nav .nav-link');
+        navLinks.forEach(link => {
+            link.addEventListener('click', function (event) {
+                event.preventDefault();
+                const targetId = this.getAttribute('data-target');
+                switchTab(targetId);
+            });
+        });
+
+        // Initial tab load based on URL hash
+        const initialHash = window.location.hash.substring(1);
+        const defaultTargetId = 'job-app-form';
+        const initialTarget = (initialHash && document.getElementById(initialHash)) ? initialHash : defaultTargetId;
+        switchTab(initialTarget);
+
+        // --- Job Application Field Toggle Logic ---
+
+        // Cache DOM elements
+        const masterToggle = document.getElementById('toggleAllFields');
+        const additionalFieldsContainer = document.getElementById('additional-fields');
+        let fieldCounter = additionalFieldsContainer.querySelectorAll('.col-lg-4').length;
+
+        // A reusable function for handling individual field toggles
+        function handleIndividualToggle(checkbox) {
+            const fieldRow = checkbox.closest('.field-row');
+            if (!fieldRow) return;
+
+            const inputElements = fieldRow.querySelectorAll('input:not([type="hidden"]):not([type="checkbox"]), select, textarea');
+
+            inputElements.forEach(input => {
+                const isEnabled = checkbox.checked;
+                input.disabled = !isEnabled;
+                if (input.type !== 'file') {
+                    const originalPlaceholder = input.getAttribute('data-original-placeholder');
+                    if (!isEnabled) {
+                        if (!originalPlaceholder) {
+                            input.setAttribute('data-original-placeholder', input.placeholder);
+                        }
+                        input.placeholder = 'Disabled by Toggle';
+                        input.value = ''; // Clear value for disabled fields
+                    } else if (originalPlaceholder) {
+                        input.placeholder = originalPlaceholder;
+                        input.removeAttribute('data-original-placeholder');
+                    }
+                }
+            });
+
+            // Update master toggle state
+            if (masterToggle) {
+                const allIndividualToggles = document.querySelectorAll('#job-app-form-fields .individual-toggle');
+                const allChecked = Array.from(allIndividualToggles).every(toggle => toggle.checked);
+                masterToggle.checked = allChecked;
+            }
+        }
+
+        // Event listener for the master toggle
+        if (masterToggle) {
+            masterToggle.addEventListener('change', () => {
+                const isChecked = masterToggle.checked;
+                document.querySelectorAll('#job-app-form-fields .individual-toggle').forEach(toggle => {
+                    toggle.checked = isChecked;
+                    handleIndividualToggle(toggle);
+                });
+            });
+        }
+
+        // Event listener for individual toggles (using delegation for dynamic fields)
+        document.getElementById('job-app-form-fields').addEventListener('change', (event) => {
+            if (event.target.classList.contains('individual-toggle')) {
+                handleIndividualToggle(event.target);
+            }
+        });
+
+        // Initial state setup on page load
+        document.querySelectorAll('#job-app-form-fields .individual-toggle').forEach(toggle => {
+            handleIndividualToggle(toggle);
+        });
+
+        // --- Additional Field Management Logic ---
+        const addFieldBtn = document.querySelector('[data-action="add-field"]');
+        const removeFieldBtn = document.querySelector('[data-action="remove-field"]');
+
+        function createNewAdditionalField() {
+            fieldCounter++;
+            const newId = fieldCounter;
+            const newFieldDiv = document.createElement('div');
+            newFieldDiv.className = 'col-lg-4 col-md-6';
+            newFieldDiv.setAttribute('data-field-id', newId);
+
+            const iconOptions = `
+                <option value="fas fa-edit" selected>Edit (Default)</option>
+                <option value="fas fa-code">Code</option>
+                <option value="fas fa-chart-line">Chart</option>
+                <option value="fas fa-headset">Headset</option>
+                <option value="fas fa-palette">Palette</option>
+                <option value="fas fa-star">Star</option>
+                <option value="fas fa-link">Link</option>
+                <option value="fas fa-calendar">Calendar</option>
+                <option value="fas fa-map-marker-alt">Location</option>
+            `;
+
+            newFieldDiv.innerHTML = `
+                <div class="field-row">
+                    <div class="form-check">
+                        <input class="form-check-input individual-toggle" type="checkbox" name="additional_field_enabled_${newId}" checked>
+                    </div>
+                    <div class="form-field-wrapper">
+                        <label class="form-label form-label-with-icon">
+                            <i class="fas fa-edit"></i> New Field
+                        </label>
+                        <input type="text" class="form-control" name="additional_field_name_${newId}" placeholder="Enter Field Name">
+                        <input type="hidden" name="additional_field_type_${newId}" value="text">
+                        <select class="form-select form-select-sm mt-2" name="additional_field_icon_${newId}">
+                            ${iconOptions}
+                        </select>
+                    </div>
+                </div>
+            `;
+            additionalFieldsContainer.appendChild(newFieldDiv);
+
+            const newToggle = newFieldDiv.querySelector('.individual-toggle');
+            const masterToggleState = masterToggle ? masterToggle.checked : true;
+            newToggle.checked = masterToggleState;
+            handleIndividualToggle(newToggle);
+
+            newFieldDiv.querySelector('select[name^="additional_field_icon_"]').addEventListener('change', (event) => {
+                const selectedIconClass = event.target.value;
+                const iconElement = event.target.closest('.form-field-wrapper').querySelector('.form-label-with-icon i');
+                if (iconElement) {
+                    iconElement.className = selectedIconClass;
+                }
+            });
+        }
+
+        addFieldBtn.addEventListener('click', createNewAdditionalField);
+
+        removeFieldBtn.addEventListener('click', () => {
+            const fields = additionalFieldsContainer.querySelectorAll('.col-lg-4');
+            if (fields.length > 0) {
+                additionalFieldsContainer.removeChild(fields[fields.length - 1]);
+            }
+        });
+
+        // --- Theme Color Preview Logic ---
+        const rootStyle = document.documentElement.style;
+
+        function setupColorPicker(colorInput, textInput) {
+            const updateColors = (color) => {
+                // Update the CSS variable
+                const varName = `--${textInput.name.replace(/_/g, '-')}`;
+                rootStyle.setProperty(varName, color);
+
+                // Keep both inputs in sync
+                colorInput.value = color;
+                textInput.value = color;
+
+                // Handle special cases for background and hover colors
+                if (varName === '--page-main-bg' || varName === '--secondary-color') {
+                    const mainBg = rootStyle.getPropertyValue('--page-main-bg').trim();
+                    const secondaryColor = rootStyle.getPropertyValue('--secondary-color').trim();
+                    document.body.style.backgroundImage = `radial-gradient(circle at 10% 20%, ${mainBg} 0%, ${secondaryColor} 90%)`;
+                }
+                if (varName === '--primary-color') {
+                    const hoverColor = pSBC(-0.1, color);
+                    rootStyle.setProperty('--primary-hover-color', hoverColor);
+                }
+            };
+
+            colorInput.addEventListener('input', (event) => updateColors(event.target.value));
+            textInput.addEventListener('input', (event) => {
+                const newColor = event.target.value;
+                if (/^#([0-9A-F]{3}){1,2}$/i.test(newColor)) {
+                    updateColors(newColor);
+                }
+            });
+        }
+
+        // Attach listeners to all color pickers
+        document.querySelectorAll('.form-control-color').forEach(colorPicker => {
+            const textInputId = colorPicker.getAttribute('data-color-target');
+            const textInput = document.getElementById(textInputId);
+            if (textInput) {
+                setupColorPicker(colorPicker, textInput);
+            }
+        });
+
+        // Function to programmatically shade/tint a color (lighten/darken)
+        // Source: https://stackoverflow.com/questions/5560248/programmatically-lighten-or-darken-a-hex-color-with-javascript
+        const pSBC = (p, c0, c1, l) => {
+            let r, g, b, P, f, t, h, i = parseInt, m = Math.round, a = typeof(c1) == "string";
+            if (typeof(p) != "number" || p < -1 || p > 1 || typeof(c0) != "string" || (c0[0] != 'r' && c0[0] != '#') || (c1 && !a)) return null;
+            h = c0.length > 9, h = a ? c1.length > 9 ? true : c1[0] == 'r' ? true : false : h, f = pSBC.pSBCr, f = h ? 1 : f ? f : pSBC.pSBCr, l = c0.length > 9 ? true : l, f = l ? 's' : f;
+            if (f !== 's') {
+                if (c0[0] !== '#') return null;
+                if (c0.length !== 4 && c0.length !== 7) return null;
+                if (c0.length === 4) c0 = '#' + c0[1] + c0[1] + c0[2] + c0[2] + c0[3] + c0[3];
+                c0 = c0.substr(1);
+                if (c1) {
+                    if (c1[0] !== '#') return null;
+                    if (c1.length !== 4 && c1.length !== 7) return null;
+                    if (c1.length === 4) c1 = '#' + c1[1] + c1[1] + c1[2] + c1[2] + c1[3] + c1[3];
+                    c1 = c1.substr(1);
+                }
+            } else {
+                if (c0[0] !== 'r' || c0.length < 10) return null;
+                c0 = c0.match(/\d+/g);
+                if (c1) {
+                    if (c1[0] !== 'r' || c1.length < 10) return null;
+                    c1 = c1.match(/\d+/g);
+                }
+            }
+            f = pSBC.pSBCr, t = p > 0, P = t ? p : -p, i = f === 's' ? i : parseInt;
+            r = i(c0[0]) * 256 + i(c0[1]) * 256 + i(c0[2]) * 256, g = i(c0[3]) * 256 + i(c0[4]) * 256 + i(c0[5]) * 256, b = i(c0[6]) * 256 + i(c0[7]) * 256 + i(c0[8]) * 256;
+            if (c1) {
+                r = i(c1[0]) * 256 + i(c1[1]) * 256 + i(c1[2]) * 256, g = i(c1[3]) * 256 + i(c1[4]) * 256 + i(c1[5]) * 256, b = i(c1[6]) * 256 + i(c1[7]) * 256 + i(c1[8]) * 256;
+                r = m((r - r * P) * (1 - P) + r * P);
+                g = m((g - g * P) * (1 - P) + g * P);
+                b = m((b - b * P) * (1 - P) + b * P);
+            }
+            else {
+                r = m((r - r * P) * (1 - P) + r * P);
+                g = m((g - g * P) * (1 - P) + g * P);
+                b = m((b - b * P) * (1 - P) + b * P);
+            }
+            return '#' + (0x1000000 + (r << 16) + (g << 8) + b).toString(16).slice(1);
+        };
+    });
+</script>
+
+</body>
+{% endblock %}

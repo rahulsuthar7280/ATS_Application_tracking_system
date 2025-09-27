@@ -86,6 +86,21 @@ urlpatterns = [
     path('post-jobs/', views.post_jobs, name='post_jobs_view'),
 
     path('career_portal/', views.list_careers, name='career_portal'),
+    
+    path('career_mainpage/', views.career_mainpage, name='career_mainpage'),
+    # path('job_detail/', views.job_detail, name='job_detail'),
+    path('careers/add-job/', views.add_job_listing, name='add_job'),
+    path('job_detail/<int:job_id>/', views.job_detail, name='job_detail'),
+    path('job/<int:job_id>/apply/', views.apply_for_job, name='apply_for_job'),
+    path('settings_careerpage/', views.settings_careerpage, name='settings_careerpage'),
+    path('edit-job/<int:job_id>/', views.edit_job, name='edit_job'),
+    path('delete-job/<int:job_id>/', views.delete_job, name='delete_job'),
+    path('edit-category/<int:category_id>/', views.edit_category, name='edit_category'),
+    path('delete-category/<int:category_id>/', views.delete_category, name='delete_category'),
+
+
+
+
     # path('careers/manage/<int:job_id>/', views.manage_job, name='manage_job'),
     # path('toggle_job_status/<int:job_id>/', views.toggle_job_status, name='toggle_job_status'),
     # path('apply_for_job/<int:career_id>/', views.apply_for_job, name='apply_for_job'),

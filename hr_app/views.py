@@ -49,7 +49,7 @@ from hr_app.admin import User
 navigation_logger = logging.getLogger('hr_app_navigation') #
 # Local imports
 from .forms import ResumeUploadForm, FinalDecisionForm, PhoneNumberForm, CustomUserCreationForm, CustomAuthenticationForm
-from .models import Application, Apply_career, CandidateAnalysis, CareerAdvanceAnalysis, CareerPage, Document, DraftEmail, Folder, JobDescriptionDocument, SentEmail
+from .models import Application, Apply_career, CandidateAnalysis, CareerAdvanceAnalysis, CareerJob, CareerPage, Category, CompanyInfo, Document, DraftEmail, Folder, JobApplicationFormSettings, JobDescriptionDocument, SentEmail, ThemeSettings
 from .services import llm_call
 from hr_app import services
 from django.core.files.uploadedfile import SimpleUploadedFile
@@ -84,7 +84,7 @@ from django.shortcuts import get_object_or_404
 # from sentence_transformers import SentenceTransformer, util
 import os
 
-
+from django.utils.dateparse import parse_date
 User = get_user_model() # Get the currently active user model
 # Assuming these are already defined correctly
 resume_storage = FileSystemStorage(location='media/resumes')
@@ -1973,13 +1973,13 @@ def admin_dashboard_view(request):
 @login_required
 def all_job_descriptions(request):
     """
-    Renders the page to display all uploaded and created job descriptions for the
-    currently logged-in user.
+    Renders the page to display all job postings created by the logged-in user.
     """
-    # Filter the queryset to only show job descriptions belonging to the current user
-    job_descriptions = JobDescriptionDocument.objects.filter(user=request.user)
+    # Filter the queryset to only show job postings belonging to the current user
+    # Renamed variable to be more clear
+    job_postings = CareerPage.objects.filter(user=request.user) 
     context = {
-        'job_descriptions': job_descriptions,
+        'job_postings': job_postings,  # Updated context key
     }
     return render(request, 'all_job_descriptions.html', context)
 
@@ -3223,6 +3223,425 @@ def post_jobs(request):
 
 ########################## Career page ###################
 # This view will only handle the initial GET request to render the page
+
+# def settings_careerpage(request):
+#     """
+#     Handles displaying and processing all three forms:
+#     1. CareerPage (New Job Posting)
+#     2. CompanyInfo
+#     3. Job Application (Apply_career)
+#     """
+    
+#     # Handle POST requests
+#     if request.method == 'POST':
+#         form_type = request.POST.get('form_type')
+
+#         if form_type == 'job_application':
+#             # Handle Job Application form submission
+#             career_id = request.POST.get('career')
+#             career_instance = CareerPage.objects.get(id=career_id)
+
+#             Apply_career.objects.create(
+#                 # Link to the user if they are logged in, otherwise it's null
+#                 user=request.user if request.user.is_authenticated else None,
+#                 career=career_instance,
+#                 first_name=request.POST.get('first_name'),
+#                 last_name=request.POST.get('last_name'),
+#                 email=request.POST.get('email'),
+#                 phone=request.POST.get('phone'),
+#                 experience=request.POST.get('experience'),
+#                 current_ctc=request.POST.get('current_ctc'),
+#                 expected_ctc=request.POST.get('expected_ctc'),
+#                 qualification=request.POST.get('qualification'),
+#                 notice_period=request.POST.get('notice_period'),
+#                 resume=request.FILES.get('resume'),
+#                 cover_letter=request.FILES.get('cover_letter'),
+#                 linkedin_url=request.POST.get('linkedin_url'),
+#             )
+#             messages.success(request, "Your job application has been submitted successfully!")
+#             return redirect('settings_careerpage')
+
+#         elif form_type == 'company_info':
+#             # Handle Company Info form submission
+#             company_info, created = CompanyInfo.objects.get_or_create(id=1) # Get or create the single instance
+
+#             company_info.company_name = request.POST.get('company_name')
+#             company_info.address = request.POST.get('address')
+#             company_info.phone_number = request.POST.get('phone_number')
+#             company_info.email = request.POST.get('email')
+#             company_info.about_us_url = request.POST.get('about_us_url')
+#             company_info.contact_us_url = request.POST.get('contact_us_url')
+#             company_info.our_services_url = request.POST.get('our_services_url')
+#             company_info.privacy_policy_url = request.POST.get('privacy_policy_url')
+#             company_info.terms_and_conditions_url = request.POST.get('terms_and_conditions_url')
+#             company_info.twitter_url = request.POST.get('twitter_url')
+#             company_info.facebook_url = request.POST.get('facebook_url')
+#             company_info.youtube_url = request.POST.get('youtube_url')
+#             company_info.linkedin_url = request.POST.get('linkedin_url')
+#             company_info.save()
+
+#             messages.success(request, "Company information has been updated successfully!")
+#             return redirect('settings_careerpage')
+
+#         elif form_type == 'career_page':
+#             # Handle new Job Posting form submission
+#             new_job = CareerPage.objects.create(
+#                 title=request.POST.get('title'),
+#                 company=request.POST.get('company'),
+#                 company_logo=request.FILES.get('company_logo'),
+#                 location=request.POST.get('location'),
+#                 job_type=request.POST.get('job_type'),
+#                 experience=request.POST.get('experience'),
+#                 salary=request.POST.get('salary'),
+#                 is_active=request.POST.get('is_active', False) == 'on',
+#                 description=request.POST.get('description'),
+#                 about_company=request.POST.get('about_company'),
+#                 skills=request.POST.get('skills'),
+#                 benefits=request.POST.get('benefits'),
+#                 application_link=request.POST.get('application_link'),
+#                 responsibilities=request.POST.get('responsibilities'),
+#                 qualifications=request.POST.get('qualifications'),
+#                 date_line=request.POST.get('date_line'),
+#             )
+#             messages.success(request, f"New job posting for '{new_job.title}' created successfully!")
+#             return redirect('settings_careerpage')
+
+#     # Handle GET requests (to display the forms)
+#     context = {}
+#     return render(request, 'settings_careerpage.html', context)
+
+
+########################### Start setting_careerpage ##################
+# @login_required
+# --- ASSUMED MODELS IMPORTS ---
+# NOTE: Ensure these models are defined in your models.py and linked to the User model.
+# The model imports you provided
+try:
+    # Assuming models are in the same app or correctly configured
+    from .models import JobApplicationFormSettings, CompanyInfo, ThemeSettings, CareerPage, Category
+except ImportError:
+    # Raise a clear error if the models are missing, as the function depends on them
+    raise Exception("Required models (JobApplicationFormSettings, CompanyInfo, ThemeSettings, CareerPage, Category) must be defined and imported.")
+# ------------------------------
+
+# Define common icon choices (if not defined on the Category model)
+# Note: You use a mix of 'fas fa-X' and 'fa-X' in your code. Using 'fas fa-X' here for consistency.
+ICON_CHOICES = [
+    ('fas fa-code', 'Code'),
+    ('fas fa-chart-line', 'Chart'),
+    ('fas fa-headset', 'Headset'),
+    ('fas fa-palette', 'Palette'),
+    ('fas fa-star', 'Star'),
+    ('fas fa-link', 'Link'),
+    ('fas fa-calendar', 'Calendar'),
+    ('fas fa-map-marker-alt', 'Location'),
+    ('fas fa-hashtag', 'Hashtag'),
+    ('fas fa-edit', 'Edit')
+]
+
+
+@login_required
+def settings_careerpage(request):
+    """
+    Handles all configuration settings for the user's career page, including 
+    Job Application Form fields, Company Info, Theme Colors, and Job/Category management.
+    """
+    
+    # -----------------------------------------------------------
+    # 1. Retrieve or Create all necessary user settings objects
+    # -----------------------------------------------------------
+    user = request.user
+    
+    # Retrieves or creates settings objects linked to the current user
+    form_settings, _ = JobApplicationFormSettings.objects.get_or_create(user=user)
+    company_info, _ = CompanyInfo.objects.get_or_create(user=user)
+    theme_settings, _ = ThemeSettings.objects.get_or_create(user=user)
+    
+    # Resolve the base URL once to handle redirects with fragments correctly
+    try:
+        # Assumes the URL is named 'settings_careerpage' in urls.py
+        base_url = reverse('settings_careerpage') 
+    except Exception:
+        # Fallback if the URL name is not set up
+        base_url = '/settings_careerpage/' 
+
+    # -----------------------------------------------------------
+    # 2. Handle POST requests for different form types
+    # -----------------------------------------------------------
+    if request.method == 'POST':
+        form_type = request.POST.get('form_type')
+
+        # --- Job Application Form Logic ---
+        if form_type == 'job_application':
+            try:
+                # Update standard fields
+                form_settings.first_name_enabled = 'first_name_enabled' in request.POST
+                form_settings.last_name_enabled = 'last_name_enabled' in request.POST
+                form_settings.email_enabled = 'email_enabled' in request.POST
+                form_settings.phone_enabled = 'phone_enabled' in request.POST
+                form_settings.experience_enabled = 'experience_enabled' in request.POST
+                form_settings.current_ctc_enabled = 'current_ctc_enabled' in request.POST
+                form_settings.expected_ctc_enabled = 'expected_ctc_enabled' in request.POST
+                form_settings.notice_period_enabled = 'notice_period_enabled' in request.POST
+                form_settings.qualification_enabled = 'qualification_enabled' in request.POST
+                form_settings.linkedin_url_enabled = 'linkedin_url_enabled' in request.POST
+                form_settings.resume_enabled = 'resume_enabled' in request.POST
+                form_settings.cover_letter_enabled = 'cover_letter_enabled' in request.POST
+
+                # Handling Additional Fields
+                additional_fields_data = []
+                # Use a more robust way to iterate over posted additional fields
+                field_ids = sorted([int(k.split('_')[-1]) for k in request.POST.keys() if k.startswith('additional_field_name_')])
+                
+                for field_id in field_ids:
+                    field_name = request.POST.get(f'additional_field_name_{field_id}', '').strip()
+                    is_enabled = f'additional_field_enabled_{field_id}' in request.POST
+                    
+                    if is_enabled and field_name:
+                        additional_fields_data.append({
+                            'name': field_name,
+                            'type': request.POST.get(f'additional_field_type_{field_id}', 'text'),
+                            'icon_class': request.POST.get(f'additional_field_icon_{field_id}', 'fas fa-edit'),
+                            'id': field_id
+                        })
+                
+                form_settings.additional_fields = additional_fields_data
+                
+                form_settings.save()
+                messages.success(request, "Job application form settings updated successfully!")
+                return redirect(base_url + '#job-app-form') 
+
+            except Exception as e:
+                messages.error(request, f"Error updating application form settings: {e}")
+                return redirect(base_url + '#job-app-form')
+
+        # --- Company Info Logic ---
+        elif form_type == 'company_info':
+            try:
+                company_info.company_name = request.POST.get('company_name')
+                
+                # Handle company logo upload
+                if 'company_logo' in request.FILES:
+                    company_info.company_logo = request.FILES.get('company_logo')
+                    
+                company_info.address = request.POST.get('address')
+                company_info.phone_number = request.POST.get('phone_number')
+                company_info.email = request.POST.get('email')
+                company_info.about_us_url = request.POST.get('about_us_url')
+                company_info.contact_us_url = request.POST.get('contact_us_url')
+                company_info.our_services_url = request.POST.get('our_services_url')
+                company_info.privacy_policy_url = request.POST.get('privacy_policy_url')
+                company_info.terms_and_conditions_url = request.POST.get('terms_and_conditions_url')
+                company_info.twitter_url = request.POST.get('twitter_url')
+                company_info.facebook_url = request.POST.get('facebook_url')
+                company_info.youtube_url = request.POST.get('youtube_url')
+                company_info.linkedin_url = request.POST.get('linkedin_url')
+                company_info.save()
+                messages.success(request, "Company information has been updated successfully!")
+                return redirect(base_url + '#company-info-form')
+
+            except Exception as e:
+                messages.error(request, f"Error updating company information: {e}")
+                return redirect(base_url + '#company-info-form')
+
+
+        # --- Theme Settings Logic ---
+        elif form_type == 'theme_settings':
+            try:
+                # 1. Background/UI Colors
+                theme_settings.theme_primary_color = request.POST.get('primary_color', '#1e3a8a')
+                theme_settings.theme_secondary_color = request.POST.get('secondary_color', '#eef2f6')
+                theme_settings.theme_background_color = request.POST.get('background_color', '#f7f9fc')
+                
+                # 2. Text Colors (The new 3 fields)
+                theme_settings.theme_primary_color_text = request.POST.get('primary_color_text', '#ffffff')
+                theme_settings.theme_secondary_color_text = request.POST.get('secondary_color_text', '#1f2937')
+                theme_settings.theme_background_color_text = request.POST.get('background_color_text', '#1f2937')
+                
+                theme_settings.save()
+                messages.success(request, "Theme settings updated successfully!")
+                return redirect(base_url + '#theme-form')
+                
+            except Exception as e:
+                messages.error(request, f"Error updating theme settings: {e}")
+                return redirect(base_url + '#theme-form')
+                
+        # --- Category Logic (Create) ---
+        elif form_type == 'category':
+            try:
+                category_name = request.POST.get('category_name')
+                icon_class = request.POST.get('icon_class')
+                
+                if not category_name:
+                    messages.error(request, "Category name cannot be empty.")
+                else:
+                    Category.objects.create(
+                        user=user, 
+                        name=category_name,
+                        icon_class=icon_class
+                    )
+                    messages.success(request, f"Category '{category_name}' added successfully!")
+                return redirect(base_url + '#category-form')
+
+            except IntegrityError:
+                messages.error(request, f"A category named '{category_name}' already exists.")
+                return redirect(base_url + '#category-form')
+            except Exception as e:
+                messages.error(request, f"Error creating category: {e}")
+                return redirect(base_url + '#category-form')
+
+        # --- Career Page (New Job Posting) Logic ---
+        elif form_type == 'career_page':
+            try:
+                category_name = request.POST.get('category')
+                
+                # Find the category object for validation/existence check
+                # Even though CareerPage.category is a CharField, this ensures a valid category name is used.
+                get_object_or_404(Category, user=user, name=category_name) 
+
+                new_job = CareerPage.objects.create(
+                    user=user,
+                    title=request.POST.get('title'),
+                    company=request.POST.get('company'),
+                    location=request.POST.get('location'),
+                    job_type=request.POST.get('job_type'),
+                    # FIX: Save the string name to match the CareerPage model's CharField
+                    category=category_name, 
+                    experience=request.POST.get('experience'),
+                    salary=request.POST.get('salary'),
+                    is_active=request.POST.get('is_active') == 'on',
+                    description=request.POST.get('description'),
+                    responsibilities=request.POST.get('responsibilities'),
+                    qualifications=request.POST.get('qualifications'),
+                    benefits=request.POST.get('benefits'),
+                    date_line=parse_date(request.POST.get('date_line')) if request.POST.get('date_line') else None,
+                )
+                messages.success(request, f"New job posting for '{new_job.title}' created successfully!")
+                return redirect(base_url + '#career-page-form') 
+                
+            except Exception as e:
+                messages.error(request, f"Error creating job posting: {e}")
+                return redirect(base_url + '#career-page-form')
+
+    # -----------------------------------------------------------
+    # 3. Handle GET request / Context preparation
+    # -----------------------------------------------------------
+    
+    # Fetch all jobs for the user
+    jobs = CareerPage.objects.filter(user=user).order_by('-id')
+
+    # Fetch all categories for the user
+    categories = Category.objects.filter(user=user)
+    print("categories",categories)
+
+    # Use ORM aggregation to efficiently get the job counts per category
+    category_counts_queryset = CareerPage.objects.filter(user=user).values('category').annotate(count=Count('category'))
+    
+    # Convert the queryset into a dictionary for easy lookup
+    vacancy_counts = {item['category']: item['count'] for item in category_counts_queryset}
+    print("vacancy_counts",vacancy_counts)
+
+    # Add the count to each category object
+    categories_with_counts = []
+    for category in categories:
+        count = vacancy_counts.get(category.name, 0)
+        # Use an attribute to store the count for the template
+        category.vacancy_count = count
+        categories_with_counts.append(category)
+
+    # Use the defined ICON_CHOICES if the model doesn't have them
+    icon_choices = getattr(Category, 'ICON_CHOICES', ICON_CHOICES)
+    
+    context = {
+        'form_settings': form_settings,
+        'company_info': company_info,
+        'theme_settings': theme_settings,
+        'jobs': jobs,
+        'categories': categories_with_counts,
+        'icon_choices': icon_choices, 
+    }
+    
+    return render(request, 'settings_careerpage.html', context)
+
+
+@login_required
+def edit_job(request, job_id):
+    job = get_object_or_404(CareerPage, pk=job_id, user=request.user)
+    
+    if request.method == 'POST':
+        # Job Edit Logic
+        job.title = request.POST.get('title')
+        job.company = request.POST.get('company')
+        if 'company_logo' in request.FILES:
+            job.company_logo = request.FILES.get('company_logo')
+        job.location = request.POST.get('location')
+        job.job_type = request.POST.get('job_type')
+        job.experience = request.POST.get('experience')
+        job.salary = request.POST.get('salary')
+        job.is_active = request.POST.get('is_active', False) == 'on'
+        job.description = request.POST.get('description')
+        job.about_company = request.POST.get('about_company')
+        job.skills = request.POST.get('skills')
+        job.benefits = request.POST.get('benefits')
+        job.application_link = request.POST.get('application_link')
+        job.responsibilities = request.POST.get('responsibilities')
+        job.qualifications = request.POST.get('qualifications')
+        job.date_line = request.POST.get('date_line')
+        job.save()
+        messages.success(request, f"Job posting for '{job.title}' updated successfully!")
+        return redirect('settings_careerpage')
+
+    context = {
+        'job': job,
+    }
+    return render(request, 'edit_job.html', context)
+
+
+@login_required
+def delete_job(request, job_id):
+    job = get_object_or_404(CareerPage, pk=job_id, user=request.user)
+    job_title = job.title # Save name before deleting
+    job.delete()
+    messages.success(request, f"Job posting for '{job_title}' deleted successfully!")
+    return redirect('settings_careerpage')
+
+
+@login_required
+def edit_category(request, category_id):
+    category = get_object_or_404(Category, pk=category_id, user=request.user)
+    
+    # Resolve base URL here to redirect back with the fragment
+    base_url = reverse('settings_careerpage')
+
+    if request.method == 'POST':
+        category.name = request.POST.get('category_name')
+        category.vacancy_count = request.POST.get('vacancy_count', 0)
+        category.icon_class = request.POST.get('icon_class')
+        category.save()
+        messages.success(request, f"Category updated to '{category.name}' successfully!")
+        # FIX: Append fragment to the resolved URL
+        return redirect(base_url + '#category-form') 
+
+    # Pass the ICON_CHOICES to the template for editing
+    icon_choices = Category.ICON_CHOICES
+    
+    context = {
+        'category': category,
+        'icon_choices': icon_choices, 
+    }
+    return render(request, 'edit_category.html', context)
+
+
+@login_required
+def delete_category(request, category_id):
+    category = get_object_or_404(Category, pk=category_id, user=request.user)
+    category_name = category.name # Save name before deleting
+    category.delete()
+    messages.success(request, f"Category '{category_name}' deleted successfully!")
+    return redirect('settings_careerpage')
+
+################### close setting_careerpage #######################
+
 def list_careers(request):
     """
     Displays the list of all career pages.
@@ -3241,6 +3660,172 @@ def list_careers(request):
     }
     
     return render(request, 'career_portal.html', context)
+
+# Helper function to get theme settings, reducing redundancy
+def get_theme_settings(user=None):
+    """Fetches ThemeSettings, prioritizing the given user or the first entry."""
+    # Importing inside the function allows for the model to be outside views.py
+    from .models import ThemeSettings 
+
+    # 1. Try to get the settings for the specific user (e.g., the job poster)
+    if user:
+        try:
+            # Note: The model instance will have the full field names
+            return ThemeSettings.objects.get(user=user)
+        except ThemeSettings.DoesNotExist:
+            pass # Fall through to default
+
+    # 2. Fallback: Get the first available ThemeSettings (site-wide default)
+    # Assuming the first object, if it exists, is the site-wide default when user is None
+    try:
+        return ThemeSettings.objects.first()
+    except Exception:
+        pass # Fall through to hardcoded default
+
+    # 3. Hardcoded default if no settings exist
+    class DefaultTheme:
+        # --- Background Colors (Matching the model field names) ---
+        theme_primary_color = '#1e3a8a'
+        theme_secondary_color = '#eef2f6'
+        theme_background_color = '#f7f9fc'
+        
+        # --- Text Colors (NEW) ---
+        theme_primary_color_text = '#ffffff'
+        theme_secondary_color_text = '#333333'
+        theme_background_color_text = '#333333'
+        
+    return DefaultTheme()
+
+@require_http_methods(["GET", "POST"])
+def job_detail(request, job_id):
+    """
+    Renders the job detail page and handles job application submissions, including dynamic additional fields.
+    """
+    try:
+        job = get_object_or_404(CareerPage, pk=job_id)
+        form_settings, created = JobApplicationFormSettings.objects.get_or_create(user=job.user)
+        theme_settings, created = ThemeSettings.objects.get_or_create(user=job.user)
+        company_info, created = CompanyInfo.objects.get_or_create(user=job.user)
+    except (CareerPage.DoesNotExist, JobApplicationFormSettings.DoesNotExist, ThemeSettings.DoesNotExist, CompanyInfo.DoesNotExist):
+        return render(request, 'error_page.html', {'message': 'Requested content not found.'}, status=404)
+
+    if request.method == 'POST':
+        # Server-side validation for 'experience'
+        experience_value = request.POST.get('experience', None)
+        if experience_value and not experience_value.isdigit():
+            messages.error(request, 'Total Experience must be a positive integer.')
+            return redirect('job_detail', job_id=job_id)
+
+        try:
+            # Prepare a dictionary to store additional field data
+            additional_data = {}
+            # Iterate through the fields enabled in the settings and get their values
+            for i, field in enumerate(form_settings.additional_fields):
+                field_name = field.get('name')
+                # The name in the form is "additional_field_1", "additional_field_2", etc.
+                form_key = f'additional_field_{i + 1}'
+                additional_data[field_name] = request.POST.get(form_key, '')
+
+            # Create a new Apply_career instance with data from the POST request
+            Apply_career.objects.create(
+                career=job,
+                first_name=request.POST.get('first_name', ''),
+                last_name=request.POST.get('last_name', ''),
+                email=request.POST.get('email', ''),
+                phone=request.POST.get('phone_number', ''),
+                experience=experience_value,
+                current_ctc=request.POST.get('current_ctc', ''),
+                expected_ctc=request.POST.get('expected_ctc', ''),
+                qualification=request.POST.get('qualification', ''),
+                notice_period=request.POST.get('notice_period', ''),
+                linkedin_url=request.POST.get('linkedin_url', ''),
+                resume=request.FILES.get('resume'),
+                cover_letter=request.FILES.get('cover_letter', None),
+                additional_data=additional_data  # Save the dynamically collected data here
+            )
+            messages.success(request, 'Your application has been submitted successfully!')
+            # Redirect to the main career page
+            return redirect('career_mainpage')
+        except Exception as e:
+            messages.error(request, f'An error occurred: {e}. Please try again.')
+            return redirect('job_detail', job_id=job_id)
+
+    context = {
+        'job': job,
+        'form_settings': form_settings,
+        'theme_settings': theme_settings,
+        'company_info': company_info,
+        'company_name': company_info
+    }
+    
+    return render(request, 'job_detail.html', context)
+
+def career_mainpage(request):
+    """
+    Renders the main career page with dynamic data.
+    """
+    
+    # Use your actual model calls to fetch data from the database
+    categories = Category.objects.all()
+    
+    # Filter jobs based on their is_active status
+    featured_jobs = CareerPage.objects.filter(job_type='Featured', is_active=True)
+    full_time_jobs = CareerPage.objects.filter(job_type='Full Time', is_active=True)
+    part_time_jobs = CareerPage.objects.filter(job_type='Part Time', is_active=True)
+    
+    # Fetch the company information
+    try:
+        company_info = CompanyInfo.objects.first()
+    except CompanyInfo.DoesNotExist:
+        company_info = None
+
+    # Get the site-wide theme settings
+    theme_settings = ThemeSettings.objects.first()
+
+    # Pass the data to the template
+    context = {
+        'categories': categories,
+        'featured_jobs': featured_jobs,
+        'full_time_jobs': full_time_jobs,
+        'part_time_jobs': part_time_jobs,
+        'company_info': company_info,
+        'theme_settings': theme_settings,  # Pass the entire object to the template
+    }
+    return render(request, 'career_mainpage.html', context)
+
+def add_job_listing(request):
+    """
+    Handles form submission to add new job listings without forms.py.
+    """
+    categories = Category.objects.all() # Fetch categories for the select dropdown
+
+    if request.method == 'POST':
+        # Create a new Job object from the POST data
+        try:
+            new_job = Job(
+                title=request.POST.get('job_title'),
+                location=request.POST.get('job_location'),
+                job_type=request.POST.get('job_type'),
+                salary_range=request.POST.get('salary_range'),
+                date_line=request.POST.get('date_line'),
+                company_logo=request.FILES.get('company_logo'),
+                category=Category.objects.get(id=request.POST.get('category'))
+            )
+            new_job.save()
+            return redirect('career_mainpage')
+        except Exception as e:
+            # Handle potential errors, e.g., if a category ID is invalid
+            print(f"Error saving job: {e}")
+            pass # Or handle the error more gracefully
+
+    context = {
+        'categories': categories
+    }
+    return render(request, 'add_job.html', context)
+
+
+
+
 
 @csrf_exempt
 @require_http_methods(["POST"])
@@ -3332,53 +3917,30 @@ def toggle_job_status(request, job_id):
         return JsonResponse({'success': False, 'message': 'Invalid data provided.'}, status=400)
 
 @csrf_exempt
-def apply_for_job(request, career_id):
-    """
-    Handles the application submission for a specific job.
-    """
+def apply_for_job(request, job_id):
     if request.method == 'POST':
-        career = get_object_or_404(CareerPage, pk=career_id)
-        
-        first_name = request.POST.get('first_name')
-        last_name = request.POST.get('last_name')
-        email = request.POST.get('email')
-        phone = request.POST.get('phone')
-        linkedin_url = request.POST.get('linkedin_url')
+        career_page = get_object_or_404(CareerPage, pk=job_id)
 
-        experience = request.POST.get('experience')
-        current_ctc = request.POST.get('current_ctc')
-        expected_ctc = request.POST.get('expected_ctc')
-        qualification = request.POST.get('qualification')
-        notice_period = request.POST.get('notice_period')
+        application = Apply_career(
+            career=career_page,
+            first_name=request.POST.get('first_name'),
+            last_name=request.POST.get('last_name'),
+            email=request.POST.get('email'),
+            phone=request.POST.get('phone'),
+            experience=request.POST.get('experience'),
+            current_ctc=request.POST.get('current_ctc'),
+            expected_ctc=request.POST.get('expected_ctc'),
+            qualification=request.POST.get('qualification'),
+            notice_period=request.POST.get('notice_period'),
+            linkedin_url=request.POST.get('linkedin_url'),
+            resume=request.FILES.get('resume'),
+            cover_letter=request.FILES.get('cover_letter')
+        )
+        application.save()
+        messages.success(request, 'Your application has been submitted successfully!')
+        return redirect('job_detail', job_id=job_id)
 
-        resume_file = request.FILES.get('resume')
-        cover_letter_file = request.FILES.get('cover_letter')
-        
-        if not all([first_name, last_name, email, resume_file]):
-            return JsonResponse({'success': False, 'errors': 'Missing required fields'}, status=400)
-        
-        try:
-            application = Apply_career.objects.create(
-                user=request.user if request.user.is_authenticated else None,
-                career=career,
-                first_name=first_name,
-                last_name=last_name,
-                email=email,
-                phone=phone,
-                linkedin_url=linkedin_url,
-                experience=experience,
-                current_ctc=current_ctc,
-                expected_ctc=expected_ctc,
-                qualification=qualification,
-                notice_period=notice_period,
-                resume=resume_file,
-                cover_letter=cover_letter_file,
-            )
-            return JsonResponse({'success': True, 'message': 'Application submitted successfully'})
-        except Exception as e:
-            return JsonResponse({'success': False, 'errors': str(e)}, status=500)
-    
-    return HttpResponseBadRequest("Invalid request method")
+    return redirect('job_detail', job_id=job_id)
 
 
 ########################################################

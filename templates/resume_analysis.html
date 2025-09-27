@@ -13,7 +13,7 @@
     /* Custom CSS to improve layout and design */
 
     :root {
-        --primary-color: #007bff; /* Blue */
+        --primary-color: #3e4f47; /* Blue */
         --secondary-color: #6c757d; /* Gray */
         --background-color: #f8f9fa; /* Light Gray */
         --card-bg-color: #ffffff; /* White */
@@ -24,7 +24,7 @@
         --success-color: #28a745;
         --danger-color: #dc3545;
         --warning-color: #ffc107;
-        --info-color: #17a2b8;
+        --info-color: #3e4f47;
     }
 
     body {
@@ -34,7 +34,7 @@
     }
 
     .container-main {
-        max-width: 1400px;
+        max-width: 1600px;
         padding-top: 2rem;
         padding-bottom: 2rem;
     }
@@ -139,8 +139,8 @@
     }
 
     .btn-primary:hover {
-        background-color: #0056b3;
-        border-color: #0056b3;
+        background-color: #3e4f47;
+        border-color: #3e4f47;
     }
     
     .btn-outline-primary.active {
@@ -445,14 +445,14 @@
             </div>
         </div>
 
-        <div class="col-md-6">
+        <div class="col">
             <div class="content-section-card pdf-preview-section h-100">
                 <embed id="pdfEmbed" class="pdf-embed" type="application/pdf"
                        style="display: {% if resume_url %}block{% else %}none{% endif %};"
                        {% if resume_url %}src="{{ resume_url }}#toolbar=0&navpanes=0"{% endif %}>
 
                 <div class="pdf-placeholder" id="pdfPlaceholder"
-                     style="display: {% if resume_url %}none{% else %}flex{% endif %};">
+                     style="display: {% if resume_url %}none{% else %}flex{% endif %}; margin-top:-50px;">
                     <i class="fas fa-file-pdf fa-4x mb-3"></i>
                     <p class="message" id="pdfPlaceholderMessage">Upload a PDF Resume to Preview</p>
                     <p class="sub-message">The AI analysis will begin shortly after.</p>

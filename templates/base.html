@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+    {% load static %}
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -9,29 +10,34 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 
     <style>
+        /* Modern Color Palette & Typography */
         :root {
-            --sidebar-bg: #2d3748;
-            --sidebar-hover: #4a5568;
-            --sidebar-text: #e2e8f0;
-            --sidebar-active: #4c51bf;
-            --header-bg: #1a202c;
-            --content-bg: #f7fafc;
-            --footer-bg: #e2e8f0;
-            --primary-color: #4c51bf;
+            /* Updated to new color palette */
+            --sidebar-bg: #3e4f47; /* Dark green/gray from palette */
+            --sidebar-hover: orangered; /* Slightly lighter for hover effect */
+            --sidebar-text: #e0e0e0; /* Light gray for contrast */
+            --sidebar-active: orangered; /* The vibrant red from the palette */
+            --header-bg: #bab3a9; 
+            --content-bg: #f5f5f5; /* Off-white for the content area */
+            --footer-bg: #e5e7eb;
+            --primary-color: #e0e0e0; /* The vibrant red */
+            --primary-hover: #e0e0e0;
+            --text-color: #333333;
+            --border-color: #e5e7eb;
+            /* --box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.06); */
         }
 
         body {
-            font-family: 'Poppins', sans-serif;
+            font-family: 'Inter', sans-serif;
             background-color: var(--content-bg);
             margin: 0;
+            color: var(--text-color);
         }
 
-        .app-container {
-            display: flex;
-            min-height: 100vh;
-        }
+   
 
         /* Sidebar */
         .app-sidebar {
@@ -45,25 +51,33 @@
             bottom: 0;
             left: 0;
             z-index: 1030;
-            transition: transform 0.3s ease-in-out;
-            box-shadow: 2px 0 5px rgba(0, 0, 0, 0.1);
+            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 4px 0 10px rgba(0, 0, 0, 0.1);
+        }
+        
+        .app-sidebar.show {
+            transform: translateX(0);
         }
 
         .app-sidebar .sidebar-header {
             padding: 30px 20px 20px;
             text-align: center;
-            flex-shrink: 0; /* Prevents the header from shrinking */
+            flex-shrink: 0;
+            border-bottom: 1px solid var(--sidebar-hover);
         }
 
         .sidebar-logo {
-            width: 120px;
-            height: 120px;
+            width: 150px;
+            height: 150px;
             margin-bottom: 10px;
             object-fit: cover;
+            /* border-radius: 10%; */
+            /* border: 5px solid white; */
         }
         
         .sidebar-title {
-            font-size: 1.5rem;
+            font-family: 'Poppins', sans-serif;
+            font-size: 1.6rem;
             font-weight: 700;
             color: white;
             letter-spacing: 1px;
@@ -72,13 +86,12 @@
         .sidebar-nav {
             flex-grow: 1;
             padding: 20px 0;
-            overflow-y: auto; /* This line makes the navigation field scrollable */
-            -webkit-overflow-scrolling: touch;
+            overflow-y: auto;
         }
         
         /* Custom scrollbar for webkit browsers */
         .sidebar-nav::-webkit-scrollbar {
-            width: 8px;
+            width: 6px;
         }
 
         .sidebar-nav::-webkit-scrollbar-track {
@@ -86,44 +99,89 @@
         }
 
         .sidebar-nav::-webkit-scrollbar-thumb {
-            background-color: var(--sidebar-hover);
-            border-radius: 4px;
-            border: 2px solid var(--sidebar-bg);
+            background-color: #4b5563;
+            border-radius: 3px;
+            border: 1px solid var(--sidebar-bg);
         }
 
         .sidebar-nav::-webkit-scrollbar-thumb:hover {
-            background-color: #5a647d;
+            background-color: #6b7280;
         }
 
-        .sidebar-nav .nav-item {
+        .sidebar-nav-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .sidebar-nav-list .nav-item {
+            margin: 4px 10px;
+        }
+
+        .sidebar-nav-list .nav-item a.nav-link {
             display: flex;
             align-items: center;
-            padding: 14px 20px;
+            padding: 12px 10px;
+            border-radius: 8px;
             color: var(--sidebar-text);
             text-decoration: none;
-            transition: all 0.3s ease;
+            transition: all 0.2s ease-in-out;
+            position: relative;
         }
-
-        .sidebar-nav .nav-item:hover {
+        
+        .sidebar-nav-list .nav-item a.nav-link:hover {
             background-color: var(--sidebar-hover);
+            transform: translateX(5px);
             color: white;
-            border-left: 4px solid var(--primary-color);
         }
 
-        .sidebar-nav .nav-item.active {
+        .sidebar-nav-list .nav-item a.nav-link.active {
             background-color: var(--sidebar-active);
             color: white;
             font-weight: 600;
-            border-left: 4px solid #fff;
+            box-shadow: inset 0 0 5px rgba(0,0,0,0.1);
         }
         
-        .sidebar-nav .nav-icon {
-            font-size: 1.1rem;
+        .sidebar-nav-list .nav-icon {
+            font-size: 1.2rem;
             margin-right: 15px;
             width: 25px;
             text-align: center;
         }
 
+        /* Submenu styles */
+        .sidebar-nav .nav-item .submenu {
+            list-style: none;
+            padding-left: 0;
+            margin-top: 5px;
+            margin-bottom: 0;
+            transition: max-height 0.3s ease;
+            max-height: 0;
+            overflow: hidden;
+            width: 100%;
+        }
+        
+        .sidebar-nav .nav-item.open .submenu {
+            max-height: 200px;
+        }
+
+        .sidebar-nav .nav-item.open .fa-caret-down {
+            transform: rotate(180deg);
+        }
+        
+        .submenu .submenu-item {
+            display: block;
+            padding: 8px 20px 8px 50px;
+            color: var(--sidebar-text);
+            text-decoration: none;
+            transition: background-color 0.2s ease;
+        }
+
+        .submenu .submenu-item:hover {
+            background-color: var(--sidebar-hover);
+            border-radius: 8px;
+        }
+        
         /* Header */
         .app-header {
             height: 70px;
@@ -138,10 +196,15 @@
             left: 280px;
             right: 0;
             z-index: 1020;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-            transition: left 0.3s ease-in-out;
+            box-shadow: var(--box-shadow);
+            transition: left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         }
-
+        
+        .header-left .btn.menu-toggle {
+            color: white;
+            font-size: 1.5rem;
+        }
+        
         .header-icon-link {
             color: white;
             font-size: 1.2rem;
@@ -154,18 +217,63 @@
             color: var(--primary-color);
         }
 
+        /* New Dropdown Button Style */
+        .header-dropdown-btn {
+            background-color: transparent;
+            border: 1px solid var(--sidebar-text);
+            color: var(--sidebar-text);
+            font-weight: 500;
+            padding: 8px 15px;
+            border-radius: 50px;
+            text-decoration: none;
+            transition: all 0.2s ease-in-out;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .header-dropdown-btn:hover {
+            background-color: var(--sidebar-text);
+            color: var(--header-bg);
+        }
+        
+        .header-dropdown-btn i {
+            font-size: 1rem;
+        }
+
+        .header-dropdown-menu {
+            border-radius: 8px;
+            padding: 10px;
+            border: none;
+            background-color: var(--sidebar-bg);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+        }
+
+        .header-dropdown-menu .dropdown-item {
+            color: var(--sidebar-text);
+            border-radius: 6px;
+            padding: 10px 15px;
+            transition: background-color 0.2s ease, color 0.2s ease;
+        }
+
+        .header-dropdown-menu .dropdown-item:hover {
+            background-color: var(--sidebar-hover);
+            color: white;
+        }
+        
         /* Notification badge */
         .notification-badge {
             position: absolute;
             top: -5px;
             right: -10px;
-            background: #e53e3e;
+            background: var(--primary-color);
             color: white;
             font-size: 0.7rem;
             padding: 2px 7px;
             border-radius: 12px;
             min-width: 20px;
             text-align: center;
+            font-weight: bold;
         }
 
         /* Main content */
@@ -175,13 +283,14 @@
             flex-grow: 1;
             display: flex;
             flex-direction: column;
-            transition: margin-left 0.3s ease-in-out;
+            transition: margin-left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
             min-height: calc(100vh - 70px);
         }
 
         .page-content {
             flex-grow: 1;
             padding: 30px;
+            background-color: var(--content-bg);
         }
 
         /* Footer */
@@ -191,7 +300,7 @@
             text-align: center;
             font-size: 0.9rem;
             color: #6b7280;
-            border-top: 1px solid #cbd5e0;
+            border-top: 1px solid var(--border-color);
         }
         
         .footer-link {
@@ -208,9 +317,6 @@
         @media (max-width: 991.98px) {
             .app-sidebar {
                 transform: translateX(-100%);
-            }
-            .app-sidebar.show {
-                transform: translateX(0);
             }
             .app-header {
                 left: 0;
@@ -242,96 +348,155 @@
             margin: 0.5rem 0;
             text-align: left;
         }
+
+        /* Subtle hover effect for the main block content */
+        .page-content .card {
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            border-radius: 12px;
+            border: 1px solid var(--border-color);
+            background-color: white;
+            box-shadow: var(--box-shadow);
+        }
+        .page-content .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -4px rgba(0, 0, 0, 0.1);
+        }
     </style>
 </head>
 <body>
     <div class="app-container">
         <aside class="app-sidebar">
-            <div class="sidebar-header">
-                <img src="https://placehold.co/100x100/4c51bf/ffffff?text=AI" alt="Logo" class="sidebar-logo">
+           <div class="sidebar-header">
+                <img src="{% static '../static/logo/VHIMS_logo.jpg' %}" class="sidebar-logo">
                 <br>
-                <span class="sidebar-title">ABC</span>
+                <span class="sidebar-title" style="color: #dfdbd5;">VHiMS</span>
             </div>
-            
-            <nav class="sidebar-nav">
-                <a href="{% url 'dashboard' %}" class="nav-item {% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}">
-                    <i class="fas fa-chart-bar nav-icon"></i>
-                    <span class="nav-text">Dashboard</span>
-                </a>
-                <a href="{% url 'resume_analysis' %}" class="nav-item {% if request.resolver_match.url_name == 'resume_analysis' %}active{% endif %}">
-                    <i class="fas fa-file-invoice nav-icon"></i>
-                    <span class="nav-text">Manual Analysis</span>
-                </a>
-                <a href="{% url 'interviews' %}" class="nav-item {% if request.resolver_match.url_name == 'interviews' %}active{% endif %}">
-                    <i class="fas fa-headset nav-icon"></i>
-                    <span class="nav-text">Interview Status</span>
-                </a>
-                <a href="{% url 'records' %}" class="nav-item {% if request.resolver_match.url_name == 'records' %}active{% endif %}">
-                    <i class="fas fa-user-friends nav-icon"></i>
-                    <span class="nav-text">All Candidate's Data</span>
-                </a>
-                <a href="{% url 'show_unread_emails' %}" class="nav-item {% if request.resolver_match.url_name == 'show_unread_emails' %}active{% endif %}">
-                    <i class="fas fa-inbox nav-icon"></i>
-                    <span class="nav-text">Incoming Applications</span>
-                </a>
-                <a href="{% url 'all_job_descriptions' %}" class="nav-item {% if request.resolver_match.url_name == 'all_job_descriptions' %}active{% endif %}">
-                    <i class="fas fa-clipboard-list nav-icon"></i>
-                    <span class="nav-text">All Job Descriptions</span>
-                </a>
-                <a href="{% url 'top_recommendations' %}" class="nav-item {% if request.resolver_match.url_name == 'top_recommendations' %}active{% endif %}">
-                    <i class="fas fa-star nav-icon"></i>
-                    <span class="nav-text">Top Recommendations</span>
-                </a>
-                <a href="{% url 'email_dashboard' %}" class="nav-item {% if request.resolver_match.url_name == 'email_dashboard' %}active{% endif %}">
-                    <i class="fas fa-envelope-open-text nav-icon"></i>
-                    <span class="nav-text">Mail Information</span>
-                </a>
-                <!-- <a href="" class="nav-item {% if request.resolver_match.url_name == 'post_job_description' %}active{% endif %}">
-                    <i class="fas fa-bullhorn nav-icon"></i>
-                    <span class="nav-text">Post Job Description</span>
-                </a> -->
-                <a href="{% url 'file_manager' %}" class="nav-item {% if request.resolver_match.url_name == 'file_manager' %}active{% endif %}">
-                    <i class="fas fa-robot nav-icon"></i>
-                    <span class="nav-text">File Manager </span>
-                </a>
-                <a href="{% url 'career_portal' %}" class="nav-item {% if request.resolver_match.url_name == 'career_portal' %}active{% endif %}">
-                    <i class="fas fa-robot nav-icon"></i>
-                    <span class="nav-text">Career Portal </span>
-                </a>
-                
-                {% if user.is_authenticated %}
-                    {% if user.role == 'admin' %}
-                        <a href="{% url 'admin_dashboard' %}" class="nav-item {% if request.resolver_match.url_name == 'admin_dashboard' %}active{% endif %}">
-                            <i class="fas fa-user-shield nav-icon"></i>
-                            <span class="nav-text">Admin Panel</span>
+            <nav class="sidebar-nav" aria-label="Main Navigation">
+                <ul class="sidebar-nav-list">
+                    <li class="nav-item">
+                        <a href="{% url 'dashboard' %}" class="nav-link {% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}" aria-current="page">
+                            <i class="fas fa-chart-bar nav-icon"></i>
+                            <span class="nav-text">Dashboard</span>
                         </a>
-                    {% endif %}
-                    {% if user.role == 'superadmin' %}
-                        <a href="{% url 'superadmin_dashboard' %}" class="nav-item {% if request.resolver_match.url_name == 'superadmin_dashboard' %}active{% endif %}">
-                            <i class="fas fa-crown nav-icon"></i>
-                            <span class="nav-text">Superadmin Panel</span>
+                    </li>
+                    <li class="nav-item">
+                        <a href="{% url 'resume_analysis' %}" class="nav-link {% if request.resolver_match.url_name == 'resume_analysis' %}active{% endif %}">
+                            <i class="fas fa-file-invoice nav-icon"></i>
+                            <span class="nav-text">Manual Analysis</span>
                         </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="{% url 'interviews' %}" class="nav-link {% if request.resolver_match.url_name == 'interviews' %}active{% endif %}">
+                            <i class="fas fa-headset nav-icon"></i>
+                            <span class="nav-text">Interview Status</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="{% url 'records' %}" class="nav-link {% if request.resolver_match.url_name == 'records' %}active{% endif %}">
+                            <i class="fas fa-user-friends nav-icon"></i>
+                            <span class="nav-text">All Candidate's Data</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="{% url 'show_unread_emails' %}" class="nav-link {% if request.resolver_match.url_name == 'show_unread_emails' %}active{% endif %}">
+                            <i class="fas fa-inbox nav-icon"></i>
+                            <span class="nav-text">Incoming Applications</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="{% url 'all_job_descriptions' %}" class="nav-link {% if request.resolver_match.url_name == 'all_job_descriptions' %}active{% endif %}">
+                            <i class="fas fa-clipboard-list nav-icon"></i>
+                            <span class="nav-text">All Job Descriptions</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="{% url 'top_recommendations' %}" class="nav-link {% if request.resolver_match.url_name == 'top_recommendations' %}active{% endif %}">
+                            <i class="fas fa-star nav-icon"></i>
+                            <span class="nav-text">Top Recommendations</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="{% url 'email_dashboard' %}" class="nav-link {% if request.resolver_match.url_name == 'email_dashboard' %}active{% endif %}">
+                            <i class="fas fa-envelope-open-text nav-icon"></i>
+                            <span class="nav-text">Mail Information</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="{% url 'file_manager' %}" class="nav-link {% if request.resolver_match.url_name == 'file_manager' %}active{% endif %}">
+                            <i class="fas fa-folder-open nav-icon"></i>
+                            <span class="nav-text">File Manager</span>
+                        </a>
+                    </li>
+                    
+                    <!-- <li class="nav-item dropdown">
+                        <a href="#" class="nav-link dropdown-toggle" id="careerPortalSubmenu" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                            <i class="fas fa-robot nav-icon"></i>
+                            <span class="nav-text">Settings</span>
+                        </a>
+                        <ul class="dropdown-menu dropdown-menu-dark" aria-labelledby="careerPortalSubmenu">
+                            <li><a href="{% url 'career_portal' %}" class="dropdown-item">Career Dashboard</a></li>
+                            <li><a href="{% url 'settings_careerpage' %}" class="dropdown-item">Career Page Settings</a></li>
+                            <li><a href="{% url 'career_mainpage' %}" class="dropdown-item">View Career Page</a></li>
+                        </ul>
+                    </li> -->
+
+                    {% if user.is_authenticated %}
+                        {% if user.role == 'admin' %}
+                            <li class="nav-item">
+                                <a href="{% url 'admin_dashboard' %}" class="nav-link {% if request.resolver_match.url_name == 'admin_dashboard' %}active{% endif %}">
+                                    <i class="fas fa-user-shield nav-icon"></i>
+                                    <span class="nav-text">Admin Panel</span>
+                                </a>
+                            </li>
+                        {% endif %}
+                        {% if user.role == 'superadmin' %}
+                            <li class="nav-item">
+                                <a href="{% url 'superadmin_dashboard' %}" class="nav-link {% if request.resolver_match.url_name == 'superadmin_dashboard' %}active{% endif %}">
+                                    <i class="fas fa-crown nav-icon"></i>
+                                    <span class="nav-text">Superadmin Panel</span>
+                                </a>
+                            </li>
+                        {% endif %}
                     {% endif %}
-                {% endif %}
+                </ul>
             </nav>
         </aside>
-
+        
         <div class="main-content-wrapper">
             <header class="app-header">
                 <div class="header-left d-flex align-items-center">
                     <button class="menu-toggle btn btn-link text-white d-lg-none" aria-label="Toggle navigation">
                         <i class="fas fa-bars"></i>
                     </button>
-                    <h5 class="mb-0 ms-3 d-none d-md-block"> ABC Infera Matrix System</h5>
+                    <strong>
+                    <h5 class="mb-0 ms-3 d-none d-md-block" style="color:#3e4f47; font-size: 25px;"><span style="color: orangered;">V</span>isionary 
+                        <span style="color: orangered;">H</span>ire 
+                        <span style="color: orangered;">I</span>nfera
+                        <span style="color: orangered;">M</span>etrix
+                        <span style="color: orangered;">S</span>ystem
+                    </h5>
+                    </strong>
                 </div>
-                <div class="header-right d-flex align-items-center">
+                <div class="header-right d-flex align-items-center" >
                     {% if user.is_authenticated %}
-                        <span class="text-white me-3 d-none d-md-block" style="font-size: 1.1rem; font-weight: 500;">Hello, {{ user.username }}</span>
-                        <a href="#" class="header-icon-link notification-icon-wrapper" aria-label="Notifications">
+                        <div class="dropdown me-3 d-none d-md-block" style="color: #3e4f47;">
+                             <button class="btn header-dropdown-btn dropdown-toggle" type="button" id="careerSettingsDropdown" style="color: #dfdbd5; background-color: #3e4f47;" data-bs-toggle="dropdown" aria-expanded="false">
+                                <i class="fas fa-cog"></i> Settings
+                             </button>
+                             <ul class="dropdown-menu header-dropdown-menu" aria-labelledby="careerSettingsDropdown">
+                                 <li><a class="dropdown-item" href="{% url 'career_portal' %}"><i class="fas fa-robot me-2"></i>Job Dashboard</a></li>
+                                 <li><a class="dropdown-item" href="{% url 'settings_careerpage' %}"><i class="fas fa-cog me-2"></i>Career Settings</a></li>
+                                 <li><a class="dropdown-item" href="{% url 'career_mainpage' %}"><i class="fas fa-external-link-alt me-2"></i>View Career Page</a></li>
+                             </ul>
+                        </div>
+                        
+                        <span class="" style="font-size: 1.1rem; font-weight: 500; color: #3e4f47;">Hello, {{ user.username }}</span>
+                        
+                        <a href="#" style="color: #3e4f47;" class="header-icon-link notification-icon-wrapper" aria-label="Notifications">
                             <i class="fas fa-bell"></i>
-                            <span class="notification-badge">3</span>
+                            <span class="notification-badge" style="color: #3e4f47;">3</span>
                         </a>
-                        <a href="{% url 'signout' %}" class="header-icon-link" title="Sign Out" aria-label="Sign Out">
+                        <a href="{% url 'signout' %}" class="header-icon-link" title="Sign Out" aria-label="Sign Out" style="color: #3e4f47;">
                             <i class="fas fa-sign-out-alt"></i>
                         </a>
                     {% else %}
@@ -364,7 +529,10 @@
 
             <main class="page-content">
                 {% block content %}
-                <h1>Welcome to AI Talent Finder!</h1>
+                <div class="card p-5 text-center">
+                    <h1>Welcome to AI Talent Finder!</h1>
+                    <p class="lead mt-3">This is a starting point for your content.</p>
+                </div>
                 {% endblock %}
             </main>
 
@@ -388,21 +556,25 @@
 
     <script>
         document.addEventListener('DOMContentLoaded', function () {
-            // Sidebar toggle
             const menuToggle = document.querySelector('.menu-toggle');
             const sidebar = document.querySelector('.app-sidebar');
             const sidebarOverlay = document.querySelector('.sidebar-overlay');
-
+            const navItemsWithSubmenu = document.querySelector('[data-bs-toggle="collapse"]');
+            
+            // Function to toggle sidebar visibility
             function toggleSidebar() {
                 sidebar.classList.toggle('show');
                 sidebarOverlay.classList.toggle('show');
+                // Toggle aria-expanded for accessibility
+                const isExpanded = menuToggle.getAttribute('aria-expanded') === 'true';
+                menuToggle.setAttribute('aria-expanded', !isExpanded);
             }
 
             if (menuToggle) menuToggle.addEventListener('click', toggleSidebar);
             if (sidebarOverlay) sidebarOverlay.addEventListener('click', toggleSidebar);
 
             // Close sidebar when a navigation item is clicked on mobile
-            const navItems = document.querySelectorAll('.sidebar-nav .nav-item');
+            const navItems = document.querySelectorAll('.sidebar-nav .nav-item:not([data-bs-toggle="collapse"])');
             navItems.forEach(item => {
                 item.addEventListener('click', () => {
                     if (window.innerWidth < 992) {
