@@ -142,6 +142,10 @@ STATIC_ROOT = BASE_DIR / 'staticfiles' # For production deployment
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
+
+LOGIN_URL = '/signin/'
+LOGIN_REDIRECT_URL = '/home/'  # or another default page
+
 # --- Custom Settings for API Keys (Hardcoded) ---
 # IMPORTANT: Replace these with your actual keys.
 # These are placeholder values.

@@ -105,7 +105,7 @@ urlpatterns = [
     # path('toggle_job_status/<int:job_id>/', views.toggle_job_status, name='toggle_job_status'),
     # path('apply_for_job/<int:career_id>/', views.apply_for_job, name='apply_for_job'),
     
-    # path('create_job/', views.create_job, name='create_job'),
+    path('create_job/', views.create_job, name='create_job'),
     path('update_job/<int:job_id>/', views.update_job, name='update_job'),
     path('delete_job/<int:job_id>/', views.delete_job, name='delete_job'),
     path('toggle_job_status/<int:job_id>/', views.toggle_job_status, name='toggle_job_status'),

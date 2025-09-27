@@ -462,7 +462,7 @@ class ThemeSettings(models.Model):
 
 
 class CareerPage(models.Model):
-    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='job_postings')
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='job_postings', null=True, blank=True)
     category = models.ForeignKey('Category', on_delete=models.SET_NULL, null=True, blank=True, related_name='jobs')
     title = models.CharField(max_length=200)
     company = models.CharField(max_length=100, default='Our Company')
@@ -737,6 +737,7 @@ class CandidateAnalysis(models.Model):
 class Category(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='categories')
     ICON_CHOICES = [
+        # Existing / basic
         ('fa-envelope-open-text', 'Marketing'),
         ('fa-headset', 'Customer Service'),
         ('fa-user-tie', 'Human Resource'),
@@ -745,6 +746,30 @@ class Category(models.Model):
         ('fa-handshake', 'Sales & Communication'),
         ('fa-book-open', 'Teaching & Education'),
         ('fa-pencil-ruler', 'Design & Creative'),
+        ('fa-laptop-code', 'Software Development'),
+        ('fa-code', 'Frontend Development'),
+        ('fa-server', 'Backend Development'),
+        ('fa-database', 'Database Development'),
+        ('fa-mobile-alt', 'Mobile App Development'),
+        ('fa-cloud', 'Cloud / DevOps'),
+        
+        # ATS-specific additions
+        ('fa-briefcase', 'Job Posting / Requisition'),
+        ('fa-file-upload', 'Application Submission'),
+        ('fa-file-alt', 'Resume / CV Processing'),
+        ('fa-tasks', 'Pre-Screening / Assessment'),
+        ('fa-calendar-alt', 'Interview Scheduling'),
+        ('fa-comments', 'Interview Feedback'),
+        ('fa-file-signature', 'Offer / Contract'),
+        ('fa-user-plus', 'Onboarding'),
+        ('fa-times-circle', 'Rejection'),
+        ('fa-user-clock', 'Candidate Status Tracking'),
+        ('fa-users', 'Internal / External Candidates'),
+        ('fa-folder-open', 'Documents & Files'),
+        ('fa-sticky-note', 'Notes & Comments'),
+        ('fa-share-alt', 'Collaboration / Sharing'),
+        ('fa-shield-alt', 'Background & Verification'),
+        ('fa-chart-pie', 'Analytics & Reports'),
     ]
 
     name = models.CharField(max_length=100)

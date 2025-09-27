@@ -5,77 +5,274 @@
 
 {% block content %}
 <style>
-body { background-color: #f8f9fa; }
+  :root {
+    --primary-color: #3e4f47;
+    --primary-color-text: #d6dcda;
+    --secondary-color: #eef2f6;
+    --secondary-color-text: #1f2937;
+    --page-main-bg: #f8400d;
+    --page-main-bg-text: #1f2937;
+    /* Non-dynamic CSS properties */
+    --primary-hover-color: #74b098;
+    --card-bg: #ffffff;
+    --text-color-dark: #3e4f47;
+    --text-color-light: #6b7280;
+    --border-color: #e5e7eb;
+    --shadow-card: 0 10px 30px rgba(0, 0, 0, 0.08), 0 20px 50px rgba(0, 0, 0, 0.04);
+    --success-color: #18362c;
+    --success-hover-color: #b0b0b0;
+    --info-color: orangered;
+    --danger-color: #003626;
+    --glass-effect: rgba(255, 255, 255, 0.4);
+  }
 
-/* Sidebar */
-.sidebar { min-width: 250px; background: #fff; }
-.sidebar .list-group-item { border: none; transition: background-color 0.2s; padding: 0.5rem 0.75rem; }
-.sidebar .list-group-item:hover { background-color: #f1f3f5; }
-.sidebar .list-group-item .fw-medium { max-width: 140px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.sidebar .badge { min-width: 24px; text-align: center; }
+  body {
+    background-color: var(--page-main-bg);
+    color: var(--page-main-bg-text);
+  }
 
-/* Cards */
-.folder-card .card-item { display: flex; flex-direction: column; justify-content: space-between; height: 100%; cursor: pointer; transition: transform 0.2s ease, box-shadow 0.2s ease; }
-.folder-card .card-item:hover { transform: translateY(-3px); box-shadow: 0 6px 16px rgba(0,0,0,0.1); }
-.folder-card .card-body { flex-grow: 1; display: flex; flex-direction: column; justify-content: center; }
-.folder-card h5 { min-height: 1.5em; }
-.folder-card small { display: block; margin-top: 0.25rem; }
-.icon-lg { font-size: 2.5rem; }
 
-/* Document List */
-#document-view .document-item { padding: 0.75rem 1rem; border: 1px solid #e9ecef; border-radius: 0.5rem; background: #fff; transition: background-color 0.2s, box-shadow 0.2s; }
-#document-view .document-item:hover { background-color: #fdfdfd; box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
 
-/* Empty state */
-.empty-state i { font-size: 3rem; }
-.empty-state button { margin-top: 1rem; }
+  .sidebar .list-group-item {
+    border: none;
+    transition: background-color 0.2s;
+    padding: 0.5rem 0.75rem;
+  }
 
-/* Search bar */
-.search-bar { max-width: 250px; }
-.search-bar input:focus { outline: none; box-shadow: none; }
+  .sidebar .list-group-item:hover {
+    background-color: var(--secondary-color);
+  }
 
-/* Buttons */
-.btn.rounded-pill { border-radius: 50rem !important; }
+  .sidebar .list-group-item.active {
+    background-color: var(--secondary-color) !important;
+  }
 
-/* Scroll to top/bottom buttons */
-.scroll-btn {
+  .sidebar .list-group-item.active .fw-medium {
+    color: var(--secondary-color-text) !important;
+  }
+
+  .sidebar .list-group-item .fw-medium {
+    max-width: 140px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .sidebar .badge {
+    min-width: 24px;
+    text-align: center;
+  }
+
+  /* Cards */
+  .folder-card .card-item {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    height: 100%;
+    cursor: pointer;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    background-color: var(--card-bg);
+  }
+
+  .folder-card .card-item:hover {
+    transform: translateY(-3px);
+    box-shadow: var(--shadow-card);
+  }
+
+  .folder-card .card-body {
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+  }
+
+  .folder-card h5 {
+    min-height: 1.5em;
+    color: var(--text-color-dark);
+  }
+
+  .folder-card small {
+    display: block;
+    margin-top: 0.25rem;
+    color: var(--text-color-light) !important;
+  }
+
+  .icon-lg {
+    font-size: 2.5rem;
+  }
+
+  /* Document List */
+  #document-view .document-item {
+    padding: 0.75rem 1rem;
+    border: 1px solid var(--border-color);
+    border-radius: 0.5rem;
+    background: var(--card-bg);
+    transition: background-color 0.2s, box-shadow 0.2s;
+  }
+
+  #document-view .document-item:hover {
+    background-color: var(--secondary-color);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+  }
+
+  #document-view .document-item h6 {
+    color: var(--text-color-dark);
+  }
+
+  /* Empty state */
+  .empty-state i {
+    font-size: 3rem;
+    color: var(--text-color-light);
+  }
+
+  .empty-state button {
+    margin-top: 1rem;
+  }
+
+  /* Search bar */
+  .search-bar {
+    max-width: 250px;
+  }
+
+  .search-bar input:focus {
+    outline: none;
+    box-shadow: none;
+  }
+
+  .search-bar input,
+  .search-bar .input-group-text {
+    background-color: var(--card-bg) !important;
+  }
+
+  /* Buttons */
+  .btn.rounded-pill {
+    border-radius: 50rem !important;
+  }
+
+  .btn-primary {
+    background-color: var(--primary-color);
+    border-color: var(--primary-color);
+    color: var(--primary-color-text);
+  }
+
+  .btn-primary:hover {
+    background-color: var(--primary-hover-color);
+    border-color: var(--primary-hover-color);
+    color: var(--secondary-color-text);
+  }
+
+  .btn-outline-secondary {
+    border-color: var(--border-color);
+    color: var(--text-color-light);
+  }
+
+  .btn-outline-secondary:hover {
+    background-color: var(--secondary-color);
+  }
+
+
+  /* Scroll to top/bottom buttons */
+  .scroll-btn {
     position: fixed;
     bottom: 20px;
     right: 20px;
-    background-color: #007bff;
-    color: white;
+    background-color: var(--primary-color);
+    color: var(--primary-color-text);
     border: none;
     border-radius: 50%;
     width: 45px;
     height: 45px;
     font-size: 1.2rem;
-    box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
     cursor: pointer;
     display: none;
     z-index: 1000;
     justify-content: center;
     align-items: center;
     transition: background-color 0.3s;
-}
-.scroll-btn:hover { background-color: #0056b3; }
-#scroll-down-btn { bottom: 75px; }
+  }
 
-/* Responsive tweaks */
-@media (max-width: 991px) { .sidebar { display: none; } }
+  .scroll-btn:hover {
+    background-color: var(--primary-hover-color);
+  }
+
+  #scroll-down-btn {
+    bottom: 75px;
+  }
+
+  /* Modals */
+  .modal-header.bg-primary {
+    background-color: var(--primary-color) !important;
+    color: var(--primary-color-text);
+  }
+
+  .modal-header.bg-danger {
+    background-color: var(--danger-color) !important;
+  }
+
+  .modal-content {
+    background-color: var(--card-bg);
+  }
+
+  .modal-body,
+  .modal-footer {
+    color: var(--text-color-dark);
+  }
+
+  /* Text Colors */
+  .text-primary {
+    color: var(--primary-color) !important;
+  }
+
+  .text-danger {
+    color: var(--danger-color) !important;
+  }
+
+  .text-muted {
+    color: var(--text-color-light) !important;
+  }
+
+  .text-dark {
+    color: var(--text-color-dark) !important;
+  }
+
+  .text-warning {
+    color: var(--info-color) !important;
+  }
+
+  .text-secondary {
+    color: var(--text-color-light) !important;
+  }
+
+  .text-purple {
+    color: #6a0dad !important;
+  }
+
+  .bg-primary-subtle {
+    background-color: var(--secondary-color) !important;
+  }
+
+
+  /* Responsive tweaks */
+  @media (max-width: 991px) {
+    .sidebar {
+      display: none;
+    }
+  }
 </style>
 
 <div class="universal-layout d-flex flex-column flex-lg-row">
   <div class="sidebar d-none d-lg-flex flex-column p-4 border-end shadow-sm">
     <h6 class="text-uppercase text-muted fw-bold mb-3">Folders</h6>
     <div class="list-group list-group-flush flex-grow-1" id="folder-tree-view">
-      <a href="{% url 'file_manager' %}" class="list-group-item list-group-item-action rounded-2 mb-1 {% if not selected_folder %}active bg-primary-subtle{% endif %}">
+      <a href="{% url 'file_manager' %}" class="list-group-item list-group-item-action rounded-2 mb-1 {% if not selected_folder %}active{% endif %}">
         <div class="d-flex align-items-center">
           <i class="fas fa-grip-horizontal me-2 text-primary"></i>
-          <span class="fw-medium" style="color: #007bff;">All Folders/Files</span>
+          <span class="fw-medium">All Folders/Files</span>
         </div>
       </a>
       {% for folder in all_folders %}
-      <a href="{% url 'browse_folder' folder.pk %}" class="list-group-item list-group-item-action rounded-2 mb-2 {% if selected_folder and folder.pk == selected_folder.pk %}active bg-primary-subtle{% endif %}">
+      <a href="{% url 'browse_folder' folder.pk %}" class="list-group-item list-group-item-action rounded-2 mb-2 {% if selected_folder and folder.pk == selected_folder.pk %}active{% endif %}">
         <div class="d-flex justify-content-between align-items-center">
           <div class="d-flex align-items-center">
             <i class="fas fa-folder me-2 text-warning"></i>
@@ -100,16 +297,16 @@ body { background-color: #f8f9fa; }
         <button class="btn btn-outline-secondary d-lg-none me-3" type="button" data-bs-toggle="offcanvas" data-bs-target="#offcanvasSidebar">
           <i class="fas fa-bars"></i>
         </button>
-        <h3 class="mb-0 text-dark fw-bold">
+        <h3 class="mb-0 fw-bold text-dark">
           {% if selected_folder %}
-            <a href="{% url 'file_manager' %}" class="text-muted text-decoration-none hover-underline me-2">&#x2B05;</a>{{ selected_folder.name }}
+          <a href="{% url 'file_manager' %}" class="text-muted text-decoration-none hover-underline me-2">&#x2B05;</a>{{ selected_folder.name }}
           {% else %} All Folders {% endif %}
         </h3>
       </div>
       <div class="d-flex gap-2">
         <div class="input-group search-bar border rounded-pill shadow-sm overflow-hidden">
-          <span class="input-group-text bg-transparent border-0 pe-2"><i class="fas fa-search text-muted"></i></span>
-          <input type="text" id="searchInput" class="form-control bg-transparent border-0 shadow-none" placeholder="Search files..." />
+          <span class="input-group-text border-0 pe-2"><i class="fas fa-search text-muted"></i></span>
+          <input type="text" id="searchInput" class="form-control border-0 shadow-none" placeholder="Search files..." />
         </div>
         <button type="button" class="btn btn-primary rounded-pill shadow-sm" data-bs-toggle="modal" data-bs-target="#uploadFileModal">
           <i class="fas fa-upload me-2"></i> Upload Resume
@@ -141,15 +338,13 @@ body { background-color: #f8f9fa; }
                 </button>
                 <ul class="dropdown-menu" aria-labelledby="dropdownMenuButton-{{ forloop.counter }}">
                   <li>
-                    <a class="dropdown-item" href="#" data-bs-toggle="modal" data-bs-target="#editFolderModal"
-                       data-edit-url="{% url 'edit_folder' folder.pk %}" data-folder-name="{{ folder.name }}">
-                        <i class="fas fa-edit me-2"></i> Rename
+                    <a class="dropdown-item" href="#" data-bs-toggle="modal" data-bs-target="#editFolderModal" data-edit-url="{% url 'edit_folder' folder.pk %}" data-folder-name="{{ folder.name }}">
+                      <i class="fas fa-edit me-2"></i> Rename
                     </a>
                   </li>
                   <li>
-                    <a class="dropdown-item text-danger" href="#" data-bs-toggle="modal" data-bs-target="#deleteFolderModal"
-                       data-delete-url="{% url 'delete_folder' folder.pk %}" data-folder-name="{{ folder.name }}">
-                        <i class="fas fa-trash me-2"></i> Delete
+                    <a class="dropdown-item text-danger" href="#" data-bs-toggle="modal" data-bs-target="#deleteFolderModal" data-delete-url="{% url 'delete_folder' folder.pk %}" data-folder-name="{{ folder.name }}">
+                      <i class="fas fa-trash me-2"></i> Delete
                     </a>
                   </li>
                 </ul>
@@ -164,15 +359,15 @@ body { background-color: #f8f9fa; }
           <div class="document-item list-group-item d-flex align-items-center justify-content-between rounded-3 mb-2 shadow-sm" data-document-id="{{ document.pk }}" data-document-name="{{ document.file.name|lower }}">
             <a href="{{ document.file.url }}" target="_blank" class="d-flex align-items-center text-decoration-none text-dark flex-grow-1">
               <div class="icon-sm text-center me-3">
-                  {% if '.pdf' in document.file_name_only|lower %}
-                    <i class="fas fa-file-pdf text-danger"></i>
-                  {% elif '.doc' in document.file_name_only|lower or '.docx' in document.file_name_only|lower %}
-                    <i class="fas fa-file-word text-primary"></i>
-                  {% elif '.jpg' in document.file_name_only|lower or '.jpeg' in document.file_name_only|lower or '.png' in document.file_name_only|lower %}
-                    <i class="fas fa-file-image text-purple"></i>
-                  {% else %}
-                    <i class="fas fa-file text-secondary"></i>
-                  {% endif %}
+                {% if '.pdf' in document.file_name_only|lower %}
+                <i class="fas fa-file-pdf text-danger"></i>
+                {% elif '.doc' in document.file_name_only|lower or '.docx' in document.file_name_only|lower %}
+                <i class="fas fa-file-word text-primary"></i>
+                {% elif '.jpg' in document.file_name_only|lower or '.jpeg' in document.file_name_only|lower or '.png' in document.file_name_only|lower %}
+                <i class="fas fa-file-image text-purple"></i>
+                {% else %}
+                <i class="fas fa-file text-secondary"></i>
+                {% endif %}
               </div>
               <div class="flex-grow-1 text-truncate">
                 <h6 class="mb-0 fw-medium">{{ document.file_name_only }}</h6>
@@ -180,9 +375,8 @@ body { background-color: #f8f9fa; }
               </div>
             </a>
             <div class="d-flex align-items-center gap-2">
-              <a href="#" class="text-danger" data-bs-toggle="modal" data-bs-target="#deleteDocumentModal"
-                 data-delete-url="{% url 'delete_document' document.pk %}" data-document-name="{{ document.file.name }}">
-                  <i class="fas fa-trash"></i>
+              <a href="#" class="text-danger" data-bs-toggle="modal" data-bs-target="#deleteDocumentModal" data-delete-url="{% url 'delete_document' document.pk %}" data-document-name="{{ document.file.name }}">
+                <i class="fas fa-trash"></i>
               </a>
             </div>
           </div>
@@ -216,7 +410,7 @@ body { background-color: #f8f9fa; }
       <form action="{% url 'create_folder' %}" method="post">
         {% csrf_token %}
         <div class="modal-body">
-          <label>Folder Name</label>
+          <label class="form-label">Folder Name</label>
           <input type="text" name="folder_name" class="form-control" required>
         </div>
         <div class="modal-footer">
@@ -238,7 +432,7 @@ body { background-color: #f8f9fa; }
       <form id="editFolderForm" method="post">
         {% csrf_token %}
         <div class="modal-body">
-          <label>New Folder Name</label>
+          <label class="form-label">New Folder Name</label>
           <input type="text" id="new-folder-name" name="new_name" class="form-control" required>
         </div>
         <div class="modal-footer">
@@ -302,22 +496,22 @@ body { background-color: #f8f9fa; }
       <form action="{% url 'upload_file' %}" method="post" enctype="multipart/form-data">
         {% csrf_token %}
         <div class="modal-body">
-          <label>Select Folder</label>
+          <label class="form-label">Select Folder</label>
           <select name="folder_id" class="form-select" required>
             <option value="">Choose...</option>
             {% for folder in all_folders %}
             <option value="{{ folder.pk }}" {% if selected_folder and folder.pk == selected_folder.pk %}selected{% endif %}>{{ folder.name }}</option>
             {% endfor %}
           </select>
-          <label class="mt-3">Choose File(s)</label>
+          <label class="mt-3 form-label">Choose File(s)</label>
           <input type="file" name="file" class="form-control" multiple required>
           <small class="text-muted">Upload any number of files.</small>
         </div>
         <div class="modal-footer">
           <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
           <button type="submit" id="upload-btn" class="btn btn-primary">
-              <span class="spinner-border spinner-border-sm d-none me-2" role="status" aria-hidden="true"></span>
-              <span class="button-text"><i class="fas fa-upload me-2"></i> Upload</span>
+            <span class="spinner-border spinner-border-sm d-none me-2" role="status" aria-hidden="true"></span>
+            <span class="button-text"><i class="fas fa-upload me-2"></i> Upload</span>
           </button>
         </div>
       </form>
@@ -342,8 +536,8 @@ body { background-color: #f8f9fa; }
         <div class="modal-footer">
           <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
           <button type="submit" id="ai-sort-btn" class="btn btn-primary">
-              <span class="spinner-border spinner-border-sm d-none me-2" role="status" aria-hidden="true"></span>
-              <span class="button-text"><i class="fas fa-robot me-2"></i> Start Sorting</span>
+            <span class="spinner-border spinner-border-sm d-none me-2" role="status" aria-hidden="true"></span>
+            <span class="button-text"><i class="fas fa-robot me-2"></i> Start Sorting</span>
           </button>
         </div>
       </form>
@@ -355,95 +549,104 @@ body { background-color: #f8f9fa; }
 <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.8/dist/umd/popper.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.min.js"></script>
 <script>
-document.addEventListener('DOMContentLoaded', function() {
-  // Modals
-  const editFolderModal = document.getElementById('editFolderModal');
-  if(editFolderModal) editFolderModal.addEventListener('show.bs.modal', function(e){
-    const trigger = e.relatedTarget;
-    this.querySelector('#new-folder-name').value = trigger.getAttribute('data-folder-name');
-    this.querySelector('#editFolderForm').action = trigger.getAttribute('data-edit-url');
-  });
+  document.addEventListener('DOMContentLoaded', function() {
+    // Modals
+    const editFolderModal = document.getElementById('editFolderModal');
+    if (editFolderModal) editFolderModal.addEventListener('show.bs.modal', function(e) {
+      const trigger = e.relatedTarget;
+      this.querySelector('#new-folder-name').value = trigger.getAttribute('data-folder-name');
+      this.querySelector('#editFolderForm').action = trigger.getAttribute('data-edit-url');
+    });
 
-  const deleteFolderModal = document.getElementById('deleteFolderModal');
-  if(deleteFolderModal) deleteFolderModal.addEventListener('show.bs.modal', function(e){
-    const trigger = e.relatedTarget;
-    this.querySelector('#folder-name-to-delete').textContent = trigger.getAttribute('data-folder-name');
-    this.querySelector('#deleteFolderForm').action = trigger.getAttribute('data-delete-url');
-  });
+    const deleteFolderModal = document.getElementById('deleteFolderModal');
+    if (deleteFolderModal) deleteFolderModal.addEventListener('show.bs.modal', function(e) {
+      const trigger = e.relatedTarget;
+      this.querySelector('#folder-name-to-delete').textContent = trigger.getAttribute('data-folder-name');
+      this.querySelector('#deleteFolderForm').action = trigger.getAttribute('data-delete-url');
+    });
 
-  const deleteDocumentModal = document.getElementById('deleteDocumentModal');
-  if(deleteDocumentModal) deleteDocumentModal.addEventListener('show.bs.modal', function(e){
-    const trigger = e.relatedTarget;
-    this.querySelector('#document-name-to-delete').textContent = trigger.getAttribute('data-document-name');
-    this.querySelector('#deleteDocumentForm').action = trigger.getAttribute('data-delete-url');
-  });
+    const deleteDocumentModal = document.getElementById('deleteDocumentModal');
+    if (deleteDocumentModal) deleteDocumentModal.addEventListener('show.bs.modal', function(e) {
+      const trigger = e.relatedTarget;
+      this.querySelector('#document-name-to-delete').textContent = trigger.getAttribute('data-document-name');
+      this.querySelector('#deleteDocumentForm').action = trigger.getAttribute('data-delete-url');
+    });
 
-  // Search
-  const searchInput = document.getElementById('searchInput');
-  if(searchInput) searchInput.addEventListener('input', function(){
-    const q = (this.value||'').trim().toLowerCase();
-    document.querySelectorAll('.folder-card').forEach(c => c.style.display = c.getAttribute('data-foldername').includes(q) ? '' : 'none');
-    document.querySelectorAll('.document-item').forEach(d => d.style.display = d.getAttribute('data-document-name').includes(q) ? '' : 'none');
-  });
+    // Search
+    const searchInput = document.getElementById('searchInput');
+    if (searchInput) searchInput.addEventListener('input', function() {
+      const q = (this.value || '').trim().toLowerCase();
+      document.querySelectorAll('.folder-card').forEach(c => c.style.display = c.getAttribute('data-foldername').includes(q) ? '' : 'none');
+      document.querySelectorAll('.document-item').forEach(d => d.style.display = d.getAttribute('data-document-name').includes(q) ? '' : 'none');
+    });
 
-  // File limit only for AI Auto Sort
-  const aiSortInput = document.getElementById('aiSortFiles');
-  if(aiSortInput) aiSortInput.addEventListener('change', function(){
-    if(this.files.length>25){ alert("You can only select up to 25 files."); this.value=''; }
-  });
+    // File limit only for AI Auto Sort
+    const aiSortInput = document.getElementById('aiSortFiles');
+    if (aiSortInput) aiSortInput.addEventListener('change', function() {
+      if (this.files.length > 25) {
+        alert("You can only select up to 25 files.");
+        this.value = '';
+      }
+    });
 
-  // Scroll buttons
-  const scrollTopBtn = document.getElementById('scroll-top-btn');
-  const scrollDownBtn = document.getElementById('scroll-down-btn');
+    // Scroll buttons
+    const scrollTopBtn = document.getElementById('scroll-top-btn');
+    const scrollDownBtn = document.getElementById('scroll-down-btn');
 
-  const toggleScrollButtons = () => {
-    if (window.scrollY > 200) {
-      scrollTopBtn.style.display = 'flex';
-      scrollDownBtn.style.display = 'flex';
-    } else {
-      scrollTopBtn.style.display = 'none';
-      scrollDownBtn.style.display = 'none';
+    const toggleScrollButtons = () => {
+      if (window.scrollY > 200) {
+        scrollTopBtn.style.display = 'flex';
+        scrollDownBtn.style.display = 'flex';
+      } else {
+        scrollTopBtn.style.display = 'none';
+        scrollDownBtn.style.display = 'none';
+      }
+    };
+
+    window.addEventListener('scroll', toggleScrollButtons);
+
+    scrollTopBtn.addEventListener('click', () => {
+      window.scrollTo({
+        top: 0,
+        behavior: 'smooth'
+      });
+    });
+
+    scrollDownBtn.addEventListener('click', () => {
+      window.scrollTo({
+        top: document.body.scrollHeight,
+        behavior: 'smooth'
+      });
+    });
+
+    // Loading spinner for form submissions
+    const uploadForm = document.querySelector('#uploadFileModal form');
+    const aiSortForm = document.querySelector('#aiSortModal form');
+
+    if (uploadForm) {
+      uploadForm.addEventListener('submit', function() {
+        const btn = this.querySelector('button[type="submit"]');
+        const spinner = btn.querySelector('.spinner-border');
+        const text = btn.querySelector('.button-text');
+
+        spinner.classList.remove('d-none');
+        text.textContent = 'Uploading...';
+        btn.disabled = true;
+      });
     }
-  };
 
-  window.addEventListener('scroll', toggleScrollButtons);
+    if (aiSortForm) {
+      aiSortForm.addEventListener('submit', function() {
+        const btn = this.querySelector('button[type="submit"]');
+        const spinner = btn.querySelector('.spinner-border');
+        const text = btn.querySelector('.button-text');
 
-  scrollTopBtn.addEventListener('click', () => {
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+        spinner.classList.remove('d-none');
+        text.textContent = 'Sorting...';
+        btn.disabled = true;
+      });
+    }
   });
-
-  scrollDownBtn.addEventListener('click', () => {
-    window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
-  });
-
-  // Loading spinner for form submissions
-  const uploadForm = document.querySelector('#uploadFileModal form');
-  const aiSortForm = document.querySelector('#aiSortModal form');
-
-  if (uploadForm) {
-    uploadForm.addEventListener('submit', function() {
-      const btn = this.querySelector('button[type="submit"]');
-      const spinner = btn.querySelector('.spinner-border');
-      const text = btn.querySelector('.button-text');
-
-      spinner.classList.remove('d-none');
-      text.textContent = 'Uploading...';
-      btn.disabled = true;
-    });
-  }
-
-  if (aiSortForm) {
-    aiSortForm.addEventListener('submit', function() {
-      const btn = this.querySelector('button[type="submit"]');
-      const spinner = btn.querySelector('.spinner-border');
-      const text = btn.querySelector('.button-text');
-
-      spinner.classList.remove('d-none');
-      text.textContent = 'Sorting...';
-      btn.disabled = true;
-    });
-  }
-});
 </script>
 {% endblock %}
 {% endblock %}

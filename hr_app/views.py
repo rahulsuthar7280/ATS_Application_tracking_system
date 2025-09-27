@@ -120,23 +120,27 @@ def signup_view(request):
 def signin_view(request):
     """
     Handles user login using a Django authentication form for better validation.
+    Also redirects to original destination if 'next' is present.
     """
+    next_url = request.GET.get('next') or request.POST.get('next') or 'dashboard'
+    print("next_url",next_url)
+
     if request.method == 'POST':
         form = CustomAuthenticationForm(request, data=request.POST)
         if form.is_valid():
-            # The form's is_valid() method authenticates the user
             user = form.get_user()
             login(request, user)
             messages.success(request, f"Welcome back, {user.username}!")
-            return redirect('dashboard')
+            return redirect(next_url)
         else:
-            # The form handles the error message for invalid credentials
             messages.error(request, "Invalid username or password.")
     else:
         form = CustomAuthenticationForm()
-    
-    return render(request, 'signin.html', {'form': form})
 
+    return render(request, 'signin.html', {
+        'form': form,
+        'next': next_url  # Pass to template
+    })
 
 @login_required
 def signout_view(request):
@@ -3842,6 +3846,7 @@ def create_job(request):
         salary_value = data.get('salary')
         
         job = CareerPage.objects.create(
+            user=request.user,  # <-- add this line
             title=data.get('title'),
             company=data.get('company'),
             location=data.get('location'),

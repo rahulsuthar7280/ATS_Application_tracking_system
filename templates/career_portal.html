@@ -18,8 +18,8 @@
     /* Updated Light Mode Palette */
     --background-color-light: #f0f4f8; /* A very light, soft gray */
     --surface-color-light: #ffffff;
-    --primary-color: #4a90e2;    /* A softer, more inviting blue */
-    --secondary-color: #1a4a75;   /* Darker blue for contrast */
+    --primary-color: #3e4f47;    /* A softer, more inviting blue */
+    --secondary-color: #eef2f6;   /* Darker blue for contrast */
     --accent-color: #ff7f50;     /* Vibrant coral for highlights */
     --text-color-light: #334e68; /* Dark, legible gray */
     --text-color-secondary-light: #829ab1; /* Lighter gray for secondary text */
@@ -38,23 +38,9 @@
 }
 
 /* Base Styles */
-body.light-mode {
-    background-color: var(--background-color-light);
-    color: var(--text-color-light);
-    transition: background-color var(--transition-speed), color var(--transition-speed);
-}
 
-body {
-    font-family: var(--font-primary);
-    display: flex;
-    flex-direction: column;
-}
 
-.container {
-    max-width: 1300px;
-    margin: 0 auto;
-    padding: 0 30px;
-}
+
 
 a {
     color: var(--primary-color);
@@ -66,16 +52,6 @@ a:hover {
     color: var(--secondary-color);
 }
 
-/* Header */
-header {
-    background-color: var(--surface-color-light);
-    border-bottom: 1px solid var(--border-color-light);
-    position: sticky;
-    top: 0;
-    z-index: 100;
-    transition: background-color var(--transition-speed), border-color var(--transition-speed);
-    box-shadow: 0 2px 10px rgba(0,0,0,0.05);
-}
 
 .header-content {
     display: flex;
@@ -140,47 +116,9 @@ main {
     transition: background-color var(--transition-speed), box-shadow var(--transition-speed);
 }
 
-/* Hero Section */
-.hero-section {
-    position: relative;
-    background: linear-gradient(135deg, var(--primary-color), var(--secondary-color), var(--accent-color));
-    background-size: 400% 400%;
-    animation: gradient-animation 15s ease infinite;
-    color: #fff;
-    padding: 30px 40px;
-    text-align: center;
-    overflow: hidden;
-    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
-}
 
-@keyframes gradient-animation {
-    0% { background-position: 0% 50%; }
-    50% { background-position: 100% 50%; }
-    100% { background-position: 0% 50%; }
-}
 
-.hero-content {
-    position: relative;
-    z-index: 2;
-}
 
-.hero-title {
-    font-family: var(--font-secondary);
-    font-size: 2.8rem;
-    font-weight: 700;
-    margin-bottom: 15px;
-}
-
-.hero-subtitle {
-    font-size: 1.2rem;
-    margin: 0;
-    font-weight: 300;
-}
-
-.highlight-text {
-    font-weight: 700;
-    color: #ffeb3b;
-}
 
 /* Filter Bar */
 .filter-bar {
@@ -200,8 +138,8 @@ main {
     display: flex;
     flex-direction: column;
     flex: 1;
-    min-width: 180px;
-    gap: 8px;
+    min-width: 200px;
+    gap: 5px;
 }
 
 .filter-bar label {
@@ -263,12 +201,6 @@ main {
     margin-bottom: 50px;
 }
 
-.section-title {
-    font-family: var(--font-secondary);
-    font-size: 1.8rem;
-    margin: 0;
-    color: var(--primary-color);
-}
 
 .job-listings-grid {
     display: grid;
@@ -573,13 +505,13 @@ main {
     margin-bottom: 20px;
 }
 
-.modal-company-logo {
+/* .modal-company-logo {
     width: 80px;
     height: 80px;
     border-radius: var(--border-radius);
     object-fit: cover;
     box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
-}
+} */
 
 .details-title {
     font-family: var(--font-secondary);
@@ -1007,12 +939,12 @@ footer {
 <body class="light-mode">
     <main>
         <div class="main-dashboard-container">
-            <section class="hero-section">
+            <!-- <section class="hero-section">
                 <div class="hero-content">
                     <h2 class="hero-title">Find Your Next Great Opportunity</h2>
                     <p class="hero-subtitle">Explore <span class="highlight-text" id="hero-total-jobs">0</span> available jobs from leading companies.</p>
                 </div>
-            </section>
+            </section> -->
 
             <section class="filter-bar">
                 <div class="filter-group">
@@ -1086,8 +1018,9 @@ footer {
             <span class="close-btn details-close-btn" role="button" aria-label="Close modal">&times;</span>
             <div class="details-main-content">
                 <div class="job-header">
-                    <img id="modal-company-logo" src="" alt="Company Logo" class="modal-company-logo">
+                    <!-- <img id="modal-company-logo" src="" alt="Company Logo" class="modal-company-logo"> -->
                     <h2 id="modal-job-title" class="details-title"></h2>
+                    <br>
                     <p id="modal-company-name" class="details-company"></p>
                 </div>
                 <div class="details-section" id="details-description">
@@ -1164,10 +1097,10 @@ footer {
                         <label for="company-name"><i class="fas fa-building"></i> Company Name</label>
                         <input type="text" id="company-name" name="company-name" placeholder="e.g., Tech Solutions Inc." required>
                     </div>
-                    <div class="form-group span-full">
+                    <!-- <div class="form-group span-full">
                         <label for="company-logo"><i class="fas fa-image"></i> Company Logo (Upload)</label>
                         <input type="file" id="company-logo" name="company-logo" accept="image/*">
-                    </div>
+                    </div> -->
                     <div class="form-group">
                         <label for="location-type"><i class="fas fa-map-marker-alt"></i> Location Type</label>
                         <select id="location-type" name="location-type" required>
@@ -1241,18 +1174,19 @@ footer {
                         </div>
                         <input type="hidden" id="skills-final-input" name="skills">
                     </div>
-                    <div class="form-group span-full" id="about-company-group">
-                        <label for="about-company"><i class="fas fa-building"></i> About the Company (Optional)</label>
-                        <textarea id="about-company" name="about-company" placeholder="Tell candidates about your company culture, mission, and benefits."></textarea>
-                    </div>
+                    
                     <div class="form-group span-full" id="benefits-group">
                         <label for="benefits"><i class="fas fa-heartbeat"></i> Benefits (Optional)</label>
                         <textarea id="benefits" name="benefits" placeholder="e.g., Medical, Dental, 401(k), Paid Time Off"></textarea>
                     </div>
-                    <div class="form-group">
+                    <div class="form-group span-full" id="about-company-group">
+                        <label for="about-company"><i class="fas fa-building"></i> About the Company (Optional)</label>
+                        <textarea id="about-company" name="about-company" placeholder="Tell candidates about your company culture, mission, and benefits."></textarea>
+                    </div>
+                    <!-- <div class="form-group">
                         <label for="is-new"><i class="fas fa-star"></i> Mark as New?</label>
                         <input type="checkbox" id="is-new" name="is-new">
-                    </div>
+                    </div> -->
                     <div class="form-group">
                         <label for="is-enabled"><i class="fas fa-toggle-on"></i> Enable Job Posting?</label>
                         <label class="switch">
@@ -1459,7 +1393,6 @@ footer {
 
                 jobCard.innerHTML = `
                     <div class="job-card-header">
-                        <img src="${job.company_logo}" alt="${job.company_name} logo" class="company-logo">
                         <div class="job-title-group">
                             <h3>${job.job_title}</h3>
                             <p class="company">${job.company_name}</p>
@@ -1539,7 +1472,7 @@ footer {
         const openDetailsModal = (job) => {
             if (!jobDetailsModal) return;
 
-            document.getElementById('modal-company-logo').src = job.company_logo;
+            // document.getElementById('modal-company-logo').src = job.company_logo;
             document.getElementById('modal-job-title').textContent = job.job_title;
             document.getElementById('modal-company-name').textContent = job.company_name;
             document.getElementById('modal-location').textContent = job.specific_location;
