@@ -3656,9 +3656,9 @@ def toggle_career_page(request):
     return redirect('dashboard')
 
 
-def settings_careerpage(request):
-    company = get_object_or_404(CompanyInfo, user=request.user)
-    return render(request, "settings_careerpage.html", {"company": company})
+# def settings_careerpage(request):
+#     company = get_object_or_404(CompanyInfo, user=request.user)
+#     return render(request, "settings_careerpage.html", {"company": company})
 
 @login_required
 def edit_job(request, job_id):

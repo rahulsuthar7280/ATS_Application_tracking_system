@@ -94,7 +94,7 @@ urlpatterns = [
     path('careers/add-job/', views.add_job_listing, name='add_job'),
     path('job_detail/<int:job_id>/', views.job_detail, name='job_detail'),
     path('job/<int:job_id>/apply/', views.apply_for_job, name='apply_for_job'),
-    path("career/settings/", views.settings_careerpage, name="settings_careerpage"),
+    path("settings_careerpage/", views.settings_careerpage, name="settings_careerpage"),
     path("toggle-career-page/", views.toggle_career_page, name="toggle_career_page"),
     # path("career/<str:username>/", views.career_mainpage, name="career_mainpage"),
 
