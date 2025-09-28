@@ -500,13 +500,16 @@ class CompanyInfo(models.Model):
     our_services_url = models.URLField(max_length=200, blank=True, null=True)
     privacy_policy_url = models.URLField(max_length=200, blank=True, null=True)
     terms_and_conditions_url = models.URLField(max_length=200, blank=True, null=True)
-    company_logo = models.ImageField(upload_to='company_logos/', blank=True, null=True) # New field
+    company_logo = models.ImageField(upload_to='company_logos/', blank=True, null=True)
 
     # Social media URLs
     twitter_url = models.URLField(max_length=200, blank=True, null=True)
     facebook_url = models.URLField(max_length=200, blank=True, null=True)
     youtube_url = models.URLField(max_length=200, blank=True, null=True)
     linkedin_url = models.URLField(max_length=200, blank=True, null=True)
+
+    # NEW FIELD → Enable/Disable Career Page
+    career_page_enabled = models.BooleanField(default=True)
 
     class Meta:
         verbose_name_plural = "Company Information"

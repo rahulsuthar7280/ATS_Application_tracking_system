@@ -3514,15 +3514,15 @@ def settings_careerpage(request):
         elif form_type == 'category':
             try:
                 category_name = request.POST.get('category_name')
-                icon_class = request.POST.get('icon_class')
+                # icon_class = request.POST.get('icon_class')
                 
                 if not category_name:
                     messages.error(request, "Category name cannot be empty.")
                 else:
                     Category.objects.create(
                         user=user, 
-                        name=category_name,
-                        icon_class=icon_class
+                        name=category_name
+                        # icon_class=icon_class
                     )
                     messages.success(request, f"Category '{category_name}' added successfully!")
                 return redirect(base_url + '#category-form')
@@ -3537,11 +3537,26 @@ def settings_careerpage(request):
         # --- Career Page (New Job Posting) Logic ---
         elif form_type == 'career_page':
             try:
-                category_name = request.POST.get('category')
-                
-                # Find the category object for validation/existence check
-                # Even though CareerPage.category is a CharField, this ensures a valid category name is used.
-                get_object_or_404(Category, user=user, name=category_name) 
+                # --- NEW LOGIC: Determine the category based on which field was submitted ---
+                category_pk = request.POST.get('category_existing')
+                new_category_name = request.POST.get('category_new')
+
+                if new_category_name:
+                    # If a new category name is provided, create it (or get the existing one)
+                    # and use its name for the job posting.
+                    category_obj, created = Category.objects.get_or_create(user=user, name=new_category_name)
+                    category_name_to_save = category_obj.name
+                    if created:
+                        messages.info(request, f"New category '{category_obj.name}' created.")
+                elif category_pk:
+                    # If an existing category PK is provided, get the object and use its name.
+                    category_obj = get_object_or_404(Category, user=user, pk=category_pk)
+                    category_name_to_save = category_obj.name
+                else:
+                    # If neither field is populated, something went wrong.
+                    messages.error(request, "Please select an existing department or add a new one.")
+                    return redirect(base_url + '#career-page-form')
+                # --- END NEW LOGIC ---
 
                 new_job = CareerPage.objects.create(
                     user=user,
@@ -3549,8 +3564,8 @@ def settings_careerpage(request):
                     company=request.POST.get('company'),
                     location=request.POST.get('location'),
                     job_type=request.POST.get('job_type'),
-                    # FIX: Save the string name to match the CareerPage model's CharField
-                    category=category_name, 
+                    # FIX: Save the resolved category name to the CareerPage model's CharField
+                    category=category_name_to_save, 
                     experience=request.POST.get('experience'),
                     salary=request.POST.get('salary'),
                     is_active=request.POST.get('is_active') == 'on',
@@ -3558,6 +3573,9 @@ def settings_careerpage(request):
                     responsibilities=request.POST.get('responsibilities'),
                     qualifications=request.POST.get('qualifications'),
                     benefits=request.POST.get('benefits'),
+                    about_company=request.POST.get('about_company'),
+                    application_link=request.POST.get('application_link'),
+                    skills=request.POST.get('skills'),
                     date_line=parse_date(request.POST.get('date_line')) if request.POST.get('date_line') else None,
                 )
                 messages.success(request, f"New job posting for '{new_job.title}' created successfully!")
@@ -3607,6 +3625,40 @@ def settings_careerpage(request):
     
     return render(request, 'settings_careerpage.html', context)
 
+
+@login_required
+def toggle_career_page(request):
+    """
+    Toggles the 'career_page_enabled' status for the logged-in user's company.
+    """
+    # Ensure the user is authenticated before proceeding
+    if not request.user.is_authenticated:
+        return redirect('signin')
+
+    try:
+        # Get or create the CompanyInfo instance for the current user
+        company_info, created = CompanyInfo.objects.get_or_create(user=request.user)
+        
+        # Toggle the boolean value
+        company_info.career_page_enabled = not company_info.career_page_enabled
+        company_info.save()
+
+        # Provide user feedback with a message
+        if company_info.career_page_enabled:
+            messages.success(request, "Career page has been enabled.")
+        else:
+            messages.warning(request, "Career page has been disabled.")
+
+    except Exception as e:
+        messages.error(request, f"An error occurred: {e}")
+
+    # Redirect back to a safe page, like the dashboard
+    return redirect('dashboard')
+
+
+def settings_careerpage(request):
+    company = get_object_or_404(CompanyInfo, user=request.user)
+    return render(request, "settings_careerpage.html", {"company": company})
 
 @login_required
 def edit_job(request, job_id):
@@ -3827,8 +3879,14 @@ def career_mainpage(request):
         # Check if the user is logged in
         is_logged_in = request.user.is_authenticated
         
+        # Fetch data based on user login status
+        if is_logged_in:
+            # Fetch jobs posted by the logged-in user, ordered by a valid field
+            # The field `date_posted` is a good substitute for `created_at`
+            user_jobs = CareerPage.objects.filter(user=request.user, is_active=True).order_by('-date_posted')
+            context['user_jobs'] = user_jobs
+            
         # Use your actual model calls to fetch data from the database
-        # You can add logic here to filter or show different data based on `is_logged_in`
         categories = Category.objects.all()
         featured_jobs = CareerPage.objects.filter(is_active=True, job_type='Featured')
         full_time_jobs = CareerPage.objects.filter(is_active=True, job_type='Full Time')

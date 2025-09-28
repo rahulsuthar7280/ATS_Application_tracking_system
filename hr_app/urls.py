@@ -88,11 +88,16 @@ urlpatterns = [
     path('career_portal/', views.list_careers, name='career_portal'),
     
     path('career_mainpage/', views.career_mainpage, name='career_mainpage'),
+    # path('career_mainpage/<str:username>/', views.career_mainpage, name='career_mainpage'),
+
     # path('job_detail/', views.job_detail, name='job_detail'),
     path('careers/add-job/', views.add_job_listing, name='add_job'),
     path('job_detail/<int:job_id>/', views.job_detail, name='job_detail'),
     path('job/<int:job_id>/apply/', views.apply_for_job, name='apply_for_job'),
-    path('settings_careerpage/', views.settings_careerpage, name='settings_careerpage'),
+    path("career/settings/", views.settings_careerpage, name="settings_careerpage"),
+    path("toggle-career-page/", views.toggle_career_page, name="toggle_career_page"),
+    # path("career/<str:username>/", views.career_mainpage, name="career_mainpage"),
+
     path('edit-job/<int:job_id>/', views.edit_job, name='edit_job'),
     path('delete-job/<int:job_id>/', views.delete_job, name='delete_job'),
     path('edit-category/<int:category_id>/', views.edit_category, name='edit_category'),

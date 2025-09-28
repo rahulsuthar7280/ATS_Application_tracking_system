@@ -25,13 +25,9 @@
             --border-color: #dee2e6;
             --shadow-subtle: rgba(0, 0, 0, 0.05);
         }
-        body {
-            background-color: var(--secondary-color);
-            font-family: 'Roboto', sans-serif;
-            color: var(--text-color);
-        }
+
         .form-container {
-            max-width: 1400px;
+            max-width: 1600px;
             background-color: var(--card-bg);
             border-radius: 12px;
             box-shadow: 0 0 25px var(--shadow-subtle);
@@ -88,13 +84,13 @@
                             <label for="id_company" class="form-label">Company Name</label>
                             <input type="text" class="form-control" id="id_company" name="company" value="{{ job.company|default_if_none:'' }}">
                         </div>
-                        <div class="col-md-4">
+                        <!-- <div class="col-md-4">
                             <label for="id_company_logo" class="form-label">Company Logo</label>
                             <input type="file" class="form-control" id="id_company_logo" name="company_logo">
                             {% if job.company_logo %}
                                 <p class="mt-2">Current Logo: <a href="{{ job.company_logo.url }}" target="_blank">{{ job.company_logo.name }}</a></p>
                             {% endif %}
-                        </div>
+                        </div> -->
                         <div class="col-md-4">
                             <label for="id_location" class="form-label">Location</label>
                             <input type="text" class="form-control" id="id_location" name="location" value="{{ job.location }}" required>
@@ -114,6 +110,10 @@
                             <input type="text" class="form-control" id="id_experience" name="experience" value="{{ job.experience|default_if_none:'' }}">
                         </div>
                         <div class="col-md-4">
+                            <label for="id_salary" class="form-label">Salary</label>
+                            <input type="text" class="form-control" id="id_salary" name="salary" value="{{ job.salary|default_if_none:'' }}">
+                        </div>
+                         <div class="col-md-4">
                             <label for="id_salary" class="form-label">Salary</label>
                             <input type="text" class="form-control" id="id_salary" name="salary" value="{{ job.salary|default_if_none:'' }}">
                         </div>

@@ -428,20 +428,7 @@
                         </a>
                     </li>
                     
-                    <!-- <li class="nav-item">
-                            <a href="{% url 'admin_dashboard' %}" class="nav-link {% if request.resolver_match.url_name == 'admin_dashboard' %}active{% endif %}">
-                                <i class="fas fa-user-shield nav-icon"></i>
-                                <span class="nav-text">Admin Panel</span>
-                            </a>
-                    </li> -->
-
-                    <!-- <li class="nav-item">
-                            <a href="{% url 'superadmin_dashboard' %}" class="nav-link {% if request.resolver_match.url_name == 'superadmin_dashboard' %}active{% endif %}">
-                                <i class="fas fa-crown nav-icon"></i>
-                                <span class="nav-text">Superadmin Panel</span>
-                            </a>
-                    </li> -->
-                {% if user.is_authenticated %}
+                    {% if user.is_authenticated %}
                     {% if user.role == 'admin' %}
                         <li class="nav-item">
                             <a href="{% url 'admin_dashboard' %}" class="nav-link {% if request.resolver_match.url_name == 'admin_dashboard' %}active{% endif %}">
@@ -481,15 +468,48 @@
                 <div class="header-right d-flex align-items-center" >
                     {% if user.is_authenticated %}
                         <div class="dropdown me-3 d-none d-md-block" style="color: #3e4f47;">
-                             <button class="btn header-dropdown-btn dropdown-toggle" type="button" id="careerSettingsDropdown" style="color: #dfdbd5; background-color: #3e4f47;" data-bs-toggle="dropdown" aria-expanded="false">
+                            <button class="btn header-dropdown-btn dropdown-toggle" type="button" id="careerSettingsDropdown" 
+                                    style="color: #dfdbd5; background-color: #3e4f47;" 
+                                    data-bs-toggle="dropdown" aria-expanded="false">
                                 <i class="fas fa-cog"></i> Settings
-                             </button>
-                             <ul class="dropdown-menu header-dropdown-menu" aria-labelledby="careerSettingsDropdown">
-                                 <!-- <li><a class="dropdown-item" href="{% url 'career_portal' %}"><i class="fas fa-robot me-2"></i>Job Dashboard</a></li> -->
-                                 <li><a class="dropdown-item" href="{% url 'settings_careerpage' %}"><i class="fas fa-cog me-2"></i>Career Settings</a></li>
-                                 <li><a class="dropdown-item" href="{% url 'career_mainpage' %}"><i class="fas fa-external-link-alt me-2"></i>View Career Page</a></li>
-                             </ul>
+                            </button>
+                            <ul class="dropdown-menu header-dropdown-menu" aria-labelledby="careerSettingsDropdown">
+                                <li>
+                                    <a class="dropdown-item" href="{% url 'settings_careerpage' %}">
+                                        <i class="fas fa-cog me-2"></i>Career Settings
+                                    </a>
+                                </li>
+
+                                {% if request.user.company_info.career_page_enabled %}
+                                <li>
+                                    <a class="dropdown-item" href="{% url 'toggle_career_page' %}">
+                                        <i class="fas fa-toggle-on me-2"></i>Disable Career Page
+                                    </a>
+                                </li>
+                                {% else %}
+                                <li>
+                                    <a class="dropdown-item" href="{% url 'toggle_career_page' %}">
+                                        <i class="fas fa-toggle-off me-2"></i>Enable Career Page
+                                    </a>
+                                </li>
+                                {% endif %}
+
+                                {% if request.user.company_info.career_page_enabled %}
+                                <li>
+                                    <a class="dropdown-item" href="{% url 'career_mainpage'  %}">
+                                        <i class="fas fa-external-link-alt me-2"></i>View Career Page
+                                    </a>
+                                </li>
+                                {% else %}
+                                <li>
+                                    <a class="dropdown-item disabled" href="javascript:void(0);" style="color: #aaa; pointer-events: none;">
+                                        <i class="fas fa-external-link-alt me-2"></i>View Career Page (Disabled)
+                                    </a>
+                                </li>
+                                {% endif %}
+                            </ul>
                         </div>
+
                         
                         <span class="" style="font-size: 1.1rem; font-weight: 500; color: #3e4f47;">Hello, {{ user.username }}</span>
                         

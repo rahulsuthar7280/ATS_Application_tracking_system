@@ -99,6 +99,58 @@
             border-right-color: var(--theme-primary) !important; 
         }
 
+        /* --- New styles for interactive pop-up layout --- */
+
+        .modal-content {
+            border-radius: 10px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+        }
+
+        .modal-header, .modal-footer {
+            border: none;
+        }
+
+        .modal-header .btn-close {
+            background-color: #e9ecef;
+            border-radius: 50%;
+            padding: 8px;
+            opacity: 0.8;
+            transition: opacity 0.3s ease;
+        }
+
+        .modal-header .btn-close:hover {
+            opacity: 1;
+        }
+
+        .form-control {
+            border-radius: 8px;
+            border: 1px solid #dee2e6;
+            padding: 12px;
+            transition: border-color 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .form-control:focus {
+            border-color: var(--theme-primary);
+            box-shadow: 0 0 0 0.25rem rgba(33, 108, 245, 0.25);
+        }
+
+        .form-label {
+            font-weight: 500;
+            color: #495057;
+            margin-bottom: 8px;
+        }
+
+        .btn-primary.w-100.py-3 {
+            border-radius: 8px;
+            transition: transform 0.2s ease;
+        }
+
+        .btn-primary.w-100.py-3:hover {
+            transform: translateY(-2px);
+        }
+
+        /* --- End of new styles --- */
+
     </style>
     
 </head>
@@ -146,8 +198,10 @@
                     <ol class="breadcrumb text-uppercase">
                         <li class="breadcrumb-item"><a href="#">Home</a></li>
                         <li class="breadcrumb-item"><a href="#">Pages</a></li>
-                        <!-- <li class="breadcrumb-item text-white active" aria-current="page">{{ job.title }}</li> -->
-                    </ol>
+                        </ol>
+                            <button type="button" class="btn btn-primary py-3 px-5 mb-4" data-bs-toggle="modal" data-bs-target="#applyJobModal">
+                                Apply
+                            </button>
                 </nav>
             </div>
         </div>
@@ -189,122 +243,136 @@
                         </div>
         
                         <div class="">
-                            <h4 class="mb-4">Apply For The Job</h4>
-                            <form method="post" enctype="multipart/form-data">
-                                {% csrf_token %}
-                                <div class="row g-3">
-                                    {% if form_settings.first_name_enabled %}
-                                    <div class="col-md-6">
-                                        <div class="form-floating">
-                                            <input type="text" class="form-control" id="first_name" name="first_name" placeholder="First Name">
-                                            <label for="first_name">First Name</label>
-                                        </div>
-                                    </div>
-                                    {% endif %}
-                                    {% if form_settings.last_name_enabled %}
-                                    <div class="col-md-6">
-                                        <div class="form-floating">
-                                            <input type="text" class="form-control" id="last_name" name="last_name" placeholder="Last Name">
-                                            <label for="last_name">Last Name</label>
-                                        </div>
-                                    </div>
-                                    {% endif %}
-                                    {% if form_settings.email_enabled %}
-                                    <div class="col-md-6">
-                                        <div class="form-floating">
-                                            <input type="email" class="form-control" id="email" name="email" placeholder="Email Address">
-                                            <label for="email">Email Address</label>
-                                        </div>
-                                    </div>
-                                    {% endif %}
-                                    {% if form_settings.phone_enabled %}
-                                    <div class="col-md-6">
-                                        <div class="form-floating">
-                                            <input type="tel" class="form-control" id="phone_number" name="phone_number" placeholder="Phone Number">
-                                            <label for="phone_number">Phone Number</label>
-                                        </div>
-                                    </div>
-                                    {% endif %}
-                                    {% if form_settings.experience_enabled %}
-                                    <div class="col-md-6">
-                                        <div class="form-floating">
-                                            <input type="text" class="form-control" id="experience" name="experience" placeholder="Total Experience" pattern="[0-9]*" oninput="this.value = this.value.replace(/[^0-9]/g, '');">
-                                            <label for="experience">Total Experience (in years)</label>
-                                        </div>
-                                    </div>
-                                    {% endif %}
-                                    {% if form_settings.current_ctc_enabled %}
-                                    <div class="col-md-6">
-                                        <div class="form-floating">
-                                            <input type="text" class="form-control" id="current_ctc" name="current_ctc" placeholder="Current CTC">
-                                            <label for="current_ctc">Current CTC</label>
-                                        </div>
-                                    </div>
-                                    {% endif %}
-                                    {% if form_settings.expected_ctc_enabled %}
-                                    <div class="col-md-6">
-                                        <div class="form-floating">
-                                            <input type="text" class="form-control" id="expected_ctc" name="expected_ctc" placeholder="Expected CTC">
-                                            <label for="expected_ctc">Expected CTC</label>
-                                        </div>
-                                    </div>
-                                    {% endif %}
-                                    {% if form_settings.notice_period_enabled %}
-                                    <div class="col-md-6">
-                                        <div class="form-floating">
-                                            <input type="text" class="form-control" id="notice_period" name="notice_period" placeholder="Notice Period">
-                                            <label for="notice_period">Notice Period</label>
-                                        </div>
-                                    </div>
-                                    {% endif %}
-                                    {% if form_settings.qualification_enabled %}
-                                    <div class="col-12">
-                                        <div class="form-floating">
-                                            <input type="text" class="form-control" id="qualification" name="qualification" placeholder="Highest Qualification">
-                                            <label for="qualification">Highest Qualification</label>
-                                        </div>
-                                    </div>
-                                    {% endif %}
-                                    {% if form_settings.linkedin_url_enabled %}
-                                    <div class="col-12">
-                                        <div class="form-floating">
-                                            <input type="url" class="form-control" id="linkedin_url" name="linkedin_url" placeholder="LinkedIn Profile URL">
-                                            <label for="linkedin_url">LinkedIn Profile URL</label>
-                                        </div>
-                                    </div>
-                                    {% endif %}
+                            <button type="button" class="btn btn-primary py-3 px-5 mb-4" data-bs-toggle="modal" data-bs-target="#applyJobModal">
+                                Apply For This Job
+                            </button>
+                        </div>
 
-                                    {% for field in form_settings.additional_fields %}
-                                    <div class="col-12">
-                                        <div class="form-floating">
-                                            <input type="{{ field.type }}" class="form-control" id="additional_field_{{ forloop.counter }}" name="additional_field_{{ forloop.counter }}" placeholder="{{ field.name }}">
-                                            <label for="additional_field_{{ forloop.counter }}"><i class="{{ field.icon_class|default:'fas fa-edit' }} me-2"></i>{{ field.name }}</label>
-                                        </div>
+                        <div class="modal fade" id="applyJobModal" tabindex="-1" aria-labelledby="applyJobModalLabel" aria-hidden="true">
+                            <div class="modal-dialog modal-dialog-centered modal-lg">
+                                <div class="modal-content p-4">
+                                    <div class="modal-header border-0">
+                                        <h4 class="modal-title fw-bold text-center w-100" id="applyJobModalLabel">Apply for the Job</h4>
+                                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                                     </div>
-                                    {% endfor %}
-                                    
-                                    {% if form_settings.resume_enabled %}
-                                    <div class="col-12">
-                                        <div class="form-group">
-                                            <label for="resume" class="form-label">Resume (PDF, DOCX)</label>
-                                            <input type="file" class="form-control" id="resume" name="resume" required>
-                                        </div>
-                                    </div>
-                                    {% endif %}
-                                    {% if form_settings.cover_letter_enabled %}
-                                    <div class="col-12">
-                                        <div class="form-group">
-                                            <label for="cover_letter" class="form-label">Cover Letter (Optional)</label>
-                                            <input type="file" class="form-control" id="cover_letter" name="cover_letter">
-                                        </div>
-                                    </div>
-                                    {% endif %}
+                                    <div class="modal-body pt-0">
+                                        <form method="post" enctype="multipart/form-data">
+                                            {% csrf_token %}
+                                            <div class="row g-3">
+                                                {% if form_settings.first_name_enabled %}
+                                                <div class="col-md-6">
+                                                    <div class="mb-3">
+                                                        <label for="first_name" class="form-label">First Name</label>
+                                                        <input type="text" class="form-control" id="first_name" name="first_name" placeholder="First Name">
+                                                    </div>
+                                                </div>
+                                                {% endif %}
+                                                {% if form_settings.last_name_enabled %}
+                                                <div class="col-md-6">
+                                                    <div class="mb-3">
+                                                        <label for="last_name" class="form-label">Last Name</label>
+                                                        <input type="text" class="form-control" id="last_name" name="last_name" placeholder="Last Name">
+                                                    </div>
+                                                </div>
+                                                {% endif %}
+                                                {% if form_settings.email_enabled %}
+                                                <div class="col-md-6">
+                                                    <div class="mb-3">
+                                                        <label for="email" class="form-label">Email Address</label>
+                                                        <input type="email" class="form-control" id="email" name="email" placeholder="Email Address">
+                                                    </div>
+                                                </div>
+                                                {% endif %}
+                                                {% if form_settings.phone_enabled %}
+                                                <div class="col-md-6">
+                                                    <div class="mb-3">
+                                                        <label for="phone_number" class="form-label">Phone Number</label>
+                                                        <input type="tel" class="form-control" id="phone_number" name="phone_number" placeholder="Phone Number">
+                                                    </div>
+                                                </div>
+                                                {% endif %}
+                                                {% if form_settings.experience_enabled %}
+                                                <div class="col-md-6">
+                                                    <div class="mb-3">
+                                                        <label for="experience" class="form-label">Total Experience (in years)</label>
+                                                        <input type="text" class="form-control" id="experience" name="experience" placeholder="Total Experience" pattern="[0-9]*" oninput="this.value = this.value.replace(/[^0-9]/g, '');">
+                                                    </div>
+                                                </div>
+                                                {% endif %}
+                                                {% if form_settings.current_ctc_enabled %}
+                                                <div class="col-md-6">
+                                                    <div class="mb-3">
+                                                        <label for="current_ctc" class="form-label">Current CTC</label>
+                                                        <input type="text" class="form-control" id="current_ctc" name="current_ctc" placeholder="Current CTC">
+                                                    </div>
+                                                </div>
+                                                {% endif %}
+                                                {% if form_settings.expected_ctc_enabled %}
+                                                <div class="col-md-6">
+                                                    <div class="mb-3">
+                                                        <label for="expected_ctc" class="form-label">Expected CTC</label>
+                                                        <input type="text" class="form-control" id="expected_ctc" name="expected_ctc" placeholder="Expected CTC">
+                                                    </div>
+                                                </div>
+                                                {% endif %}
+                                                {% if form_settings.notice_period_enabled %}
+                                                <div class="col-md-6">
+                                                    <div class="mb-3">
+                                                        <label for="notice_period" class="form-label">Notice Period</label>
+                                                        <input type="text" class="form-control" id="notice_period" name="notice_period" placeholder="Notice Period">
+                                                    </div>
+                                                </div>
+                                                {% endif %}
+                                                {% if form_settings.qualification_enabled %}
+                                                <div class="col-12">
+                                                    <div class="mb-3">
+                                                        <label for="qualification" class="form-label">Highest Qualification</label>
+                                                        <input type="text" class="form-control" id="qualification" name="qualification" placeholder="Highest Qualification">
+                                                    </div>
+                                                </div>
+                                                {% endif %}
+                                                {% if form_settings.linkedin_url_enabled %}
+                                                <div class="col-12">
+                                                    <div class="mb-3">
+                                                        <label for="linkedin_url" class="form-label">LinkedIn Profile URL</label>
+                                                        <input type="url" class="form-control" id="linkedin_url" name="linkedin_url" placeholder="LinkedIn Profile URL">
+                                                    </div>
+                                                </div>
+                                                {% endif %}
 
-                                    <div class="col-12">
-                                        <button class="btn btn-primary w-100 py-3" type="submit">Apply Now</button>
+                                                {% for field in form_settings.additional_fields %}
+                                                <div class="col-12">
+                                                    <div class="mb-3">
+                                                        <label for="additional_field_{{ forloop.counter }}" class="form-label">{{ field.name }}</label>
+                                                        <input type="{{ field.type }}" class="form-control" id="additional_field_{{ forloop.counter }}" name="additional_field_{{ forloop.counter }}" placeholder="{{ field.name }}">
+                                                    </div>
+                                                </div>
+                                                {% endfor %}
+
+                                                {% if form_settings.resume_enabled %}
+                                                <div class="col-12">
+                                                    <div class="mb-3">
+                                                        <label for="resume" class="form-label">Resume (PDF, DOCX)</label>
+                                                        <input type="file" class="form-control" id="resume" name="resume" required>
+                                                    </div>
+                                                </div>
+                                                {% endif %}
+                                                {% if form_settings.cover_letter_enabled %}
+                                                <div class="col-12">
+                                                    <div class="mb-3">
+                                                        <label for="cover_letter" class="form-label">Cover Letter (Optional)</label>
+                                                        <input type="file" class="form-control" id="cover_letter" name="cover_letter">
+                                                    </div>
+                                                </div>
+                                                {% endif %}
+                                            </div>
+                                        </form>
+                                    </div>
+                                    <div class="modal-footer border-0">
+                                        <button type="submit" class="btn btn-primary w-100 py-3">Apply Now</button>
                                     </div>
                                 </div>
-                            </form>
+                            </div>
                         </div>
                     </div>
         
