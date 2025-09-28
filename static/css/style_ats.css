@@ -18,7 +18,21 @@
         --shadow-medium: 0 10px 30px rgba(0, 0, 0, 0.2);
         --shadow-strong: 0 20px 60px rgba(0, 0, 0, 0.3);
     }
-
+    :root {
+        /* Updated to new color palette */
+        --sidebar-bg: #3e4f47; /* Dark green/gray from palette */
+        --sidebar-hover: orangered; /* Slightly lighter for hover effect */
+        --sidebar-text: #e0e0e0; /* Light gray for contrast */
+        --sidebar-active: orangered; /* The vibrant red from the palette */
+        --header-bg: #bab3a9; 
+        --content-bg: #f5f5f5; /* Off-white for the content area */
+        --footer-bg: #e5e7eb;
+        --primary-color: #e0e0e0; /* The vibrant red */
+        --primary-hover: #e0e0e0;
+        --text-color: #333333;
+        --border-color: #e5e7eb;
+        /* --box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.06); */
+    }
     /* Base styles for a bold, clean, and modern look */
     body {
         background: linear-gradient(135deg, var(--bg-gradient-start) 0%, var(--bg-gradient-end) 100%);

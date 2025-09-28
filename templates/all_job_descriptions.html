@@ -4,250 +4,749 @@
 {% block page_heading %}All Job Postings{% endblock %}
 
 {% block content %}
-<div class="">
-    <h1 class="page-heading">All Job Postings</h1>
 
-    {% csrf_token %}
-
-    <div class="header-actions mb-5 d-flex flex-column flex-md-row justify-content-between align-items-center">
-        <div class="input-group search-bar mb-3 mb-md-0" style="max-width: 400px;">
-            <span class="input-group-text universal-search-icon"><i class="fas fa-search"></i></span>
-            <input type="text" id="searchInput" class="form-control universal-search-input" placeholder="Search JDs by title, date, etc...">
-        </div>
-        {# The Create and Upload buttons have been removed from this block #}
-    </div>
-
-    {# This card is shown if there are job postings to display #}
-    <div class="card p-4 shadow-subtle rounded-3" id="jobDescriptionsTableCard" style="display: none;">
-        <div class="table-responsive">
-            <table id="jobDescriptionsTable" class="table table-striped table-hover w-100 universal-table">
-                <thead class="bg-primary text-white">
-                    <tr>
-                        <th scope="col" class="id-column">Id</th>
-                        <th scope="col" class="title-column">Title</th>
-                        <th scope="col" class="date-column">Date Posted</th>
-                        <th scope="col" class="action-column text-center">Actions</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {# Loop to display multiple job postings #}
-                    {% for posting in job_postings %}
-                    <tr data-jd-id="{{ posting.id }}">
-                        <td>{{ forloop.counter }}</td>
-                        <td>
-                            <a href="" class="text-decoration-none text-dark fw-semibold hover-underline-effect">
-                                {{ posting.title }}
-                            </a>
-                        </td>
-                        <td>{{ posting.date_posted|date:"F j, Y, P" }}</td>
-                        <td class="text-center d-flex justify-content-center align-items-center gap-2">
-                            <a href="" class="btn btn-sm enhanced-btn btn-view-details animate-hover-pulse" title="View Details">
-                                <i class="fas fa-eye"></i> <span class="d-none d-lg-inline">View</span>
-                            </a>
-                            <a href="" class="btn btn-sm enhanced-btn btn-warning animate-hover-pulse" title="Edit Job Posting">
-                                <i class="fas fa-edit"></i> <span class="d-none d-lg-inline">Edit</span>
-                            </a>
-                            <button type="button" class="btn btn-sm btn-danger enhanced-btn delete-jd-btn animate-hover-pulse" data-jd-id="{{ posting.id }}" data-jd-title="{{ posting.title }}" title="Delete Job Posting">
-                                <i class="fas fa-trash-alt"></i> <span class="d-none d-lg-inline">Delete</span>
-                            </button>
-                        </td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-            {# This message is purely for client-side search filtering #}
-            <div id="noJDsMessage" class="text-center p-5 text-muted" style="display: none;">
-                <p><i class="fas fa-search-minus fa-3x mb-3"></i></p>
-                <h4 class="fw-light">No job postings match your search.</h4>
-                <p>Try refining your search terms.</p>
-            </div>
-        </div>
-    </div>
-
-    {# This message is displayed when there are NO job postings AT ALL (from the server) #}
-    <div class="text-center card p-5 mt-5 shadow-lg custom-card" id="noJobDescriptionsServerMessage" style="display: none;">
-        <h3 class="text-muted">No job postings have been added yet.</h3>
-        <p class="mb-4">Start by creating a new job posting.</p>
-    </div>
-</div>
-
-{# Delete Confirmation Modal #}
-<div class="modal fade" id="deleteJdModal" tabindex="-1" aria-labelledby="deleteJdModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content shadow-lg rounded-3">
-            <div class="modal-header bg-danger text-white border-0 rounded-top-3">
-                <h5 class="modal-title" id="deleteJdModalLabel">Confirm Deletion</h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body p-4 text-center">
-                <p>Are you sure you want to delete the job posting: <br> <strong id="jdTitleToDelete"></strong>?</p>
-                <p class="text-danger"><small>This action cannot be undone.</small></p>
-            </div>
-            <div class="modal-footer justify-content-center border-0 bg-light-subtle rounded-bottom-3">
-                <button type="button" class="btn btn-secondary universal-btn" data-bs-dismiss="modal">Cancel</button>
-                <button type="button" id="confirmDeleteBtn" class="btn btn-danger universal-btn">Delete</button>
-            </div>
-        </div>
-    </div>
-</div>
-
-{# Custom Alert Modal for feedback messages #}
-<div class="modal fade" id="customAlertModal" tabindex="-1" aria-labelledby="customAlertModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content shadow-lg rounded-3">
-            <div class="modal-header bg-warning text-dark border-0 rounded-top-3">
-                <h5 class="modal-title" id="customAlertModalLabel">Alert</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body p-4 text-center">
-                <p id="customAlertMessage"></p>
-            </div>
-            <div class="modal-footer justify-content-center border-0 bg-light-subtle rounded-bottom-3">
-                <button type="button" class="btn btn-warning universal-btn" data-bs-dismiss="modal">OK</button>
-            </div>
-        </div>
-    </div>
-</div>
-
-{% endblock %}
-
-{% block extra_head %}
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
-<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
-    /* ... (CSS Styles remain the same) ... */
+    /* Global Variables and Base Styles */
+    :root {
+        --primary-color: #5d5dff;
+        --secondary-color: #f77062;
+        --text-dark: #333;
+        --text-light: #fff;
+        --bg-light: #f4f7f9;
+        --card-bg: #fff;
+        --border-color: #e0e0e0;
+        --shadow-color: rgba(0, 0, 0, 0.08);
+    }
+
+    body {
+        background-color: var(--bg-light);
+        font-family: 'Poppins', sans-serif;
+        line-height: 1.6;
+        color: var(--text-dark);
+    }
+
+    /* Filter Bar */
+    .filter-bar {
+        background-color: var(--card-bg);
+        border-radius: 12px;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+        padding: 1.5rem 2rem;
+        margin-bottom: 2rem;
+    }
+
+    .filter-form {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 1rem;
+        align-items: flex-end;
+    }
+
+    .filter-group {
+        display: flex;
+        flex-direction: column;
+        flex: 1;
+        min-width: 150px;
+    }
+
+    .filter-group label {
+        font-weight: 600;
+        color: var(--text-dark);
+        margin-bottom: 0.5rem;
+        font-size: 0.9rem;
+    }
+
+    .filter-bar input,
+    .filter-bar select {
+        padding: 0.75rem 1rem;
+        border: 1px solid #dcdcdc;
+        border-radius: 8px;
+        font-size: 1rem;
+        color: var(--text-dark);
+        background-color: #fafafa;
+        transition: border-color 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .filter-bar input:focus,
+    .filter-bar select:focus {
+        border-color: var(--primary-color);
+        box-shadow: 0 0 0 3px rgba(93, 93, 255, 0.2);
+        outline: none;
+    }
+
+    .filter-button {
+        padding: 0.75rem 2rem;
+        background-color: var(--primary-color);
+        color: var(--text-light);
+        border: none;
+        border-radius: 8px;
+        font-weight: bold;
+        cursor: pointer;
+        transition: background-color 0.3s ease;
+        height: fit-content;
+        min-width: 120px;
+    }
+    
+    .filter-button:hover {
+        background-color: #4c4cc9;
+    }
+
+    /* Main Job Grid */
+    .job-grid-compact {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+        gap: 1.5rem;
+        padding: 1.5rem 0;
+    }
+
+    .job-card-compact {
+        background-color: var(--card-bg);
+        border-radius: 12px;
+        box-shadow: 0 8px 20px var(--shadow-color);
+        overflow: hidden;
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+        display: flex;
+        flex-direction: column;
+        position: relative;
+    }
+
+    .job-card-compact:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 12px 30px rgba(0, 0, 0, 0.1);
+    }
+
+    .job-status-flag {
+        position: absolute;
+        top: 1rem;
+        right: 1rem;
+        font-size: 0.8rem;
+        font-weight: bold;
+        padding: 0.3rem 0.6rem;
+        border-radius: 6px;
+        color: var(--text-light);
+        z-index: 10;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .active-flag {
+        background-color: #28a745;
+    }
+
+    .inactive-flag {
+        background-color: #dc3545;
+    }
+
+    .card-header-compact {
+        background: linear-gradient(145deg, #7b5dff, #f77062);
+        padding: 1.5rem;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: flex-start;
+        position: relative;
+    }
+
+    .job-title-compact {
+        font-size: 1.4rem;
+        font-weight: 700;
+        color: var(--text-light);
+        margin: 0;
+        line-height: 1.2;
+    }
+
+    .company-name-compact {
+        font-size: 0.9rem;
+        color: rgba(255, 255, 255, 0.8);
+        margin: 5px 0 0;
+        font-weight: 500;
+    }
+
+    .card-body-compact {
+        padding: 1.2rem;
+        flex-grow: 1;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+    }
+
+    .job-meta-compact {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.8rem;
+        margin-bottom: 1rem;
+        font-size: 0.85rem;
+        color: var(--text-dark);
+        align-items: center;
+    }
+
+    .meta-item {
+        display: flex;
+        align-items: center;
+        font-weight: 500;
+        color: #555;
+    }
+
+    .meta-item i {
+        margin-right: 0.4rem;
+        color: var(--primary-color);
+    }
+    
+    .job-description-compact {
+        font-size: 0.9rem;
+        color: #666;
+        line-height: 1.5;
+        margin-bottom: 1rem;
+        overflow: hidden;
+        display: -webkit-box;
+        -webkit-line-clamp: 3;
+        -webkit-box-orient: vertical;
+        text-overflow: ellipsis;
+    }
+
+    .skills-section {
+        margin-top: 0.8rem;
+        margin-bottom: 1.5rem;
+    }
+
+    .skills-section h4 {
+        margin-bottom: 0.6rem;
+        color: var(--text-dark);
+        font-size: 0.9rem;
+    }
+
+    .skills-list {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+    }
+
+    .skill-badge {
+        background-color: #eef2f5;
+        color: #555;
+        padding: 0.4rem 0.8rem;
+        border-radius: 16px;
+        font-size: 0.75rem;
+        font-weight: 500;
+        transition: background-color 0.2s ease;
+    }
+    
+    .skill-badge:hover {
+        background-color: #e0e6eb;
+    }
+
+    .view-details-btn {
+        display: block;
+        width: 100%;
+        padding: 0.8rem;
+        background-color: var(--primary-color);
+        color: var(--text-light);
+        text-align: center;
+        text-decoration: none;
+        border-radius: 8px;
+        font-weight: bold;
+        cursor: pointer;
+        border: none;
+        transition: background-color 0.3s ease;
+    }
+    
+    .view-details-btn:hover {
+        background-color: #4c4cc9;
+    }
+
+    /* Modal Styles (Document Format) */
+    .modal {
+        position: fixed;
+        z-index: 1000;
+        left: 0;
+        top: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0, 0, 0, 0.7);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        visibility: hidden;
+        opacity: 0;
+        transition: visibility 0s, opacity 0.3s;
+    }
+
+    .modal.show {
+        visibility: visible;
+        opacity: 1;
+    }
+
+    .modal-content {
+        background-color: var(--card-bg);
+        border-radius: 12px;
+        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.4);
+        max-width: 800px;
+        width: 90%;
+        position: relative;
+        transform: scale(0.95);
+        transition: transform 0.3s cubic-bezier(0.18, 0.89, 0.32, 1.28);
+        max-height: 90vh;
+        overflow-y: auto;
+    }
+
+    .modal.show .modal-content {
+        transform: scale(1);
+    }
+
+    .close-button {
+        position: absolute;
+        top: 1.5rem;
+        right: 1.5rem;
+        font-size: 2rem;
+        font-weight: 300;
+        cursor: pointer;
+        color: #555;
+        transition: color 0.2s ease;
+        background: transparent;
+        border: none;
+    }
+
+    .close-button:hover {
+        color: #000;
+    }
+    
+    .modal-header {
+        background: linear-gradient(135deg, #7b5dff, #f77062);
+        color: white;
+        padding: 2rem;
+        border-top-left-radius: 12px;
+        border-top-right-radius: 12px;
+        text-align: center;
+    }
+
+    .modal-company-logo {
+        max-width: 120px;
+        max-height: 120px;
+        border-radius: 12px;
+        margin-bottom: 1rem;
+        background-color: white;
+        padding: 8px;
+    }
+
+    .modal-title {
+        font-size: 2.5rem;
+        font-weight: 700;
+        margin: 0;
+        line-height: 1.2;
+    }
+
+    .modal-company {
+        font-size: 1.2rem;
+        font-weight: 500;
+        margin: 0.5rem 0 0;
+        color: rgba(255, 255, 255, 0.9);
+    }
+
+    .modal-body {
+        padding: 2.5rem;
+    }
+
+    .modal-meta-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 1.5rem;
+        margin-bottom: 2rem;
+    }
+
+    .modal-meta-item {
+        background-color: #f7f9fc;
+        padding: 1rem;
+        border-radius: 8px;
+        border: 1px solid #eef2f5;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+    }
+
+    .modal-meta-item strong {
+        display: block;
+        font-size: 0.9rem;
+        color: #888;
+        margin-bottom: 0.2rem;
+    }
+
+    .modal-meta-item span {
+        font-size: 1.1rem;
+        color: var(--text-dark);
+        font-weight: 500;
+    }
+    
+    .modal-section {
+        margin-bottom: 2rem;
+    }
+    
+    .modal-section-title {
+        font-size: 1.75rem;
+        font-weight: 600;
+        color: var(--primary-color);
+        margin-bottom: 1rem;
+        position: relative;
+    }
+
+    .modal-section-title::after {
+        content: '';
+        position: absolute;
+        bottom: -5px;
+        left: 0;
+        width: 60px;
+        height: 3px;
+        background-color: var(--secondary-color);
+        border-radius: 2px;
+    }
+
+    .modal-text {
+        font-size: 1rem;
+        color: #444;
+    }
+    
+    .modal-text p {
+        white-space: pre-wrap;
+        margin-bottom: 1rem;
+    }
+
+    .modal-skills-list {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+    }
+
+    .apply-link {
+        display: block;
+        width: 100%;
+        text-align: center;
+        margin-top: 2rem;
+        padding: 1rem;
+        background-color: var(--secondary-color);
+        color: var(--text-light);
+        text-decoration: none;
+        border-radius: 8px;
+        font-weight: bold;
+        transition: background-color 0.3s ease;
+    }
+    .apply-link:hover {
+        background-color: #e26154;
+    }
+
+    .hidden {
+        display: none !important;
+    }
+
+    .active-status {
+        color: #28a745;
+        font-weight: bold;
+    }
+
+    .inactive-status {
+        color: #dc3545;
+        font-weight: bold;
+    }
 </style>
-{% endblock %}
 
-{% block extra_js %}
-<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-<script>
-    $(document).ready(function() {
-        // Cache jQuery selectors for performance
-        const $tableBody = $('#jobDescriptionsTable tbody');
-        const $searchInput = $('#searchInput');
-        const $jobDescriptionsTableCard = $('#jobDescriptionsTableCard');
-        const $noJobDescriptionsServerMessage = $('#noJobDescriptionsServerMessage');
-        const $noJDsMessage = $('#noJDsMessage');
-        const $deleteJdModal = $('#deleteJdModal');
-        const $customAlertModal = $('#customAlertModal');
-        const hasJDsFromServer = {{ job_postings|length }} > 0;
+<div class="filter-bar">
+    <form action="" method="get" class="filter-form">
+        <div class="filter-group">
+            <label for="title_filter">Job Title/Skills</label>
+            <input type="text" id="title_filter" name="title" placeholder="e.g., Python Developer" value="{{ request.GET.title|default_if_none:'' }}">
+        </div>
+        <div class="filter-group">
+            <label for="location_filter">Location</label>
+            <select id="location_filter" name="location">
+                <option value="">Any</option>
+                {% for location in dynamic_locations %}
+                    <option value="{{ location }}" {% if request.GET.location == location %}selected{% endif %}>{{ location }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="filter-group">
+            <label for="type_filter">Job Type</label>
+            <select id="type_filter" name="job_type">
+                <option value="">Any</option>
+                {% for job_type in dynamic_job_types %}
+                    <option value="{{ job_type }}" {% if request.GET.job_type == job_type %}selected{% endif %}>{{ job_type }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="filter-group">
+            <label for="experience_filter">Experience Level</label>
+            <select id="experience_filter" name="experience">
+                <option value="">Any</option>
+                {% for experience in dynamic_experiences %}
+                    <option value="{{ experience }}" {% if request.GET.experience == experience %}selected{% endif %}>{{ experience }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="filter-group">
+            <label for="company_filter">Company</label>
+            <select id="company_filter" name="company">
+                <option value="">Any</option>
+                {% for company in dynamic_companies %}
+                    <option value="{{ company }}" {% if request.GET.company == company %}selected{% endif %}>{{ company }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <button type="submit" class="filter-button">Filter Jobs</button>
+    </form>
+</div>
 
-        // --- Initial State Check and Display ---
-        if (hasJDsFromServer) {
-            $jobDescriptionsTableCard.show();
-            $noJobDescriptionsServerMessage.hide();
-        } else {
-            $jobDescriptionsTableCard.hide();
-            $noJobDescriptionsServerMessage.show();
-        }
+<div class="job-grid-compact">
+    {% for job in job_postings %}
+    <div 
+        class="job-card-compact" 
+        data-title="{{ job.title }}"
+        data-company="{{ job.company }}"
+        data-location="{{ job.location }}"
+        data-job-type="{{ job.job_type }}"
+        data-experience="{{ job.experience }}"
+        data-salary="{{ job.salary }}"
+        data-date-posted="{{ job.date_posted|date:'F d, Y' }}"
+        data-date-line="{{ job.date_line|date:'F d, Y' }}"
+        data-application-link="{{ job.application_link }}"
+        data-about-company="{{ job.about_company }}"
+        data-responsibilities="{{ job.responsibilities }}"
+        data-qualifications="{{ job.qualifications }}"
+        data-benefits="{{ job.benefits }}"
+        data-skills="{{ job.skills }}"
+        data-description="{{ job.description }}"
+        data-is-active="{{ job.is_active|yesno:'true,false' }}"
+        {% if job.company_logo %}data-company-logo="{{ job.company_logo.url }}"{% endif %}
+    >
+        <span class="job-status-flag {% if job.is_active %}active-flag{% else %}inactive-flag{% endif %}">
+            {% if job.is_active %}Active{% else %}Inactive{% endif %}
+        </span>
+        <div class="card-header-compact">
+            <div>
+                <h2 class="job-title-compact">{{ job.title }}</h2>
+                <p class="company-name-compact">{{ job.company }}</p>
+            </div>
+        </div>
+
+        <div class="card-body-compact">
+            <div class="job-meta-compact">
+                <span class="meta-item">
+                    <i class="fas fa-map-marker-alt"></i> {{ job.location }}
+                </span>
+                <span class="meta-item">
+                    <i class="fas fa-briefcase"></i> {{ job.job_type }}
+                </span>
+                <span class="meta-item">
+                    <i class="fas fa-user-tie"></i> {{ job.experience }}
+                </span>
+            </div>
+            
+            <p class="job-description-compact">{{ job.description }}</p>
+
+            <div class="skills-section">
+                <h4>Skills</h4>
+                <div class="skills-list">
+                    {% if job.skill_list %}
+                        {% for skill in job.skill_list %}
+                            <span class="skill-badge">{{ skill }}</span>
+                        {% endfor %}
+                    {% else %}
+                        <span class="skill-badge">No skills listed</span>
+                    {% endif %}
+                </div>
+            </div>
+
+            <button class="view-details-btn">View Details</button>
+        </div>
+    </div>
+    {% empty %}
+    <p>No job postings match your criteria.</p>
+    {% endfor %}
+</div>
+
+
+<div id="jobModal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <button class="close-button">&times;</button>
+            <img id="modal-company-logo" class="modal-company-logo" alt="Company Logo">
+            <h2 id="modal-title" class="modal-title"></h2>
+            <h3 id="modal-company" class="modal-company"></h3>
+        </div>
         
-        // --- Client-side Search and Filter Functionality ---
-        const filterJDs = () => {
-            const searchQuery = $searchInput.val().toLowerCase();
-            let counter = 1;
-            let foundJDs = false;
-            
-            // Re-select rows on each keyup to ensure we're working with the current DOM state
-            $tableBody.find('tr').each(function() {
-                const rowText = $(this).text().toLowerCase();
+        <div class="modal-body">
+            <div class="modal-meta-grid">
+                <div class="modal-meta-item">
+                    <strong>Location</strong>
+                    <span id="modal-location"></span>
+                </div>
+                <div class="modal-meta-item">
+                    <strong>Job Type</strong>
+                    <span id="modal-type"></span>
+                </div>
+                <div class="modal-meta-item">
+                    <strong>Experience</strong>
+                    <span id="modal-experience"></span>
+                </div>
+                <div class="modal-meta-item">
+                    <strong>Salary</strong>
+                    <span id="modal-salary"></span>
+                </div>
+                <div class="modal-meta-item">
+                    <strong>Posted On</strong>
+                    <span id="modal-date-posted"></span>
+                </div>
+                <div class="modal-meta-item">
+                    <strong>Application Deadline</strong>
+                    <span id="modal-date-line"></span>
+                </div>
+                <div class="modal-meta-item">
+                    <strong>Job Status</strong>
+                    <span id="modal-is-active"></span>
+                </div>
+            </div>
 
-                if (rowText.includes(searchQuery)) {
-                    $(this).show();
-                    $(this).find('td:first-child').text(counter++);
-                    foundJDs = true;
-                } else {
-                    $(this).hide();
-                }
-            });
-            
-            if (!foundJDs) {
-                $noJDsMessage.show();
-                $('#jobDescriptionsTable').hide();
-            } else {
-                $noJDsMessage.hide();
-                $('#jobDescriptionsTable').show();
-            }
-        };
+            <div id="modal-description" class="modal-section">
+                <h4 class="modal-section-title">Job Description</h4>
+                <div class="modal-text"></div>
+            </div>
 
-        // Bind the filter function to the search input
-        $searchInput.on('keyup', filterJDs);
+            <div id="modal-about-company" class="modal-section">
+                <h4 class="modal-section-title">About the Company</h4>
+                <div class="modal-text"></div>
+            </div>
 
-        // --- Delete Confirmation Modal & AJAX ---
-        $tableBody.on('click', '.delete-jd-btn', function() {
-            const jdId = $(this).data('jd-id');
-            const jdTitle = $(this).data('jd-title');
-            
-            $('#jdTitleToDelete').text(jdTitle);
-            $('#confirmDeleteBtn').data('jd-id', jdId);
-            $deleteJdModal.modal('show');
-        });
+            <div id="modal-responsibilities" class="modal-section">
+                <h4 class="modal-section-title">Responsibilities</h4>
+                <div class="modal-text"></div>
+            </div>
 
-        // Corrected event handler for delete confirmation button
-        $('#confirmDeleteBtn').on('click', function() {
-            const jdId = $(this).data('jd-id');
-            const csrfToken = $('input[name="csrfmiddlewaretoken"]').val();
+            <div id="modal-qualifications" class="modal-section">
+                <h4 class="modal-section-title">Qualifications</h4>
+                <div class="modal-text"></div>
+            </div>
 
-            $.ajax({
-                url: `/delete-career-page/${jdId}/`,
-                type: 'POST',
-                data: { csrfmiddlewaretoken: csrfToken },
-                success: function(response) {
-                    if (response.success) {
-                        $deleteJdModal.modal('hide');
-                        showCustomAlert('Success', 'Job posting deleted successfully.', 'success', () => {
-                            location.reload();
-                        });
+            <div id="modal-benefits" class="modal-section">
+                <h4 class="modal-section-title">Benefits</h4>
+                <div class="modal-text"></div>
+            </div>
+
+            <div id="modal-skills" class="modal-section">
+                <h4 class="modal-section-title">Skills Required</h4>
+                <div id="modal-skills-list" class="skills-list modal-skills-list"></div>
+            </div>
+
+            <a id="modal-apply-link" class="apply-link" href="#" target="_blank">Apply Now</a>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const modal = document.getElementById('jobModal');
+        const closeButton = modal.querySelector('.close-button');
+        const viewDetailsButtons = document.querySelectorAll('.view-details-btn');
+
+        viewDetailsButtons.forEach(button => {
+            button.addEventListener('click', function() {
+                const jobCard = this.closest('.job-card-compact');
+                
+                const title = jobCard.dataset.title || 'N/A';
+                const company = jobCard.dataset.company || 'N/A';
+                const logo = jobCard.dataset.companyLogo;
+                const location = jobCard.dataset.location || 'N/A';
+                const jobType = jobCard.dataset.jobType || 'N/A';
+                const experience = jobCard.dataset.experience || 'N/A';
+                const salary = jobCard.dataset.salary || 'Not specified';
+                const datePosted = jobCard.dataset.datePosted || 'N/A';
+                const dateLine = jobCard.dataset.dateLine || 'N/A';
+                const aboutCompany = jobCard.dataset.aboutCompany || '';
+                const responsibilities = jobCard.dataset.responsibilities || '';
+                const qualifications = jobCard.dataset.qualifications || '';
+                const benefits = jobCard.dataset.benefits || '';
+                const skills = jobCard.dataset.skills || '';
+                const description = jobCard.dataset.description || '';
+                const applicationLink = jobCard.dataset.applicationLink || '#';
+                const isActive = jobCard.dataset.isActive === 'true';
+
+                function updateSection(sectionId, content) {
+                    const sectionElement = document.getElementById(sectionId);
+                    const contentElement = sectionElement.querySelector('.modal-text');
+                    if (content.trim()) {
+                        sectionElement.classList.remove('hidden');
+                        contentElement.innerText = content;
                     } else {
-                        const errorMessage = response.error || 'An unknown error occurred.';
-                        $deleteJdModal.modal('hide');
-                        showCustomAlert('Error', 'Error deleting job posting: ' + errorMessage, 'danger');
+                        sectionElement.classList.add('hidden');
                     }
-                },
-                error: function(xhr) {
-                    $deleteJdModal.modal('hide');
-                    let errorMessage = 'An error occurred. Please try again.';
-                    if (xhr.status === 403) {
-                        errorMessage = 'Access Forbidden: CSRF token missing or incorrect. Please refresh the page.';
-                    }
-                    showCustomAlert('Error', errorMessage, 'danger');
                 }
+
+                document.getElementById('modal-title').innerText = title;
+                document.getElementById('modal-company').innerText = company;
+                
+                const logoElement = document.getElementById('modal-company-logo');
+                if (logo) {
+                    logoElement.src = logo;
+                    logoElement.classList.remove('hidden');
+                } else {
+                    logoElement.classList.add('hidden');
+                }
+
+                document.getElementById('modal-location').innerText = location;
+                document.getElementById('modal-type').innerText = jobType;
+                document.getElementById('modal-experience').innerText = experience;
+                document.getElementById('modal-salary').innerText = salary;
+                document.getElementById('modal-date-posted').innerText = datePosted;
+                document.getElementById('modal-date-line').innerText = dateLine;
+
+                const isActiveElement = document.getElementById('modal-is-active');
+                if (isActive) {
+                    isActiveElement.innerText = 'Active';
+                    isActiveElement.className = 'active-status';
+                } else {
+                    isActiveElement.innerText = 'Inactive';
+                    isActiveElement.className = 'inactive-status';
+                }
+
+                updateSection('modal-description', description);
+                updateSection('modal-about-company', aboutCompany);
+                updateSection('modal-responsibilities', responsibilities);
+                updateSection('modal-qualifications', qualifications);
+                updateSection('modal-benefits', benefits);
+
+                const skillsList = document.getElementById('modal-skills-list');
+                skillsList.innerHTML = '';
+                if (skills.trim()) {
+                    document.getElementById('modal-skills').classList.remove('hidden');
+                    const skillArray = skills.split(',').map(s => s.trim()).filter(s => s);
+                    skillArray.forEach(skill => {
+                        const badge = document.createElement('span');
+                        badge.className = 'skill-badge';
+                        badge.innerText = skill;
+                        skillsList.appendChild(badge);
+                    });
+                } else {
+                    document.getElementById('modal-skills').classList.add('hidden');
+                }
+                
+                const applyLink = document.getElementById('modal-apply-link');
+                applyLink.href = applicationLink;
+                if (applicationLink === '#' || applicationLink === null || applicationLink.trim() === '') {
+                    applyLink.classList.add('hidden');
+                } else {
+                    applyLink.classList.remove('hidden');
+                }
+
+                modal.classList.add('show');
+                document.body.style.overflow = 'hidden';
             });
         });
 
-        // --- Custom Alert Modal Function ---
-        function showCustomAlert(title, message, type = 'info', callback = null) {
-            const modalHeader = $customAlertModal.find('.modal-header');
-            const modalTitle = $('#customAlertModalLabel');
-            const modalMessage = $('#customAlertMessage');
-            const modalButton = $customAlertModal.find('.btn');
-            
-            modalTitle.text(title);
-            modalMessage.text(message);
-            modalHeader.removeClass().addClass('modal-header border-0 rounded-top-3');
-            modalButton.removeClass().addClass('btn universal-btn');
+        closeButton.addEventListener('click', function() {
+            modal.classList.remove('show');
+            document.body.style.overflow = 'auto';
+        });
 
-            if (type === 'success') {
-                modalHeader.addClass('bg-success text-white');
-                modalButton.addClass('btn-success');
-            } else if (type === 'danger') {
-                modalHeader.addClass('bg-danger text-white');
-                modalButton.addClass('btn-danger');
-            } else {
-                modalHeader.addClass('bg-warning text-dark');
-                modalButton.addClass('btn-warning');
+        window.addEventListener('click', function(event) {
+            if (event.target === modal) {
+                modal.classList.remove('show');
+                document.body.style.overflow = 'auto';
             }
-            
-            $customAlertModal.modal('show');
-            
-            $customAlertModal.off('hidden.bs.modal').on('hidden.bs.modal', function() {
-                if (callback && typeof callback === 'function') {
-                    callback();
-                }
-            });
-        }
+        });
     });
 </script>
+
 {% endblock %}

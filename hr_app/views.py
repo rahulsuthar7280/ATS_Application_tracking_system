@@ -1977,16 +1977,56 @@ def admin_dashboard_view(request):
 @login_required
 def all_job_descriptions(request):
     """
-    Renders the page to display all job postings created by the logged-in user.
+    Renders the page to display all job postings with advanced dynamic filtering functionality.
     """
-    # Filter the queryset to only show job postings belonging to the current user
-    # Renamed variable to be more clear
-    job_postings = CareerPage.objects.filter(user=request.user) 
+    # Start with the base queryset
+    job_postings = CareerPage.objects.all()
+
+    # Get dynamic filter options from the database
+    dynamic_job_types = CareerPage.objects.values_list('job_type', flat=True).distinct().order_by('job_type')
+    dynamic_locations = CareerPage.objects.values_list('location', flat=True).distinct().order_by('location')
+    dynamic_experiences = CareerPage.objects.values_list('experience', flat=True).distinct().order_by('experience')
+    dynamic_companies = CareerPage.objects.values_list('company', flat=True).distinct().order_by('company')
+
+    # Get filter parameters from the URL
+    title_query = request.GET.get('title')
+    location_query = request.GET.get('location')
+    job_type_query = request.GET.get('job_type')
+    experience_query = request.GET.get('experience')
+    company_query = request.GET.get('company')
+    
+    # Apply filters to the queryset
+    if title_query:
+        # Search for the title in both the title and skills fields
+        job_postings = job_postings.filter(Q(title__icontains=title_query) | Q(skills__icontains=title_query))
+
+    if location_query:
+        job_postings = job_postings.filter(location__icontains=location_query)
+
+    if job_type_query:
+        job_postings = job_postings.filter(job_type=job_type_query)
+
+    if experience_query:
+        job_postings = job_postings.filter(experience=experience_query)
+
+    if company_query:
+        job_postings = job_postings.filter(company__icontains=company_query)
+
+    # Process each job posting to turn the comma-separated skills into a list
+    for job in job_postings:
+        if job.skills:
+            job.skill_list = [skill.strip() for skill in job.skills.split(',')]
+        else:
+            job.skill_list = []
+    
     context = {
-        'job_postings': job_postings,  # Updated context key
+        'job_postings': job_postings,
+        'dynamic_job_types': dynamic_job_types,
+        'dynamic_locations': dynamic_locations,
+        'dynamic_experiences': dynamic_experiences,
+        'dynamic_companies': dynamic_companies,
     }
     return render(request, 'all_job_descriptions.html', context)
-
 
 @login_required
 def create_job_description(request):
@@ -3763,40 +3803,52 @@ def job_detail(request, job_id):
     }
     
     return render(request, 'job_detail.html', context)
-
 def career_mainpage(request):
     """
     Renders the main career page with dynamic data.
+    Data displayed can vary based on user login status and data availability.
     """
     
-    # Use your actual model calls to fetch data from the database
-    categories = Category.objects.all()
-    
-    # Filter jobs based on their is_active status
-    featured_jobs = CareerPage.objects.filter(job_type='Featured', is_active=True)
-    full_time_jobs = CareerPage.objects.filter(job_type='Full Time', is_active=True)
-    part_time_jobs = CareerPage.objects.filter(job_type='Part Time', is_active=True)
-    
+    context = {}
+
     # Fetch the company information
     try:
         company_info = CompanyInfo.objects.first()
     except CompanyInfo.DoesNotExist:
         company_info = None
 
-    # Get the site-wide theme settings
-    theme_settings = ThemeSettings.objects.first()
+    # Check for required data. If company info or logo is missing, the page is not available.
+    if not company_info or not company_info.company_logo:
+        context['is_page_available'] = False
+        context['message'] = "Career page not available. Please create a career page with company information."
+    else:
+        context['is_page_available'] = True
+        
+        # Check if the user is logged in
+        is_logged_in = request.user.is_authenticated
+        
+        # Use your actual model calls to fetch data from the database
+        # You can add logic here to filter or show different data based on `is_logged_in`
+        categories = Category.objects.all()
+        featured_jobs = CareerPage.objects.filter(is_active=True, job_type='Featured')
+        full_time_jobs = CareerPage.objects.filter(is_active=True, job_type='Full Time')
+        part_time_jobs = CareerPage.objects.filter(is_active=True, job_type='Part Time')
 
-    # Pass the data to the template
-    context = {
-        'categories': categories,
-        'featured_jobs': featured_jobs,
-        'full_time_jobs': full_time_jobs,
-        'part_time_jobs': part_time_jobs,
-        'company_info': company_info,
-        'theme_settings': theme_settings,  # Pass the entire object to the template
-    }
+        # Get the site-wide theme settings
+        theme_settings = ThemeSettings.objects.first()
+
+        # Pass all the data to the template context
+        context.update({
+            'categories': categories,
+            'featured_jobs': featured_jobs,
+            'full_time_jobs': full_time_jobs,
+            'part_time_jobs': part_time_jobs,
+            'company_info': company_info,
+            'theme_settings': theme_settings,
+            'is_logged_in': is_logged_in,
+        })
+    
     return render(request, 'career_mainpage.html', context)
-
 def add_job_listing(request):
     """
     Handles form submission to add new job listings without forms.py.

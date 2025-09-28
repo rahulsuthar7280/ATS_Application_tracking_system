@@ -224,7 +224,7 @@
             color: var(--sidebar-text);
             font-weight: 500;
             padding: 8px 15px;
-            border-radius: 50px;
+            /* border-radius: 50px; */
             text-decoration: none;
             transition: all 0.2s ease-in-out;
             display: inline-flex;
@@ -242,7 +242,7 @@
         }
 
         .header-dropdown-menu {
-            border-radius: 8px;
+            /* border-radius: 8px; */
             padding: 10px;
             border: none;
             background-color: var(--sidebar-bg);
@@ -428,36 +428,37 @@
                         </a>
                     </li>
                     
-                    <!-- <li class="nav-item dropdown">
-                        <a href="#" class="nav-link dropdown-toggle" id="careerPortalSubmenu" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                            <i class="fas fa-robot nav-icon"></i>
-                            <span class="nav-text">Settings</span>
-                        </a>
-                        <ul class="dropdown-menu dropdown-menu-dark" aria-labelledby="careerPortalSubmenu">
-                            <li><a href="{% url 'career_portal' %}" class="dropdown-item">Career Dashboard</a></li>
-                            <li><a href="{% url 'settings_careerpage' %}" class="dropdown-item">Career Page Settings</a></li>
-                            <li><a href="{% url 'career_mainpage' %}" class="dropdown-item">View Career Page</a></li>
-                        </ul>
+                    <!-- <li class="nav-item">
+                            <a href="{% url 'admin_dashboard' %}" class="nav-link {% if request.resolver_match.url_name == 'admin_dashboard' %}active{% endif %}">
+                                <i class="fas fa-user-shield nav-icon"></i>
+                                <span class="nav-text">Admin Panel</span>
+                            </a>
                     </li> -->
 
-                    {% if user.is_authenticated %}
-                        {% if user.role == 'admin' %}
-                            <li class="nav-item">
-                                <a href="{% url 'admin_dashboard' %}" class="nav-link {% if request.resolver_match.url_name == 'admin_dashboard' %}active{% endif %}">
-                                    <i class="fas fa-user-shield nav-icon"></i>
-                                    <span class="nav-text">Admin Panel</span>
-                                </a>
-                            </li>
-                        {% endif %}
-                        {% if user.role == 'superadmin' %}
-                            <li class="nav-item">
-                                <a href="{% url 'superadmin_dashboard' %}" class="nav-link {% if request.resolver_match.url_name == 'superadmin_dashboard' %}active{% endif %}">
-                                    <i class="fas fa-crown nav-icon"></i>
-                                    <span class="nav-text">Superadmin Panel</span>
-                                </a>
-                            </li>
-                        {% endif %}
+                    <!-- <li class="nav-item">
+                            <a href="{% url 'superadmin_dashboard' %}" class="nav-link {% if request.resolver_match.url_name == 'superadmin_dashboard' %}active{% endif %}">
+                                <i class="fas fa-crown nav-icon"></i>
+                                <span class="nav-text">Superadmin Panel</span>
+                            </a>
+                    </li> -->
+                {% if user.is_authenticated %}
+                    {% if user.role == 'admin' %}
+                        <li class="nav-item">
+                            <a href="{% url 'admin_dashboard' %}" class="nav-link {% if request.resolver_match.url_name == 'admin_dashboard' %}active{% endif %}">
+                                <i class="fas fa-user-shield nav-icon"></i>
+                                <span class="nav-text">Admin Panel</span>
+                            </a>
+                        </li>
                     {% endif %}
+                    {% if user.role == 'superadmin' %}
+                        <li class="nav-item">
+                            <a href="{% url 'superadmin_dashboard' %}" class="nav-link {% if request.resolver_match.url_name == 'superadmin_dashboard' %}active{% endif %}">
+                                <i class="fas fa-crown nav-icon"></i>
+                                <span class="nav-text">Superadmin Panel</span>
+                            </a>
+                        </li>
+                    {% endif %}
+                {% endif %}
                 </ul>
             </nav>
         </aside>
@@ -484,7 +485,7 @@
                                 <i class="fas fa-cog"></i> Settings
                              </button>
                              <ul class="dropdown-menu header-dropdown-menu" aria-labelledby="careerSettingsDropdown">
-                                 <li><a class="dropdown-item" href="{% url 'career_portal' %}"><i class="fas fa-robot me-2"></i>Job Dashboard</a></li>
+                                 <!-- <li><a class="dropdown-item" href="{% url 'career_portal' %}"><i class="fas fa-robot me-2"></i>Job Dashboard</a></li> -->
                                  <li><a class="dropdown-item" href="{% url 'settings_careerpage' %}"><i class="fas fa-cog me-2"></i>Career Settings</a></li>
                                  <li><a class="dropdown-item" href="{% url 'career_mainpage' %}"><i class="fas fa-external-link-alt me-2"></i>View Career Page</a></li>
                              </ul>
