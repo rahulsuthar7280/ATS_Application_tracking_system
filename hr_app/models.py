@@ -436,28 +436,50 @@ class DraftEmail(models.Model):
 #         ordering = ['-date_posted']
 from django.core.exceptions import ValidationError
 class ThemeSettings(models.Model):
-    """Stores the global company name and theme colors (Singleton)."""
+    """Stores theme colors for each user (One-to-One with User)."""
+
     user = models.OneToOneField(
-        settings.AUTH_USER_MODEL, 
-        on_delete=models.CASCADE
-    ) 
-    # company_name = models.CharField(max_length=100, default='JobEntry')
-    
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="theme_settings"
+    )
+
     # --- Background Colors ---
-    theme_primary_color = models.CharField(max_length=7, default='#1e3a8a', help_text="Primary color for buttons and highlights.")
-    theme_secondary_color = models.CharField(max_length=7, default='#eef2f6', help_text="Secondary/light background color (e.g., footer).")
-    theme_background_color = models.CharField(max_length=7, default='#f7f9fc', help_text="Main page background color.")
+    theme_primary_color = models.CharField(
+        max_length=7,
+        default="#1e3a8a",
+        help_text="Primary color for buttons and highlights."
+    )
+    theme_secondary_color = models.CharField(
+        max_length=7,
+        default="#eef2f6",
+        help_text="Secondary/light background color (e.g., footer)."
+    )
+    theme_background_color = models.CharField(
+        max_length=7,
+        default="#f7f9fc",
+        help_text="Main page background color."
+    )
 
     # --- Text Colors for the corresponding backgrounds ---
-    theme_primary_color_text = models.CharField(max_length=7, default='#ffffff', help_text="Text color on Primary background (e.g., button text).")
-    theme_secondary_color_text = models.CharField(max_length=7, default='#333333', help_text="Text color on Secondary background (e.g., light sections/footer links).")
-    theme_background_color_text = models.CharField(max_length=7, default='#333333', help_text="Default text color on the main Background.")
+    theme_primary_color_text = models.CharField(
+        max_length=7,
+        default="#ffffff",
+        help_text="Text color on Primary background (e.g., button text)."
+    )
+    theme_secondary_color_text = models.CharField(
+        max_length=7,
+        default="#333333",
+        help_text="Text color on Secondary background (e.g., light sections/footer links)."
+    )
+    theme_background_color_text = models.CharField(
+        max_length=7,
+        default="#333333",
+        help_text="Default text color on the main Background."
+    )
 
-    def save(self, *args, **kwargs):
-        # Enforce singleton pattern: only one entry allowed (remove this if linked to User)
-        if not self.pk and ThemeSettings.objects.exists():
-            raise ValidationError('There can be only one ThemeSettings instance.')
-        super(ThemeSettings, self).save(*args, **kwargs)
+    def __str__(self):
+        return f"ThemeSettings for {self.user.username}"
 
 
 

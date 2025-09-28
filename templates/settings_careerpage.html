@@ -57,7 +57,7 @@
         font-weight: 600;
         color: var(--text-color-dark);
         position: relative;
-        padding: 10px 15px;
+        /* padding: 10px 15px; */
         transition: color 0.3s ease, transform 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
     }
 
@@ -84,11 +84,11 @@
 
     .header-nav .nav-link.active::after,
     .header-nav .nav-link:hover::after {
-        width: 90%;
+        width: 100%;
     }
 
     .form-container {
-        max-width: 1600px;
+        max-width: 1800px;
         background-color: var(--card-bg);
         border-radius: 10px;
         box-shadow: var(--shadow-card);
@@ -549,7 +549,9 @@
                                 {% with field_name="address" label="Address" placeholder="e.g. 123 Main St, Anytown" type="text" value=company_info.address %}
                                 <div class="col-lg-12 col-md-12">
                                     <label for="id_address" class="form-label">Address</label>
-                                    <input type="text" class="form-control" id="id_address" name="address" value="{{ company_info.address|default:'' }}" placeholder="e.g. 123 Main St, Anytown">
+                                    <textarea class="form-control" id="id_address" name="address" rows="5" value="{{ company_info.address|default:'' }}" placeholder="e.g. 123 Main St, Anytown"></textarea>
+
+                                    <!-- <input type="textarea" class="form-control" id="id_address" name="address" value="{{ company_info.address|default:'' }}" placeholder="e.g. 123 Main St, Anytown"> -->
                                 </div>
                                 {% endwith %}
                             </div>
@@ -857,7 +859,7 @@
                                     <tr>
                                         <th>Sr.No</th>
                                         <th>Department Name</th>
-                                        <th>Vacancies</th>
+                                        <th>Job Count</th>
                                         <th>Actions</th>
                                     </tr>
                                 </thead>
@@ -1270,6 +1272,19 @@
             }
             return '#' + (0x1000000 + (r << 16) + (g << 8) + b).toString(16).slice(1);
         };
+            // Find the "Add Field" button using its data-action attribute
+    const addFieldButton = document.querySelector('[data-action="add-field"]');
+
+    // Add a click event listener
+    if (addFieldButton) {
+        addFieldButton.addEventListener('click', function() {
+            // Scroll to the bottom of the page
+            window.scrollTo({
+                top: document.body.scrollHeight,
+                behavior: 'smooth' // Adds a smooth scrolling animation
+            });
+        });
+    }
     });
 </script>
 </body>
