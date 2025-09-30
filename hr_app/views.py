@@ -3463,6 +3463,10 @@ def settings_careerpage(request):
         elif form_type == 'company_info':
             try:
                 company_info.company_name = request.POST.get('company_name')
+                company_info.slider_header1 = request.POST.get('slider_header1')
+                company_info.slider_header2 = request.POST.get('slider_header2')
+                company_info.slider_paragraph1 = request.POST.get('slider_paragraph1')
+                company_info.slider_paragraph2 = request.POST.get('slider_paragraph2')
                 
                 # Handle company logo upload
                 if 'company_logo' in request.FILES:
@@ -3480,6 +3484,7 @@ def settings_careerpage(request):
                 company_info.facebook_url = request.POST.get('facebook_url')
                 company_info.youtube_url = request.POST.get('youtube_url')
                 company_info.linkedin_url = request.POST.get('linkedin_url')
+                company_info.application_url = request.POST.get('application_url')
                 company_info.save()
                 messages.success(request, "Company information has been updated successfully!")
                 return redirect(base_url + '#company-info-form')
@@ -3493,7 +3498,7 @@ def settings_careerpage(request):
         elif form_type == 'theme_settings':
             try:
                 # 1. Background/UI Colors
-                theme_settings.theme_primary_color = request.POST.get('primary_color', '#1e3a8a')
+                theme_settings.theme_primary_color = request.POST.get('primary_color', '#3e4f47')
                 theme_settings.theme_secondary_color = request.POST.get('secondary_color', '#eef2f6')
                 theme_settings.theme_background_color = request.POST.get('background_color', '#f7f9fc')
                 
@@ -3574,7 +3579,7 @@ def settings_careerpage(request):
                     qualifications=request.POST.get('qualifications'),
                     benefits=request.POST.get('benefits'),
                     about_company=request.POST.get('about_company'),
-                    application_link=request.POST.get('application_link'),
+                    # application_link=request.POST.get('application_link'),
                     skills=request.POST.get('skills'),
                     date_line=parse_date(request.POST.get('date_line')) if request.POST.get('date_line') else None,
                 )

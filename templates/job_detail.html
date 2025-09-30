@@ -149,6 +149,19 @@
             transform: translateY(-2px);
         }
 
+        /* --- New styles for WYSIWYG content to ensure lists and bold text display correctly --- */
+        .wysiwyg-content p {
+            margin-bottom: 1rem;
+            line-height: 1.6;
+        }
+        .wysiwyg-content ul, 
+        .wysiwyg-content ol {
+            margin-bottom: 1.5rem;
+            padding-left: 25px; /* Ensure lists are indented */
+        }
+        .wysiwyg-content li {
+            margin-bottom: 0.5rem;
+        }
         /* --- End of new styles --- */
 
     </style>
@@ -193,7 +206,7 @@
         </nav>
         <div class="container-xxxl py-5 bg-dark page-header mb-5">
             <div class="container my-5 pt-5 pb-4" >
-                <span style="color: white;"><h2 class="display-3 text-white mb-3 animated slideInDown" style="color: white;">{{ job.title }}</h1></span>
+                <h1 class="display-3 mb-3 animated slideInDown" ><span style="color: white;">{{ job.title }}</span></h1>
                 <nav aria-label="breadcrumb">
                     <ol class="breadcrumb text-uppercase">
                         <li class="breadcrumb-item"><a href="#">Home</a></li>
@@ -224,21 +237,29 @@
 
                         <div class="mb-5">
                             <h4 class="mb-3">Job description</h4>
-                            <p>{{ job.description|linebreaksbr }}</p>
+                            <div class="wysiwyg-content">
+                                {{ job.description|safe }}
+                            </div>
                             
                             {% if job.responsibilities %}
-                            <h4 class="mb-3">Responsibility</h4>
-                            <p>{{ job.responsibilities|linebreaksbr }}</p>
+                            <h4 class="mb-3 mt-5">Responsibility</h4>
+                            <div class="wysiwyg-content">
+                                {{ job.responsibilities|safe }}
+                            </div>
                             {% endif %}
 
                             {% if job.qualifications %}
-                            <h4 class="mb-3">Qualifications</h4>
-                            <p>{{ job.qualifications|linebreaksbr }}</p>
+                            <h4 class="mb-3 mt-5">Qualifications</h4>
+                            <div class="wysiwyg-content">
+                                {{ job.qualifications|safe }}
+                            </div>
                             {% endif %}
 
                             {% if job.skills %}
-                            <h4 class="mb-3">Skills Required</h4>
-                            <p>{{ job.skills|linebreaksbr }}</p>
+                            <h4 class="mb-3 mt-5">Skills Required</h4>
+                            <div class="wysiwyg-content">
+                                {{ job.skills|safe }}
+                            </div>
                             {% endif %}
                         </div>
         
@@ -384,7 +405,7 @@
                             <p><i class="fa fa-angle-right text-primary me-2"></i>Job Type: {{ job.job_type }}</p>
                             <p><i class="fa fa-angle-right text-primary me-2"></i>Salary: {{ job.salary|default:"Not Disclosed" }}</p>
                             <p><i class="fa fa-angle-right text-primary me-2"></i>Location: {{ job.location }}</p>
-                            <p><i class="fa fa-angle-right text-primary me-2"></i>Experience: {{ job.experience|default:"N/A" }}</p>
+                            <p class="m-0"><i class="fa fa-angle-right text-primary me-2"></i>Experience: {{ job.experience|default:"N/A" }}</p>
                         </div>
 
                         <div class="bg-light rounded p-5 wow slideInUp" data-wow-delay="0.1s">
@@ -395,7 +416,7 @@
                             <h5 class="mb-3">{{ company_info.company_name|default:"Company Name Not Set" }}</h5>
                             <p class="m-0">{{ company_info.address|default:"Address Not Set" }}</p>
                             <hr class="my-3">
-                            <a class="btn btn-primary" href="#">Read More</a>
+                            <a class="btn btn-primary" href="{{company_info.application_url|default:'#'}}">Read More</a>
                         </div>
                     </div>
                 </div>
@@ -441,15 +462,7 @@
                             {% endif %}
                         </div>
                     </div>
-                    <div class="col-lg-3 col-md-6">
-                        <h5 class="text-white mb-4">Newsletter</h5>
-                        <p>Dolor et eos labore stet justo sed est sed</p>
-                        <div class="position-relative mx-auto" style="max-width: 400px;">
-                            <input class="form-control bg-transparent w-100 py-3 ps-4 pe-5" type="text" placeholder="Your Email">
-                            <button type="button" class="btn btn-primary py-2 position-absolute top-0 end-0 mt-2 me-2">SignUp</button>
-                        </div>
                     </div>
-                </div>
             </div>
             <div class="container">
                 <div class="copyright">

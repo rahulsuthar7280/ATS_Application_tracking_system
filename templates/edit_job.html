@@ -63,6 +63,7 @@
             font-weight: 600;
         }
     </style>
+
 </head>
 
 <div class="container py-5">
@@ -84,13 +85,6 @@
                             <label for="id_company" class="form-label">Company Name</label>
                             <input type="text" class="form-control" id="id_company" name="company" value="{{ job.company|default_if_none:'' }}">
                         </div>
-                        <!-- <div class="col-md-4">
-                            <label for="id_company_logo" class="form-label">Company Logo</label>
-                            <input type="file" class="form-control" id="id_company_logo" name="company_logo">
-                            {% if job.company_logo %}
-                                <p class="mt-2">Current Logo: <a href="{{ job.company_logo.url }}" target="_blank">{{ job.company_logo.name }}</a></p>
-                            {% endif %}
-                        </div> -->
                         <div class="col-md-4">
                             <label for="id_location" class="form-label">Location</label>
                             <input type="text" class="form-control" id="id_location" name="location" value="{{ job.location }}" required>
@@ -166,4 +160,27 @@
         </form>
     </div>
 </div>
+<script src="https://cdn.tiny.cloud/1/4xitxnad0evflsi4a67g3vubeg17qy565n0d8qgl8nj6c6vn/tinymce/8/tinymce.min.js" referrerpolicy="origin" crossorigin="anonymous"></script>
+
+<script>
+  tinymce.init({
+    // Target the specific textareas for the job details
+    selector: '#id_description, #id_about_company, #id_benefits, #id_responsibilities, #id_qualifications', 
+    height: 300, 
+    plugins: [
+      'anchor', 'autolink', 'charmap', 'codesample', 'emoticons', 'link', 'lists', 'media', 'searchreplace', 'table', 'visualblocks', 'wordcount',
+      'checklist', 'mediaembed', 'casechange', 'formatpainter', 'pageembed', 'a11ychecker', 'tinymcespellchecker', 'permanentpen', 'powerpaste', 'advtable', 'advcode', 'advtemplate', 'ai', 'uploadcare', 'mentions', 'tinycomments', 'tableofcontents', 'footnotes', 'mergetags', 'autocorrect', 'typography', 'inlinecss', 'markdown','importword', 'exportword', 'exportpdf'
+    ],
+    toolbar: 'undo redo | blocks fontfamily fontsize | bold italic underline strikethrough | link media table mergetags | addcomment showcomments | spellcheckdialog a11ycheck typography uploadcare | align lineheight | checklist numlist bullist indent outdent | emoticons charmap | removeformat',
+    tinycomments_mode: 'embedded',
+    tinycomments_author: 'Author name',
+    mergetags_list: [
+      { value: 'First.Name', title: 'First Name' },
+      { value: 'Email', title: 'Email' },
+    ],
+    ai_request: (request, respondWith) => respondWith.string(() => Promise.reject('See docs to implement AI Assistant')),
+    uploadcare_public_key: 'd17749c6fac4e5abfc7d',
+  });
+</script>
+
 {% endblock %}

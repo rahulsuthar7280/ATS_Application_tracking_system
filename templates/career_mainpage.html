@@ -109,7 +109,8 @@
             color: var(--theme-primary-text) !important;
         }
         .job-grid-item:hover * {
-            color: var(--theme-primary-text) !important;
+            color: #fff;
+            /* color: var(--theme-primary-text) !important; */
         }
     </style>
     
@@ -148,8 +149,8 @@
                         <div class="container">
                             <div class="row justify-content-start">
                                 <div class="col-10 col-lg-8">
-                                    <h1 class="display-3 text-white animated slideInDown mb-4">Find The Perfect Job That You Deserved</h1>
-                                    <p class="fs-5 fw-medium text-white mb-4 pb-2">Vero elitr justo clita lorem. Ipsum dolor at sed stet sit diam no. Kasd rebum ipsum et diam justo clita et kasd rebum sea elitr.</p>
+                                    <h1 class="display-3 text-white animated slideInDown mb-4">{{ company_info.slider_header1 }}</h1>
+                                    <p class="fs-5 fw-medium text-white mb-4 pb-2">{{company_info.slider_paragraph1}}</p>
                                 </div>
                             </div>
                         </div>
@@ -161,8 +162,8 @@
                         <div class="container">
                             <div class="row justify-content-start">
                                 <div class="col-10 col-lg-8">
-                                    <h1 class="display-3 text-white animated slideInDown mb-4">Find The Best Startup Job That Fit You</h1>
-                                    <p class="fs-5 fw-medium text-white mb-4 pb-2">Vero elitr justo clita lorem. Ipsum dolor at sed stet sit diam no. Kasd rebum ipsum et diam justo clita et kasd rebum sea elitr.</p>
+                                    <h1 class="display-3 text-white animated slideInDown mb-4">{{company_info.slider_header2}}</h1>
+                                    <p class="fs-5 fw-medium text-white mb-4 pb-2">{{company_info.slider_paragraph2}}</p>
                                 </div>
                             </div>
                         </div>
@@ -238,7 +239,7 @@
                                         <img class="flex-shrink-0 img-fluid border rounded" src="{{ job.company_logo.url }}" alt="" style="width: 80px; height: 80px;">
                                         {% endif %}
                                         <div class="text-start ps-4">
-                                            <h5 class="mb-3">{{ job.title }}</h5>
+                                            <h2 class="mb-3"><span style="font-size: 25px;">{{ job.title }}</span></h2>
                                             <span class="text-truncate me-3"><i class="fa fa-map-marker-alt text-primary me-2"></i>{{ job.location }}</span>
                                             <span class="text-truncate me-3"><i class="far fa-clock text-primary me-2"></i>{{ job.job_type }}</span>
                                             <span class="text-truncate me-0"><i class="far fa-money-bill-alt text-primary me-2"></i>{{ job.salary }}</span>
@@ -321,9 +322,9 @@
         {% if is_logged_in and user_jobs %}
         <div class="container-xxxl py-5">
             <div class="container">
-                <h1 class="text-center mb-5 wow fadeInUp" data-wow-delay="0.1s">Listings Department's</h1>
+                <!-- <h1 class="text-center mb-5 wow fadeInUp" data-wow-delay="0.1s">Listings Department's</h1> -->
                 
-                <div class="text-center mb-5 wow fadeInUp" data-wow-delay="0.2s">
+                <!-- <div class="text-center mb-5 wow fadeInUp" data-wow-delay="0.2s">
                     <div id="category-filter-buttons" class="d-flex flex-wrap justify-content-center">
                         <div class="filter-button active" data-category-id="">All</div>
                         {% for category in categories %}
@@ -331,14 +332,14 @@
                         {% endfor %}
                     </div>
                 </div>
-                
+                 -->
                 <div class="row g-4" id="job-listings-container">
                     {% for job in user_jobs %}
                     <div class="col-lg-3 col-sm-6 wow fadeInUp job-item-card" data-category-id="{{ job.category.id }}" data-wow-delay="0.1s">
                         <a class="job-grid-item" href="{% url 'job_detail' job.id %}">
-                            <h6 class="mb-3">{{ job.title|upper }}</h6>
-                            <p class="mb-0">{{ job.job_type }}</p>
-                            <p class="mb-0">{{ job.category }}</p>
+                            <h5 class="mb-3">{{ job.title|upper }}</h5>
+                            <p class="mb-0" >{{ job.job_type }}</p>
+                            <p class="mb-0" >{{ job.category }}</p>
                         </a>
                     </div>
                     {% endfor %}
@@ -386,14 +387,14 @@
                             {% endif %}
                         </div>
                     </div>
-                    <div class="col-lg-3 col-md-6">
+                    <!-- <div class="col-lg-3 col-md-6">
                         <h5 class="text-white mb-4">Newsletter</h5>
                         <p>Dolor et eos labore stet justo sed est sed</p>
                         <div class="position-relative mx-auto" style="max-width: 400px;">
                             <input class="form-control bg-transparent w-100 py-3 ps-4 pe-5" type="text" placeholder="Your Email">
                             <button type="button" class="btn btn-primary py-2 position-absolute top-0 end-0 mt-2 me-2">SignUp</button>
                         </div>
-                    </div>
+                    </div> -->
                 </div>
             </div>
             <div class="container">

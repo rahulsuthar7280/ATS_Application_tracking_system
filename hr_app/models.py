@@ -447,7 +447,7 @@ class ThemeSettings(models.Model):
     # --- Background Colors ---
     theme_primary_color = models.CharField(
         max_length=7,
-        default="#1e3a8a",
+        default="#3e4f47",
         help_text="Primary color for buttons and highlights."
     )
     theme_secondary_color = models.CharField(
@@ -514,6 +514,10 @@ class CareerPage(models.Model):
 class CompanyInfo(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE, unique=True, related_name='company_info')
     company_name = models.CharField(max_length=200, default='Your Company Name')
+    slider_header1 = models.CharField(max_length=1000, default='Find The Perfect Job That You Deserved')
+    slider_header2 = models.CharField(max_length=1000, default='Find The Best Startup Job That Fit You')
+    slider_paragraph1 = models.CharField(max_length=1000, default='Vero elitr justo clita lorem. Ipsum dolor at sed stet sit diam no. Kasd rebum ipsum et diam justo clita et kasd rebum sea elitr.')
+    slider_paragraph2 = models.CharField(max_length=1000, default='Vero elitr justo clita lorem. Ipsum dolor at sed stet sit diam no. Kasd rebum ipsum et diam justo clita et kasd rebum sea elitr.')
     address = models.CharField(max_length=255, blank=True, null=True)
     phone_number = models.CharField(max_length=20, blank=True, null=True)
     email = models.EmailField(blank=True, null=True)
@@ -523,6 +527,7 @@ class CompanyInfo(models.Model):
     privacy_policy_url = models.URLField(max_length=200, blank=True, null=True)
     terms_and_conditions_url = models.URLField(max_length=200, blank=True, null=True)
     company_logo = models.ImageField(upload_to='company_logos/', blank=True, null=True)
+    application_url = models.URLField(max_length=500, default='#')
 
     # Social media URLs
     twitter_url = models.URLField(max_length=200, blank=True, null=True)

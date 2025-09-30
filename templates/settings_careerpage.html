@@ -13,6 +13,8 @@
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@500;600;700;800&family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    
+    <script src="https://cdn.jsdelivr.net/npm/tinymce@6.8.3/tinymce.min.js"></script>
 </head>
 
 <body class="bg-light-subtle">
@@ -238,6 +240,11 @@
     .badge-danger {
         background-color: var(--danger-color);
     }
+    
+    /* Style fixes for TinyMCE inside Bootstrap */
+    .tox-tinymce {
+        border-radius: 0.25rem !important; /* Matches Bootstrap form-control rounding */
+    }
 </style>
 
 <nav class="navbar navbar-expand-lg navbar-light universal-header">
@@ -316,7 +323,7 @@
                                                     <input class="form-check-input individual-toggle" type="checkbox" name="first_name_enabled" {% if form_settings.first_name_enabled %}checked{% endif %}>
                                                 </div>
                                                 <div class="form-field-wrapper">
-                                                    <label for="id_first_name" class="form-label">First Name</label>
+                                                    <label for="id_first_name" class="form-label">First Name<span style="color: red; font-size: 1.2em; font-weight: bold;">*</span></label>
                                                     <input type="text" class="form-control" id="id_first_name" name="first_name" {% if not form_settings.first_name_enabled %}disabled{% endif %} placeholder="e.g. John" {% if not form_settings.first_name_enabled %} value="" {% else %} value="{% if not form_settings.first_name_enabled %}Disabled Field{% endif %}" data-original-placeholder="e.g. John"{% endif %}>
                                                 </div>
                                             </div>
@@ -327,7 +334,7 @@
                                                     <input class="form-check-input individual-toggle" type="checkbox" name="last_name_enabled" {% if form_settings.last_name_enabled %}checked{% endif %}>
                                                 </div>
                                                 <div class="form-field-wrapper">
-                                                    <label for="id_last_name" class="form-label">Last Name</label>
+                                                    <label for="id_last_name" class="form-label">Last Name<span style="color: red; font-size: 1.2em; font-weight: bold;">*</span></label>
                                                     <input type="text" class="form-control" id="id_last_name" name="last_name" {% if not form_settings.last_name_enabled %}disabled{% endif %} placeholder="e.g. Doe" {% if not form_settings.last_name_enabled %} value="" {% else %} value="{% if not form_settings.last_name_enabled %}Disabled Field{% endif %}" data-original-placeholder="e.g. Doe"{% endif %}>
                                                 </div>
                                             </div>
@@ -338,7 +345,7 @@
                                                     <input class="form-check-input individual-toggle" type="checkbox" name="email_enabled" {% if form_settings.email_enabled %}checked{% endif %}>
                                                 </div>
                                                 <div class="form-field-wrapper">
-                                                    <label for="id_email" class="form-label">Email Address</label>
+                                                    <label for="id_email" class="form-label">Email Address<span style="color: red; font-size: 1.2em; font-weight: bold;">*</span></label>
                                                     <input type="email" class="form-control" id="id_email" name="email" {% if not form_settings.email_enabled %}disabled{% endif %} placeholder="e.g. john.doe@example.com" {% if not form_settings.email_enabled %} value="" {% else %} value="{% if not form_settings.email_enabled %}Disabled Field{% endif %}" data-original-placeholder="e.g. john.doe@example.com"{% endif %}>
                                                 </div>
                                             </div>
@@ -349,7 +356,7 @@
                                                     <input class="form-check-input individual-toggle" type="checkbox" name="phone_enabled" {% if form_settings.phone_enabled %}checked{% endif %}>
                                                 </div>
                                                 <div class="form-field-wrapper">
-                                                    <label for="id_phone" class="form-label">Phone Number</label>
+                                                    <label for="id_phone" class="form-label">Phone Number<span style="color: red; font-size: 1.2em; font-weight: bold;">*</span></label>
                                                     <input type="tel" class="form-control" id="id_phone" name="phone" {% if not form_settings.phone_enabled %}disabled{% endif %} placeholder="e.g. +1 (123) 456-7890" {% if not form_settings.phone_enabled %} value="" {% else %} value="{% if not form_settings.phone_enabled %}Disabled Field{% endif %}" data-original-placeholder="e.g. +1 (123) 456-7890"{% endif %}>
                                                 </div>
                                             </div>
@@ -450,7 +457,7 @@
                                                     <input class="form-check-input individual-toggle" type="checkbox" name="resume_enabled" {% if form_settings.resume_enabled %}checked{% endif %}>
                                                 </div>
                                                 <div class="form-field-wrapper">
-                                                    <label for="id_resume" class="form-label">Resume (PDF, DOCX)</label>
+                                                    <label for="id_resume" class="form-label">Resume (PDF, DOCX)<span style="color: red; font-size: 1.2em; font-weight: bold;">*</span></label>
                                                     <input type="file" class="form-control" id="id_resume" name="resume" {% if not form_settings.resume_enabled %}disabled{% endif %}>
                                                 </div>
                                             </div>
@@ -520,12 +527,11 @@
                         </div>
                         <div class="card-body">
                             <div class="row g-4">
-                                {% with field_name="company_name" label="Company Name" placeholder="e.g. Acme Corp" type="text" required=True value=company_info.company_name %}
+                                {# Company Name - REQUIRED #}
                                 <div class="col-lg-3 col-md-6">
-                                    <label for="id_company_name" class="form-label">Company Name</label>
+                                    <label for="id_company_name" class="form-label">Company Name<span style="color: red; font-size: 1.2em; font-weight: bold;">*</span></label>
                                     <input type="text" class="form-control" id="id_company_name" name="company_name" value="{{ company_info.company_name|default:'' }}" placeholder="e.g. Acme Corp" required>
                                 </div>
-                                {% endwith %}
                                 <div class="col-lg-3 col-md-6">
                                     <label for="id_company_logo" class="form-label">Company Logo</label>
                                     <input type="file" class="form-control" id="id_company_logo" name="company_logo">
@@ -533,27 +539,44 @@
                                     <img src="{{ company_info.company_logo.url }}" class="img-fluid mt-2 rounded" style="max-height: 100px;">
                                     {% endif %}
                                 </div>
-                                                                {% with field_name="email" label="Email" placeholder="e.g. info@acmecorp.com" type="email" value=company_info.email %}
+                                {# Email #}
                                 <div class="col-lg-3 col-md-6">
                                     <label for="id_email" class="form-label">Email</label>
                                     <input type="email" class="form-control" id="id_email" name="email" value="{{ company_info.email|default:'' }}" placeholder="e.g. info@acmecorp.com">
                                 </div>
-                                {% endwith %}
-                                {% with field_name="phone_number" label="Phone Number" placeholder="e.g. +1 (123) 456-7890" type="tel" value=company_info.phone_number %}
+                                {# Phone Number #}
                                 <div class="col-lg-3 col-md-6">
                                     <label for="id_phone_number" class="form-label">Phone Number</label>
                                     <input type="tel" class="form-control" id="id_phone_number" name="phone_number" value="{{ company_info.phone_number|default:'' }}" placeholder="e.g. +1 (123) 456-7890">
                                 </div>
-                                {% endwith %}
 
-                                {% with field_name="address" label="Address" placeholder="e.g. 123 Main St, Anytown" type="text" value=company_info.address %}
+                                {# About Company (Address used as placeholder in original, kept the field name) #}
                                 <div class="col-lg-12 col-md-12">
-                                    <label for="id_address" class="form-label">Address</label>
-                                    <textarea class="form-control" id="id_address" name="address" rows="5" value="{{ company_info.address|default:'' }}" placeholder="e.g. 123 Main St, Anytown"></textarea>
-
-                                    <!-- <input type="textarea" class="form-control" id="id_address" name="address" value="{{ company_info.address|default:'' }}" placeholder="e.g. 123 Main St, Anytown"> -->
+                                    <label for="id_address" class="form-label">About Company</label>
+                                    <textarea class="form-control" id="id_address" name="address" rows="5" placeholder="A brief description of the company..." >{{ company_info.address|default:'' }}</textarea>
                                 </div>
-                                {% endwith %}
+                                {# Slider Header First - REQUIRED #}
+                                <div class="col-lg-6 col-md-6">
+                                    <label for="id_slider_header1" class="form-label">Slider Header First<span style="color: red; font-size: 1.2em; font-weight: bold;">*</span></label>
+                                    <input type="text" class="form-control" id="id_slider_header1" name="slider_header1" value="{{ company_info.slider_header1|default:'' }}" placeholder="Enter first slider heading" required>
+                                </div>
+                                {# Slider Header Second - REQUIRED #}
+                                <div class="col-lg-6 col-md-6">
+                                    <label for="id_slider_header2" class="form-label">Slider Header Second<span style="color: red; font-size: 1.2em; font-weight: bold;">*</span></label>
+                                    <input type="text" class="form-control" id="id_slider_header2" name="slider_header2" value="{{ company_info.slider_header2|default:'' }}" placeholder="Enter second slider heading" required>
+                                </div>
+                                {# Slider Paragraph First - REQUIRED #}
+                                <div class="col-lg-6 col-md-6">
+                                    <label for="id_slider_paragraph1" class="form-label">Slider Paragraph First<span style="color: red; font-size: 1.2em; font-weight: bold;">*</span></label>
+                                    <textarea class="form-control" id="id_slider_paragraph1" name="slider_paragraph1" rows="3" placeholder="Enter first slider paragraph" required>{{ company_info.slider_paragraph1|default:'' }}</textarea>
+
+                                </div>
+                                {# Slider Paragraph Second - REQUIRED #}
+                                <div class="col-lg-6 col-md-6">
+                                    <label for="id_slider_paragraph2" class="form-label">Slider Paragraph Second<span style="color: red; font-size: 1.2em; font-weight: bold;">*</span></label>
+                                    <textarea class="form-control" id="id_slider_paragraph2" name="slider_paragraph2" rows="3" placeholder="Enter second slider paragraph" required>{{ company_info.slider_paragraph2|default:'' }}</textarea>
+
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -565,73 +588,70 @@
                         </div>
                         <div class="card-body">
                             <div class="row g-4">
-                                {% with field_name="about_us_url" label="About Us URL" placeholder="e.g. /about" type="url" value=company_info.about_us_url %}
+                                {# About Us URL #}
                                 <div class="col-lg-4 col-md-6">
                                     <label for="id_about_us_url" class="form-label">About Us URL</label>
                                     <input type="url" class="form-control" id="id_about_us_url" name="about_us_url" value="{{ company_info.about_us_url|default:'' }}" placeholder="e.g. /about">
                                 </div>
-                                {% endwith %}
-                                {% with field_name="contact_us_url" label="Contact Us URL" placeholder="e.g. /contact" type="url" value=company_info.contact_us_url %}
+                                {# Contact Us URL #}
                                 <div class="col-lg-4 col-md-6">
                                     <label for="id_contact_us_url" class="form-label">Contact Us URL</label>
                                     <input type="url" class="form-control" id="id_contact_us_url" name="contact_us_url" value="{{ company_info.contact_us_url|default:'' }}" placeholder="e.g. /contact">
                                 </div>
-                                {% endwith %}
-                                {% with field_name="our_services_url" label="Our Services URL" placeholder="e.g. /services" type="url" value=company_info.our_services_url %}
+                                {# Our Services URL #}
                                 <div class="col-lg-4 col-md-6">
                                     <label for="id_our_services_url" class="form-label">Our Services URL</label>
                                     <input type="url" class="form-control" id="id_our_services_url" name="our_services_url" value="{{ company_info.our_services_url|default:'' }}" placeholder="e.g. /services">
                                 </div>
-                                {% endwith %}
-                                {% with field_name="privacy_policy_url" label="Privacy Policy URL" placeholder="e.g. /privacy" type="url" value=company_info.privacy_policy_url %}
+                                {# Privacy Policy URL #}
                                 <div class="col-lg-4 col-md-6">
                                     <label for="id_privacy_policy_url" class="form-label">Privacy Policy URL</label>
                                     <input type="url" class="form-control" id="id_privacy_policy_url" name="privacy_policy_url" value="{{ company_info.privacy_policy_url|default:'' }}" placeholder="e.g. /privacy">
                                 </div>
-                                {% endwith %}
-                                {% with field_name="terms_and_conditions_url" label="T&C URL" placeholder="e.g. /terms" type="url" value=company_info.terms_and_conditions_url %}
+                                {# T&C URL #}
                                 <div class="col-lg-4 col-md-6">
                                     <label for="id_terms_and_conditions_url" class="form-label">T&C URL</label>
                                     <input type="url" class="form-control" id="id_terms_and_conditions_url" name="terms_and_conditions_url" value="{{ company_info.terms_and_conditions_url|default:'' }}" placeholder="e.g. /terms">
                                 </div>
-                                {% endwith %}
                             </div>
 
                             <hr class="my-4">
 
                             <div class="row g-4">
-                                {% with field_name="twitter_url" label="Twitter URL" placeholder="e.g. https://twitter.com/acmecorp" type="url" value=company_info.twitter_url icon="fab fa-twitter" %}
+                                {# Twitter URL #}
                                 <div class="col-lg-4 col-md-6">
                                     <label for="id_twitter_url" class="form-label">
                                         <i class="fab fa-twitter"></i> Twitter URL
                                     </label>
                                     <input type="url" class="form-control" id="id_twitter_url" name="twitter_url" value="{{ company_info.twitter_url|default:'' }}" placeholder="e.g. https://twitter.com/acmecorp">
                                 </div>
-                                {% endwith %}
-                                {% with field_name="facebook_url" label="Facebook URL" placeholder="e.g. https://facebook.com/acmecorp" type="url" value=company_info.facebook_url icon="fab fa-facebook" %}
+                                {# Facebook URL #}
                                 <div class="col-lg-4 col-md-6">
                                     <label for="id_facebook_url" class="form-label">
                                         <i class="fab fa-facebook"></i> Facebook URL
                                     </label>
                                     <input type="url" class="form-control" id="id_facebook_url" name="facebook_url" value="{{ company_info.facebook_url|default:'' }}" placeholder="e.g. https://facebook.com/acmecorp">
                                 </div>
-                                {% endwith %}
-                                {% with field_name="youtube_url" label="YouTube URL" placeholder="e.g. https://youtube.com/acmecorp" type="url" value=company_info.youtube_url icon="fab fa-youtube" %}
+                                {# YouTube URL #}
                                 <div class="col-lg-4 col-md-6">
                                     <label for="id_youtube_url" class="form-label">
                                         <i class="fab fa-youtube"></i> YouTube URL
                                     </label>
                                     <input type="url" class="form-control" id="id_youtube_url" name="youtube_url" value="{{ company_info.youtube_url|default:'' }}" placeholder="e.g. https://youtube.com/acmecorp">
                                 </div>
-                                {% endwith %}
-                                {% with field_name="linkedin_url" label="LinkedIn URL" placeholder="e.g. https://linkedin.com/company/acmecorp" type="url" value=company_info.linkedin_url icon="fab fa-linkedin" %}
+                                {# LinkedIn URL #}
                                 <div class="col-lg-4 col-md-6">
                                     <label for="id_linkedin_url" class="form-label">
                                         <i class="fab fa-linkedin"></i> LinkedIn URL
                                     </label>
                                     <input type="url" class="form-control" id="id_linkedin_url" name="linkedin_url" value="{{ company_info.linkedin_url|default:'' }}" placeholder="e.g. https://linkedin.com/company/acmecorp">
                                 </div>
-                                {% endwith %}
+                                {# Company Website URL #}
+                                 <div class="col">
+                                    <label for="application_url_id" class="form-label">Company Website URL</label>
+                                    <input type="url" class="form-control" id="application_url_id" name="application_url" value="{{ company_info.application_url|default:'' }}" placeholder="e.g. https://abc.com">
+                                </div>
+
                             </div>
                         </div>
                     </div>
@@ -654,24 +674,23 @@
                             <input type="hidden" name="form_type" value="career_page">
 
                             <div class="row g-4">
+                                {# Job Title - REQUIRED #}
                                 <div class="col-lg-6">
-                                    <label for="id_title" class="form-label">Job Title</label>
+                                    <label for="id_title" class="form-label">Job Title<span style="color: red; font-size: 1.2em; font-weight: bold;">*</span></label>
                                     <input type="text" class="form-control" id="id_title" name="title" required placeholder="e.g. Senior Backend Developer">
                                 </div>
                                 <div class="col-lg-3 col-md-6">
                                     <label for="id_company" class="form-label">Company (Optional)</label>
                                     <input type="text" class="form-control" id="id_company" name="company" placeholder="Defaults to Company Info Name">
                                 </div>
-                                <!-- <div class="col-lg-3 col-md-6">
-                                    <label for="id_company_logo" class="form-label">Company Logo (Optional)</label>
-                                    <input type="file" class="form-control" id="id_company_logo" name="company_logo">
-                                </div> -->
                                 <div class="col-lg-3 col-md-6">
-                                    <label for="id_location" class="form-label">Location</label>
+                                    {# Location - REQUIRED #}
+                                    <label for="id_location" class="form-label">Location<span style="color: red; font-size: 1.2em; font-weight: bold;">*</span></label>
                                     <input type="text" class="form-control" id="id_location" name="location" required placeholder="e.g. Remote, London, or NYC">
                                 </div>
                                 <div class="col-lg-3 col-md-6">
-                                    <label for="id_job_type" class="form-label">Job Type</label>
+                                    {# Job Type - REQUIRED #}
+                                    <label for="id_job_type" class="form-label">Job Type<span style="color: red; font-size: 1.2em; font-weight: bold;">*</span></label>
                                     <select class="form-select" id="id_job_type" name="job_type" required>
                                         <option value="Full Time">Full Time</option>
                                         <option value="Part Time">Part Time</option>
@@ -680,8 +699,9 @@
                                     </select>
                                 </div>
                                 <div class="col-md-3 mb-3">
-                                    <label for="id_category" class="form-label">Job Department</label>
-                                    
+                                    {# Job Department/Category - REQUIRED (Either select or new input) #}
+                                    <label for="id_category" class="form-label">Job Department<span style="color: red; font-size: 1.2em; font-weight: bold;">*</span></label>
+
                                     <div id="category-select-group">
                                         <select class="form-select" id="id_category_select" name="category_existing" required>
                                             <option value="" disabled selected>Select a Department</option>
@@ -691,12 +711,12 @@
                                         </select>
                                         <div class="invalid-feedback">Please select a job category.</div>
                                     </div>
-                                    
+
                                     <div id="category-add-group" class="d-none">
                                         <input type="text" class="form-control" id="id_category_new" name="category_new" placeholder="Enter new department name">
                                         <div class="invalid-feedback">Please enter a new department name.</div>
                                     </div>
-                                    
+
                                     <button type="button" id="toggle-category-btn" class="btn btn-sm btn-link mt-2 p-0">
                                         <span id="add-text">Add New Department</span>
                                         <span id="cancel-text" class="d-none">Cancel</span>
@@ -723,34 +743,35 @@
                                         </label>
                                     </div>
                                 </div>
+                                {# Job Description - REQUIRED - TinyMCE Target #}
                                 <div class="col-12">
-                                    <label for="id_application_link" class="form-label">Application Link</label>
-                                    <input type="url" class="form-control" id="id_application_link" name="application_link" placeholder="e.g. https://example.com/apply-here">
+                                    <label for="id_description" class="form-label">Job Description<span style="color: red; font-size: 1.2em; font-weight: bold;">*</span></label>
+                                    <textarea class="form-control tinymce-editor" id="id_description" name="description" required placeholder="A brief overview of the role..."></textarea>
                                 </div>
+                                {# Responsibilities - REQUIRED - TinyMCE Target #}
                                 <div class="col-12">
-                                    <label for="id_description" class="form-label">Job Description</label>
-                                    <textarea class="form-control" id="id_description" name="description" rows="5" required placeholder="A brief overview of the role..."></textarea>
+                                    <label for="id_responsibilities" class="form-label">Responsibilities<span style="color: red; font-size: 1.2em; font-weight: bold;">*</span></label>
+                                    <textarea class="form-control tinymce-editor" id="id_responsibilities" name="responsibilities" required placeholder="e.g., - Develop and maintain APIs"></textarea>
                                 </div>
-                               
+                                {# Qualifications - REQUIRED - TinyMCE Target #}
                                 <div class="col-12">
-                                    <label for="id_responsibilities" class="form-label">Responsibilities (Use bullet points or separate lines)</label>
-                                    <textarea class="form-control" id="id_responsibilities" name="responsibilities" rows="5" placeholder="e.g., - Develop and maintain APIs"></textarea>
+                                    <label for="id_qualifications" class="form-label">Qualifications<span style="color: red; font-size: 1.2em; font-weight: bold;">*</span></label>
+                                    <textarea class="form-control tinymce-editor" id="id_qualifications" name="qualifications" required placeholder="e.g., - 5+ years of experience"></textarea>
                                 </div>
+                                {# Benefits - TinyMCE Target #}
                                 <div class="col-12">
-                                    <label for="id_qualifications" class="form-label">Qualifications (Use bullet points or separate lines)</label>
-                                    <textarea class="form-control" id="id_qualifications" name="qualifications" rows="5" placeholder="e.g., - 5+ years of experience"></textarea>
+                                    <label for="id_benefits" class="form-label">Benefits</label>
+                                    <textarea class="form-control tinymce-editor" id="id_benefits" name="benefits" placeholder="e.g., - Health Insurance, - Unlimited PTO"></textarea>
                                 </div>
-                                <div class="col-12">
-                                    <label for="id_benefits" class="form-label">Benefits (Use bullet points or separate lines)</label>
-                                    <textarea class="form-control" id="id_benefits" name="benefits" rows="5" placeholder="e.g., - Health Insurance, - Unlimited PTO"></textarea>
-                                </div>
+                                {# Skills (Comma-separated) - TinyMCE Target #}
                                 <div class="col-12">
                                     <label for="id_skills" class="form-label">Skills (Comma-separated)</label>
-                                    <textarea class="form-control" id="id_skills" name="skills" rows="3" placeholder="e.g. Python, Django, REST APIs, PostgreSQL"></textarea>
+                                    <textarea class="form-control tinymce-editor" id="id_skills" name="skills" rows="3" placeholder="e.g. Python, Django, REST APIs, PostgreSQL"></textarea>
                                 </div>
+                                 {# About Company - TinyMCE Target #}
                                  <div class="col-12">
                                     <label for="id_about_company" class="form-label">About Company</label>
-                                    <textarea class="form-control" id="id_about_company" name="about_company" rows="5" placeholder="A brief description of your company for this job listing..."></textarea>
+                                    <textarea class="form-control tinymce-editor" id="id_about_company" name="about_company" placeholder="A brief description of your company for this job listing..."></textarea>
                                 </div>
                             </div>
 
@@ -831,14 +852,15 @@
                         <form method="post" class="row g-4 align-items-end">
                             {% csrf_token %}
                             <input type="hidden" name="form_type" value="category">
-
+                            {# Department Name - REQUIRED #}
                             <div class="col-md-4 col-lg-6">
-                                <label for="id_category_name" class="form-label">Department Name</label>
+                                <label for="id_category_name" class="form-label">Department Name<span style="color: red; font-size: 1.2em; font-weight: bold;">*</span></label>
                                 <input type="text" class="form-control" id="id_category_name" name="category_name" required placeholder="e.g. Software Engineering">
                             </div>
+                            {# Job Count - REQUIRED #}
                             <div class="col-md-3 col-lg-3">
-                                <label for="id_category_vacancy_count" class="form-label">Job Count</label>
-                                <input type="number" class="form-control" id="id_category_vacancy_count" name="vacancy_count" required placeholder="Enter Number of Job Count">
+                                <label for="id_category_vacancy_count" class="form-label">Job Count<span style="color: red; font-size: 1.2em; font-weight: bold;">*</span></label>
+                                <input type="number" class="form-control" id="id_category_vacancy_count" name="vacancy_count" required placeholder="Enter Number of Job Count" min="0">
                             </div>
                             <div class="col-md-3 col-lg-3">
                                 <button type="submit" class="btn btn-primary w-100">Add Department</button>
@@ -909,26 +931,26 @@
                             <p class="text-muted mb-4">Changes here will instantly update the preview (and variables on this page), but won't be saved until you click 'Save Theme Settings'.</p>
                             <div class="row g-4">
                                 <div class="col-lg-4 col-md-6">
-                                    <label for="id_primary_color" class="form-label">Primary Color (Accent)</label>
+                                    <label for="id_primary_color" class="form-label">Primary Color (Accent)<span style="color: red; font-size: 1.2em; font-weight: bold;">*</span></label>
                                     <div class="input-group">
-                                        <input type="color" class="form-control form-control-color" data-color-target="id_primary_color" value="{{ theme_settings.theme_primary_color|default:'#1e3a8a' }}">
-                                        <input type="text" class="form-control" id="id_primary_color" name="primary_color" value="{{ theme_settings.theme_primary_color|default:'#1e3a8a' }}" placeholder="#1e3a8a">
+                                        <input type="color" class="form-control form-control-color" data-color-target="id_primary_color" value="{{ theme_settings.theme_primary_color|default:'#3e4f47' }}">
+                                        <input type="text" class="form-control" id="id_primary_color" name="primary_color" value="{{ theme_settings.theme_primary_color|default:'#3e4f47' }}" placeholder="#3e4f47" required pattern="#[0-9A-Fa-f]{6}">
                                     </div>
                                     <small class="form-text text-muted">Used for buttons, links, and active elements.</small>
                                 </div>
                                 <div class="col-lg-4 col-md-6">
-                                    <label for="id_secondary_color" class="form-label">Secondary Color</label>
+                                    <label for="id_secondary_color" class="form-label">Secondary Color<span style="color: red; font-size: 1.2em; font-weight: bold;">*</span></label>
                                     <div class="input-group">
                                         <input type="color" class="form-control form-control-color" data-color-target="id_secondary_color" value="{{ theme_settings.theme_secondary_color|default:'#eef2f6' }}">
-                                        <input type="text" class="form-control" id="id_secondary_color" name="secondary_color" value="{{ theme_settings.theme_secondary_color|default:'#eef2f6' }}" placeholder="#eef2f6">
+                                        <input type="text" class="form-control" id="id_secondary_color" name="secondary_color" value="{{ theme_settings.theme_secondary_color|default:'#eef2f6' }}" placeholder="#eef2f6" required pattern="#[0-9A-Fa-f]{6}">
                                     </div>
                                     <small class="form-text text-muted">Used for subtle highlights and secondary backgrounds.</small>
                                 </div>
                                 <div class="col-lg-4 col-md-6">
-                                    <label for="id_background_color" class="form-label">Page Background Color</label>
+                                    <label for="id_background_color" class="form-label">Page Background Color<span style="color: red; font-size: 1.2em; font-weight: bold;">*</span></label>
                                     <div class="input-group">
                                         <input type="color" class="form-control form-control-color" data-color-target="id_background_color" value="{{ theme_settings.theme_background_color|default:'#f7f9fc' }}">
-                                        <input type="text" class="form-control" id="id_background_color" name="background_color" value="{{ theme_settings.theme_background_color|default:'#f7f9fc' }}" placeholder="#f7f9fc">
+                                        <input type="text" class="form-control" id="id_background_color" name="background_color" value="{{ theme_settings.theme_background_color|default:'#f7f9fc' }}" placeholder="#f7f9fc" required pattern="#[0-9A-Fa-f]{6}">
                                     </div>
                                     <small class="form-text text-muted">Main background color of the career page.</small>
                                 </div>
@@ -939,26 +961,26 @@
                             <h5>Text Color Customization</h5>
                             <div class="row g-4 mt-3">
                                 <div class="col-lg-4 col-md-6">
-                                    <label for="id_primary_color_text" class="form-label">Primary Text Color (on Primary BG)</label>
+                                    <label for="id_primary_color_text" class="form-label">Primary Text Color (on Primary BG)<span style="color: red; font-size: 1.2em; font-weight: bold;">*</span></label>
                                     <div class="input-group">
                                         <input type="color" class="form-control form-control-color" data-color-target="id_primary_color_text" value="{{ theme_settings.theme_primary_color_text|default:'#ffffff' }}">
-                                        <input type="text" class="form-control" id="id_primary_color_text" name="primary_color_text" value="{{ theme_settings.theme_primary_color_text|default:'#ffffff' }}" placeholder="#ffffff">
+                                        <input type="text" class="form-control" id="id_primary_color_text" name="primary_color_text" value="{{ theme_settings.theme_primary_color_text|default:'#ffffff' }}" placeholder="#ffffff" required pattern="#[0-9A-Fa-f]{6}">
                                     </div>
                                     <small class="form-text text-muted">Text color used on primary colored elements (like buttons).</small>
                                 </div>
                                 <div class="col-lg-4 col-md-6">
-                                    <label for="id_secondary_color_text" class="form-label">Secondary Text Color (on Secondary BG)</label>
+                                    <label for="id_secondary_color_text" class="form-label">Secondary Text Color (on Secondary BG)<span style="color: red; font-size: 1.2em; font-weight: bold;">*</span></label>
                                     <div class="input-group">
                                         <input type="color" class="form-control form-control-color" data-color-target="id_secondary_color_text" value="{{ theme_settings.theme_secondary_color_text|default:'#1f2937' }}">
-                                        <input type="text" class="form-control" id="id_secondary_color_text" name="secondary_color_text" value="{{ theme_settings.theme_secondary_color_text|default:'#1f2937' }}" placeholder="#1f2937">
+                                        <input type="text" class="form-control" id="id_secondary_color_text" name="secondary_color_text" value="{{ theme_settings.theme_secondary_color_text|default:'#1f2937' }}" placeholder="#1f2937" required pattern="#[0-9A-Fa-f]{6}">
                                     </div>
                                     <small class="form-text text-muted">Text color used on secondary colored elements.</small>
                                 </div>
                                 <div class="col-lg-4 col-md-6">
-                                    <label for="id_background_color_text" class="form-label">Background Text Color</label>
+                                    <label for="id_background_color_text" class="form-label">Background Text Color<span style="color: red; font-size: 1.2em; font-weight: bold;">*</span></label>
                                     <div class="input-group">
                                         <input type="color" class="form-control form-control-color" data-color-target="id_background_color_text" value="{{ theme_settings.theme_background_color_text|default:'#1f2937' }}">
-                                        <input type="text" class="form-control" id="id_background_color_text" name="background_color_text" value="{{ theme_settings.theme_background_color_text|default:'#1f2937' }}" placeholder="#1f2937">
+                                        <input type="text" class="form-control" id="id_background_color_text" name="background_color_text" value="{{ theme_settings.theme_background_color_text|default:'#1f2937' }}" placeholder="#1f2937" required pattern="#[0-9A-Fa-f]{6}">
                                     </div>
                                     <small class="form-text text-muted">Main text color on the page background.</small>
                                 </div>
@@ -1143,7 +1165,7 @@
             }
         });
 
-        // --- NEW: Job Department Toggle Logic ---
+        // --- Job Department Toggle Logic ---
         const toggleBtn = document.getElementById('toggle-category-btn');
         const selectGroup = document.getElementById('category-select-group');
         const addGroup = document.getElementById('category-add-group');
@@ -1156,18 +1178,18 @@
             toggleBtn.addEventListener('click', function() {
                 // Toggle visibility of the two groups
                 const isSelectVisible = !selectGroup.classList.contains('d-none');
-                
+
                 if (isSelectVisible) {
                     // Switch from select to new input
                     selectGroup.classList.add('d-none');
                     addGroup.classList.remove('d-none');
-                    
+
                     // Set 'required' attributes to the currently visible field
                     selectElement.removeAttribute('required');
                     newCategoryInput.setAttribute('required', 'required');
 
                     // Update button text
-                    addText.classList.add('d-none');
+                    addText.classList.add('d-d-none');
                     cancelText.classList.remove('d-none');
                 } else {
                     // Switch from new input back to select
@@ -1209,7 +1231,30 @@
                     document.body.style.backgroundImage = `radial-gradient(circle at 10% 20%, ${mainBg} 0%, ${secondaryColor} 90%)`;
                 }
                 if (varName === '--primary-color') {
-                    const hoverColor = pSBC(-0.1, color);
+                    // Simple programmatic color darkening for hover effect
+                    const pSBC = (p, c0) => {
+                        let i = parseInt, m = Math.round;
+                        if (typeof(c0) != "string" || c0[0] != '#') return null;
+                        c0 = c0.length === 4 ? '#' + c0[1] + c0[1] + c0[2] + c0[2] + c0[3] + c0[3] : c0;
+                        c0 = c0.substr(1);
+
+                        let r = i(c0.substring(0,2), 16),
+                            g = i(c0.substring(2,4), 16),
+                            b = i(c0.substring(4,6), 16);
+
+                        r = m(r * (1 - p));
+                        g = m(g * (1 - p));
+                        b = m(b * (1 - p));
+
+                        r = r > 255 ? 255 : r < 0 ? 0 : r;
+                        g = g > 255 ? 255 : g < 0 ? 0 : g;
+                        b = b > 255 ? 255 : b < 0 ? 0 : b;
+
+                        const toHex = (c) => ('0' + c.toString(16)).slice(-2);
+                        return '#' + toHex(r) + toHex(g) + toHex(b);
+                    };
+
+                    const hoverColor = pSBC(0.1, color); // Darken by 10%
                     rootStyle.setProperty('--primary-hover-color', hoverColor);
                 }
             };
@@ -1217,10 +1262,13 @@
             colorInput.addEventListener('input', (event) => updateColors(event.target.value));
             textInput.addEventListener('input', (event) => {
                 const newColor = event.target.value;
-                if (/^#([0-9A-F]{3}){1,2}$/i.test(newColor)) {
+                // Basic hex format validation before updating
+                if (/^#([0-9A-Fa-f]{3}){1,2}$/i.test(newColor)) {
                     updateColors(newColor);
                 }
             });
+            // Initial call to set hover color if not using pSBC from original code
+            updateColors(colorInput.value);
         }
 
         // Attach listeners to all color pickers
@@ -1232,46 +1280,6 @@
             }
         });
 
-        // Function to programmatically shade/tint a color (lighten/darken)
-        // Source: https://stackoverflow.com/questions/5560248/programmatically-lighten-or-darken-a-hex-color-with-javascript
-        const pSBC = (p, c0, c1, l) => {
-            let r, g, b, P, f, t, h, i = parseInt, m = Math.round, a = typeof(c1) == "string";
-            if (typeof(p) != "number" || p < -1 || p > 1 || typeof(c0) != "string" || (c0[0] != 'r' && c0[0] != '#') || (c1 && !a)) return null;
-            h = c0.length > 9, h = a ? c1.length > 9 ? true : c1[0] == 'r' ? true : false : h, f = pSBC.pSBCr, f = h ? 1 : f ? f : pSBC.pSBCr, l = c0.length > 9 ? true : l, f = l ? 's' : f;
-            if (f !== 's') {
-                if (c0[0] !== '#') return null;
-                if (c0.length !== 4 && c0.length !== 7) return null;
-                if (c0.length === 4) c0 = '#' + c0[1] + c0[1] + c0[2] + c0[2] + c0[3] + c0[3];
-                c0 = c0.substr(1);
-                if (c1) {
-                    if (c1[0] !== '#') return null;
-                    if (c1.length !== 4 && c1.length !== 7) return null;
-                    if (c1.length === 4) c1 = '#' + c1[1] + c1[1] + c1[2] + c1[2] + c1[3] + c1[3];
-                    c1 = c1.substr(1);
-                }
-            } else {
-                if (c0[0] !== 'r' || c0.length < 10) return null;
-                c0 = c0.match(/\d+/g);
-                if (c1) {
-                    if (c1[0] !== 'r' || c1.length < 10) return null;
-                    c1 = c1.match(/\d+/g);
-                }
-            }
-            f = pSBC.pSBCr, t = p > 0, P = t ? p : -p, i = f === 's' ? i : parseInt;
-            r = i(c0[0]) * 256 + i(c0[1]) * 256 + i(c0[2]) * 256, g = i(c0[3]) * 256 + i(c0[4]) * 256 + i(c0[5]) * 256, b = i(c0[6]) * 256 + i(c0[7]) * 256 + i(c0[8]) * 256;
-            if (c1) {
-                r = i(c1[0]) * 256 + i(c1[1]) * 256 + i(c1[2]) * 256, g = i(c1[3]) * 256 + i(c1[4]) * 256 + i(c1[5]) * 256, b = i(c1[6]) * 256 + i(c1[7]) * 256 + i(c1[8]) * 256;
-                r = m((r - r * P) * (1 - P) + r * P);
-                g = m((g - g * P) * (1 - P) + g * P);
-                b = m((b - b * P) * (1 - P) + b * P);
-            }
-            else {
-                r = m((r - r * P) * (1 - P) + r * P);
-                g = m((g - g * P) * (1 - P) + g * P);
-                b = m((b - b * P) * (1 - P) + b * P);
-            }
-            return '#' + (0x1000000 + (r << 16) + (g << 8) + b).toString(16).slice(1);
-        };
             // Find the "Add Field" button using its data-action attribute
     const addFieldButton = document.querySelector('[data-action="add-field"]');
 
@@ -1285,6 +1293,23 @@
             });
         });
     }
+
+    // 2. TINYMCE INITIALIZATION
+    tinymce.init({
+        selector: '.tinymce-editor', // Target the elements with this class
+        plugins: 'advlist autolink lists link charmap preview searchreplace visualblocks code fullscreen insertdatetime table paste help wordcount',
+        toolbar: 'undo redo | formatselect | bold italic underline forecolor backcolor | alignleft aligncenter alignright alignjustify | bullist numlist outdent indent | link | code',
+        menubar: false,
+        height: 300,
+        content_style: 'body { font-family:Helvetica,Arial,sans-serif; font-size:14px }',
+        // TinyMCE needs to be initialized only after DOM is ready
+        setup: function (editor) {
+            editor.on('change', function () {
+                editor.save();
+            });
+        }
+    });
+
     });
 </script>
 </body>
