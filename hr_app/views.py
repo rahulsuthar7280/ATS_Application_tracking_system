@@ -211,78 +211,304 @@ def _parse_experience_string(experience_str):
     return None # Could not parse
 
 
-def resume_analysis_view(request):
-    analysis_result = None
-    resume_url = None
+# def resume_analysis_view(request):
+#     analysis_result = None
+#     resume_url = None
     
-    # Get all existing job description documents
-    job_description_documents = JobDescriptionDocument.objects.all()
+#     # Get all existing job description documents
+#     job_description_documents = JobDescriptionDocument.objects.all()
 
+#     form = ResumeUploadForm(request.POST or None, request.FILES or None)
+
+#     if request.method == 'POST':
+#         logging.info("POST request received for resume analysis.")
+        
+#         # Check if an existing JD was selected from the dropdown
+#         existing_jd_id = request.POST.get('job_description_id')
+        
+#         if form.is_valid():
+#             logging.info("Form is valid. Processing uploaded files and form data.")
+#             resume_file = form.cleaned_data['resume_pdf']
+            
+#             # Use uploaded job description file first, if it exists
+#             if 'job_description' in request.FILES:
+#                 job_description_file = form.cleaned_data['job_description']
+#             elif existing_jd_id:
+#                 # If an existing JD was selected, fetch it from the database
+#                 try:
+#                     job_description_doc = JobDescriptionDocument.objects.get(pk=existing_jd_id)
+#                     job_description_file = job_description_doc.file
+#                     logging.info(f"Using existing job description from database: {job_description_doc.title}")
+#                 except JobDescriptionDocument.DoesNotExist:
+#                     messages.error(request, "Selected job description not found.")
+#                     logging.error(f"Job Description with ID {existing_jd_id} not found.")
+#                     job_description_file = None
+#             else:
+#                 messages.error(request, "Please upload or select a job description.")
+#                 job_description_file = None
+            
+#             job_role = form.cleaned_data['job_role']
+#             target_experience_type = form.cleaned_data['target_experience_type']
+#             min_years_required = form.cleaned_data['min_years_required']
+#             max_years_required = form.cleaned_data['max_years_required']
+
+#             if job_description_file:
+#                 try:
+#                     # 1. Save the resume file for PDF preview
+#                     resume_filename = resume_storage.save(resume_file.name, resume_file)
+#                     resume_url = request.build_absolute_uri(resume_storage.url(resume_filename))
+#                     logging.info(f"Resume file '{resume_filename}' saved for preview. URL: {resume_url}")
+
+#                     # 2. Call the main AI analysis service function.
+#                     llm_response = services.analyze_resume_with_llm(
+#                         resume_file_obj=resume_file,
+#                         job_description_file_obj=job_description_file,
+#                         job_role=job_role,
+#                         experience_type=target_experience_type,
+#                         min_years=min_years_required,
+#                         max_years=max_years_required
+#                     )
+
+#                     if llm_response and not llm_response.get("error"):
+#                         analysis_result = llm_response
+                        
+#                         # --- START: DATABASE SAVE LOGIC ---
+#                         try:
+#                             # Get the analysis_summary dictionary safely
+#                             analysis_summary = analysis_result.get("analysis_summary", {})
+#                             candidate_fitment_analysis = analysis_result.get("candidate_fitment_analysis", {})
+                            
+#                             # Prepare data for the CandidateAnalysis model.
+#                             # Serialize complex data to JSON strings.
+#                             candidate_data_for_db = {
+#                                 "resume_file_path": resume_filename,
+#                                 "full_name": analysis_result.get("full_name"),
+#                                 "job_role": job_role,
+#                                 "phone_no": analysis_result.get("contact_number"),
+#                                 "hiring_recommendation": analysis_result.get("hiring_recommendation"),
+#                                 "suggested_salary_range": analysis_result.get("suggested_salary_range"),
+#                                 "interview_questions": json.dumps(analysis_result.get("interview_questions", [])),
+#                                 "analysis_summary": json.dumps(analysis_summary),
+#                                 "experience_match": analysis_result.get("experience_match"),
+#                                 "overall_experience": analysis_result.get("overall_experience"),
+#                                 "current_company_name": analysis_result.get("current_company_name"),
+#                                 "current_company_address": analysis_result.get("current_company_address"),
+#                                 "fitment_verdict": analysis_result.get("fitment_verdict"),
+#                                 "aggregate_score": analysis_result.get("aggregate_score"),
+#                                 "strategic_alignment": candidate_fitment_analysis.get("strategic_alignment", ""),
+#                                 "quantifiable_impact": candidate_fitment_analysis.get("quantifiable_impact", ""),
+#                                 "potential_gaps_risks": candidate_fitment_analysis.get("potential_gaps_risks", ""),
+#                                 "comparable_experience": candidate_fitment_analysis.get("comparable_experience_analysis", ""),
+#                                 "scoring_matrix_json": json.dumps(analysis_result.get("scoring_matrix", [])),
+#                                 "bench_recommendation_json": json.dumps(analysis_result.get("bench_recommendation", {})),
+#                                 "alternative_role_recommendations_json": json.dumps(analysis_result.get("alternative_role_recommendations", [])),
+#                                 "automated_recruiter_insights_json": json.dumps(analysis_result.get("automated_recruiter_insights", {})),
+#                                 "candidate_overview": analysis_summary.get("candidate_overview", ""),
+#                                 "technical_prowess_json": json.dumps(analysis_summary.get("technical_prowess", {})),
+#                                 "project_impact_json": json.dumps(analysis_summary.get("project_impact", [])),
+#                                 "education_certifications_json": json.dumps(analysis_summary.get("education_certifications", {})),
+#                                 "overall_rating_summary": analysis_summary.get("overall_rating", ""),
+#                                 "conclusion_summary": analysis_summary.get("conclusion", ""),
+#                                 # --- THE CRUCIAL LINE IS ADDED HERE ---
+#                                 "user": request.user 
+#                             }
+                            
+#                             # Use .create() to save the new object and get its automatically generated ID.
+#                             candidate_obj = CandidateAnalysis.objects.create(**candidate_data_for_db)
+                            
+#                             # Now, update the analysis_result dictionary with the new ID
+#                             analysis_result['id'] = candidate_obj.id 
+                            
+#                             messages.success(request, f"Analysis saved to database for {candidate_obj.full_name}.")
+#                         except Exception as db_save_error:
+#                             logging.warning(f"AI analysis completed, but failed to save to database: {db_save_error}")
+#                             messages.warning(request, f"AI analysis completed, but failed to save to database: {db_save_error}")
+#                         # --- END: DATABASE SAVE LOGIC ---
+                        
+#                         messages.success(request, f"AI analysis completed for {analysis_result.get('full_name', 'the candidate')}.")
+#                     else:
+#                         error_message = llm_response.get("error", "AI analysis failed to return a valid response.") if llm_response else "LLM response was empty or None."
+#                         logging.error(f"LLM response error: {error_message}")
+#                         messages.error(request, error_message)
+#                 except Exception as e:
+#                     logging.error(f"An unexpected error occurred during the analysis process: {e}", exc_info=True)
+#                     messages.error(request, f"An unexpected error occurred during analysis: {e}")
+            
+#         else:
+#             logging.warning("Form is not valid. Displaying errors.")
+#             messages.error(request, "Please correct the errors in the form before submitting.")
+
+#     context = {
+#         'form': form,
+#         'analysis_result': analysis_result,
+#         'resume_url': resume_url,
+#         'job_description_documents': job_description_documents,
+#     }
+
+#     return render(request, 'resume_analysis.html', context)
+
+# def analyze_resume_basic_ats(resume_file_obj, job_description_file_obj, job_role):
+#     """
+#     Performs a basic, non-LLM keyword-based ATS analysis.
+    
+#     You will need to implement the actual parsing (e.g., using PyPDF2 or textract) 
+#     and keyword matching logic here.
+#     """
+    
+#     # --- YOUR NON-LLM LOGIC GOES HERE ---
+    
+#     # Example Placeholder Logic:
+    
+#     # 1. Extract text from the files (e.g., using PyPDF2, textract, or simple file read)
+#     # resume_text = non_llm_text_extractor(resume_file_obj)
+#     # jd_text = non_llm_text_extractor(job_description_file_obj)
+    
+#     # 2. Define keywords and score
+#     # required_keywords = ["python", "django", "sql"] 
+#     # score = calculate_keyword_match_score(resume_text, required_keywords)
+    
+#     # 3. Extract basic info using regex
+#     # name = extract_name_with_regex(resume_text)
+    
+#     # --- END OF YOUR NON-LLM LOGIC ---
+
+#     # *** For demonstration, here is a hardcoded minimum structure: ***
+#     keyword_score = 75 # Your calculated score 
+#     candidate_name = "Candidate Name (Basic ATS)" 
+    
+#     if keyword_score >= 60:
+#         fitment_verdict = "BASIC MATCH: Pass"
+#         recommendation = "ATS Recommended"
+#     else:
+#         fitment_verdict = "BASIC MATCH: Fail"
+#         recommendation = "ATS Not Recommended"
+
+#     return {
+#         "full_name": candidate_name,
+#         "contact_number": "N/A",
+#         "aggregate_score": round(keyword_score), # Required by DB
+#         "fitment_verdict": fitment_verdict, # Required by DB
+#         "hiring_recommendation": recommendation, # Required by DB
+#         # The view will wrap this simple string into the required dict format
+#         "analysis_summary": f"Basic keyword matching resulted in a **{keyword_score}%** score. The analysis was based solely on keywords from the job description for the role: {job_role}.",
+#     }
+
+
+def resume_analysis_view(request):
+    import logging, json
+    from django.contrib import messages
+    from django.shortcuts import render
+    from .forms import ResumeUploadForm
+    from .models import CareerPage, CandidateAnalysis
+    from . import services
+    from django.core.files.storage import default_storage as resume_storage
+
+    # Hold analysis results and resume previews
+    all_analysis_results = []
+    all_resume_previews = []
+
+    # Get all existing job description documents
+    job_description_documents = CareerPage.objects.all()
+
+    # Instantiate the form
     form = ResumeUploadForm(request.POST or None, request.FILES or None)
 
+    # Determine analysis mode
+    analysis_mode = request.POST.get('analysis_mode', 'advanced_ai')
+
     if request.method == 'POST':
-        logging.info("POST request received for resume analysis.")
-        
-        # Check if an existing JD was selected from the dropdown
-        existing_jd_id = request.POST.get('job_description_id')
-        
+        logging.info(f"POST request received for multi-resume analysis in {analysis_mode} mode.")
+
+        # Get uploaded resumes
+        resume_files = request.FILES.getlist('resume_pdf')
+        if not resume_files:
+            messages.error(request, "Please upload one or more resumes.")
+            return render(request, 'resume_analysis.html', {
+                'form': form,
+                'all_analysis_results': [],
+                'all_resume_previews': [],
+                'job_description_documents': job_description_documents,
+                'analysis_mode': analysis_mode
+            })
+
         if form.is_valid():
-            logging.info("Form is valid. Processing uploaded files and form data.")
-            resume_file = form.cleaned_data['resume_pdf']
-            
-            # Use uploaded job description file first, if it exists
+            logging.info("Form is valid. Processing resumes.")
+
+            # Determine job description source (upload or dropdown)
+            existing_jd_id = request.POST.get('job_description_id')
+            job_description_file = None
+
             if 'job_description' in request.FILES:
-                job_description_file = form.cleaned_data['job_description']
+                job_description_file = form.cleaned_data.get('job_description')  # uploaded file
             elif existing_jd_id:
-                # If an existing JD was selected, fetch it from the database
                 try:
-                    job_description_doc = JobDescriptionDocument.objects.get(pk=existing_jd_id)
-                    job_description_file = job_description_doc.file
-                    logging.info(f"Using existing job description from database: {job_description_doc.title}")
-                except JobDescriptionDocument.DoesNotExist:
+                    job_description_file = CareerPage.objects.get(pk=existing_jd_id)
+                    logging.info(f"Using existing JD: {job_description_file.title}")
+                except CareerPage.DoesNotExist:
                     messages.error(request, "Selected job description not found.")
-                    logging.error(f"Job Description with ID {existing_jd_id} not found.")
                     job_description_file = None
-            else:
+
+            if not job_description_file:
                 messages.error(request, "Please upload or select a job description.")
-                job_description_file = None
-            
+                return render(request, 'resume_analysis.html', {
+                    'form': form,
+                    'all_analysis_results': [],
+                    'all_resume_previews': [],
+                    'job_description_documents': job_description_documents,
+                    'analysis_mode': analysis_mode
+                })
+
+            # Extract common job details
             job_role = form.cleaned_data['job_role']
             target_experience_type = form.cleaned_data['target_experience_type']
             min_years_required = form.cleaned_data['min_years_required']
             max_years_required = form.cleaned_data['max_years_required']
 
-            if job_description_file:
+            # Process each resume
+            for resume_file in resume_files:
+                analysis_result = None
                 try:
-                    # 1. Save the resume file for PDF preview
+                    # Save resume for preview
                     resume_filename = resume_storage.save(resume_file.name, resume_file)
                     resume_url = request.build_absolute_uri(resume_storage.url(resume_filename))
-                    logging.info(f"Resume file '{resume_filename}' saved for preview. URL: {resume_url}")
+                    all_resume_previews.append({'name': resume_file.name, 'url': resume_url})
+                    logging.info(f"Saved resume '{resume_file.name}' for preview.")
 
-                    # 2. Call the main AI analysis service function.
-                    llm_response = services.analyze_resume_with_llm(
-                        resume_file_obj=resume_file,
-                        job_description_file_obj=job_description_file,
-                        job_role=job_role,
-                        experience_type=target_experience_type,
-                        min_years=min_years_required,
-                        max_years=max_years_required
-                    )
+                    # Call appropriate analysis service
+                    if analysis_mode == 'advanced_ai':
+                        analysis_result = services.analyze_resume_with_llm(
+                            resume_file_obj=resume_file,
+                            job_description_file_obj=job_description_file,
+                            job_role=job_role,
+                            experience_type=target_experience_type,
+                            min_years=min_years_required,
+                            max_years=max_years_required
+                        )
+                    elif analysis_mode == 'basic_ats':
+                        analysis_result = services.analyze_resume_basic_ats(
+                            resume_file_obj=resume_file,
+                            job_description_file_obj=job_description_file,
+                            job_role=job_role
+                        )
+                        # Set defaults for Basic ATS
+                        analysis_result['hiring_recommendation'] = analysis_result.get('hiring_recommendation', 'Needs Review')
+                        analysis_result['aggregate_score'] = analysis_result.get('aggregate_score', 0)
+                        analysis_result['fitment_verdict'] = analysis_result.get('fitment_verdict', 'Undetermined')
+                        if isinstance(analysis_result.get('analysis_summary'), str):
+                            analysis_result['analysis_summary'] = {'candidate_overview': analysis_result['analysis_summary']}
 
-                    if llm_response and not llm_response.get("error"):
-                        analysis_result = llm_response
-                        
-                        # --- START: DATABASE SAVE LOGIC ---
+                    # Save analysis to database
+                    if analysis_result and not analysis_result.get("error"):
+                        analysis_result['resume_filename'] = resume_file.name
+                        analysis_result['mode'] = analysis_mode
+
                         try:
-                            # Get the analysis_summary dictionary safely
                             analysis_summary = analysis_result.get("analysis_summary", {})
                             candidate_fitment_analysis = analysis_result.get("candidate_fitment_analysis", {})
-                            
-                            # Prepare data for the CandidateAnalysis model.
-                            # Serialize complex data to JSON strings.
+
                             candidate_data_for_db = {
                                 "resume_file_path": resume_filename,
-                                "full_name": analysis_result.get("full_name"),
+                                "full_name": analysis_result.get("full_name", "N/A"),
                                 "job_role": job_role,
                                 "phone_no": analysis_result.get("contact_number"),
                                 "hiring_recommendation": analysis_result.get("hiring_recommendation"),
@@ -309,43 +535,54 @@ def resume_analysis_view(request):
                                 "education_certifications_json": json.dumps(analysis_summary.get("education_certifications", {})),
                                 "overall_rating_summary": analysis_summary.get("overall_rating", ""),
                                 "conclusion_summary": analysis_summary.get("conclusion", ""),
-                                # --- THE CRUCIAL LINE IS ADDED HERE ---
-                                "user": request.user 
+                                "user": request.user
                             }
-                            
-                            # Use .create() to save the new object and get its automatically generated ID.
+
                             candidate_obj = CandidateAnalysis.objects.create(**candidate_data_for_db)
-                            
-                            # Now, update the analysis_result dictionary with the new ID
-                            analysis_result['id'] = candidate_obj.id 
-                            
-                            messages.success(request, f"Analysis saved to database for {candidate_obj.full_name}.")
-                        except Exception as db_save_error:
-                            logging.warning(f"AI analysis completed, but failed to save to database: {db_save_error}")
-                            messages.warning(request, f"AI analysis completed, but failed to save to database: {db_save_error}")
-                        # --- END: DATABASE SAVE LOGIC ---
-                        
-                        messages.success(request, f"AI analysis completed for {analysis_result.get('full_name', 'the candidate')}.")
+                            analysis_result['id'] = candidate_obj.id
+                            analysis_result['status'] = 'Done'
+                            all_analysis_results.append(analysis_result)
+
+                        except Exception as db_error:
+                            logging.warning(f"DB save failed for {resume_file.name}: {db_error}")
+                            all_analysis_results.append({
+                                'resume_filename': resume_file.name,
+                                'status': 'Error: DB Save Failed',
+                                'error': str(db_error)
+                            })
                     else:
-                        error_message = llm_response.get("error", "AI analysis failed to return a valid response.") if llm_response else "LLM response was empty or None."
-                        logging.error(f"LLM response error: {error_message}")
-                        messages.error(request, error_message)
+                        error_message = analysis_result.get("error", "Analysis failed.") if analysis_result else "No response from service."
+                        all_analysis_results.append({
+                            'resume_filename': resume_file.name,
+                            'status': 'Error: Analysis Failed',
+                            'error': error_message
+                        })
+
                 except Exception as e:
-                    logging.error(f"An unexpected error occurred during the analysis process: {e}", exc_info=True)
-                    messages.error(request, f"An unexpected error occurred during analysis: {e}")
-            
+                    logging.error(f"Unexpected error for {resume_file.name}: {e}", exc_info=True)
+                    all_analysis_results.append({
+                        'resume_filename': resume_file.name,
+                        'status': 'Error: Unexpected',
+                        'error': str(e)
+                    })
+
+            total_success = sum(1 for res in all_analysis_results if res.get('status') == 'Done')
+            messages.success(request, f"Completed **{analysis_mode.upper()}** analysis for {total_success} out of {len(resume_files)} resumes.")
+
         else:
-            logging.warning("Form is not valid. Displaying errors.")
-            messages.error(request, "Please correct the errors in the form before submitting.")
+            logging.warning("Form is invalid.")
+            messages.error(request, "Please correct the errors in the Job Details form.")
 
     context = {
         'form': form,
-        'analysis_result': analysis_result,
-        'resume_url': resume_url,
+        'all_analysis_results': all_analysis_results,
+        'all_resume_previews': all_resume_previews,
         'job_description_documents': job_description_documents,
+        'analysis_mode': analysis_mode
     }
 
     return render(request, 'resume_analysis.html', context)
+
 
 @login_required
 def interview_dashboard_view(request):
