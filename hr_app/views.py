@@ -406,6 +406,7 @@ def resume_analysis_view(request):
     # Hold analysis results and resume previews
     all_analysis_results = []
     all_resume_previews = []
+    processed_resume_names = set() # Set to track processed file names in this request
 
     # Get all existing job description documents
     job_description_documents = CareerPage.objects.all()
@@ -421,6 +422,8 @@ def resume_analysis_view(request):
 
         # Get uploaded resumes
         resume_files = request.FILES.getlist('resume_pdf')
+        logging.info(f"*** DEBUG: Number of uploaded resume files received: {len(resume_files)} ***") # DEBUG LOG
+
         if not resume_files:
             messages.error(request, "Please upload one or more resumes.")
             return render(request, 'resume_analysis.html', {
@@ -467,8 +470,19 @@ def resume_analysis_view(request):
             # Process each resume
             for resume_file in resume_files:
                 analysis_result = None
+                
+                # *** FIX: Check if this file name has already been processed in this request ***
+                if resume_file.name in processed_resume_names:
+                    logging.warning(f"Skipping duplicate resume file name in this submission: {resume_file.name}")
+                    continue # Skip to the next file
+
+                processed_resume_names.add(resume_file.name)
+                logging.info(f"*** DEBUG: Starting analysis for resume: {resume_file.name} ***")
+                
                 try:
                     # Save resume for preview
+                    # Note: If two files have the exact same name, resume_storage might rename the second,
+                    # but the check above should catch it based on the name in request.FILES.
                     resume_filename = resume_storage.save(resume_file.name, resume_file)
                     resume_url = request.build_absolute_uri(resume_storage.url(resume_filename))
                     all_resume_previews.append({'name': resume_file.name, 'url': resume_url})
@@ -485,7 +499,7 @@ def resume_analysis_view(request):
                             max_years=max_years_required
                         )
                     elif analysis_mode == 'basic_ats':
-                        analysis_result = services.analyze_resume_basic_ats(
+                        analysis_result = services.analyze_resume(
                             resume_file_obj=resume_file,
                             job_description_file_obj=job_description_file,
                             job_role=job_role
@@ -542,6 +556,7 @@ def resume_analysis_view(request):
                             analysis_result['id'] = candidate_obj.id
                             analysis_result['status'] = 'Done'
                             all_analysis_results.append(analysis_result)
+                            logging.info(f"Successfully saved analysis for {resume_file.name} to DB.")
 
                         except Exception as db_error:
                             logging.warning(f"DB save failed for {resume_file.name}: {db_error}")
@@ -552,6 +567,7 @@ def resume_analysis_view(request):
                             })
                     else:
                         error_message = analysis_result.get("error", "Analysis failed.") if analysis_result else "No response from service."
+                        logging.error(f"Analysis failed for {resume_file.name}: {error_message}")
                         all_analysis_results.append({
                             'resume_filename': resume_file.name,
                             'status': 'Error: Analysis Failed',
@@ -567,7 +583,8 @@ def resume_analysis_view(request):
                     })
 
             total_success = sum(1 for res in all_analysis_results if res.get('status') == 'Done')
-            messages.success(request, f"Completed **{analysis_mode.upper()}** analysis for {total_success} out of {len(resume_files)} resumes.")
+            # messages.success(request, f"Completed **{analysis_mode.upper()}** analysis for {total_success} out of {len(processed_resume_names)} unique resumes.")
+            messages.success(request, f"✅ {analysis_mode.upper()} analysis completed for {total_success} resume(s).")
 
         else:
             logging.warning("Form is invalid.")
@@ -582,8 +599,6 @@ def resume_analysis_view(request):
     }
 
     return render(request, 'resume_analysis.html', context)
-
-
 @login_required
 def interview_dashboard_view(request):
     """
@@ -1157,6 +1172,8 @@ def candidate_records_view(request):
             'full_name': candidate.full_name,
             'job_role': candidate.job_role,
             'overall_experience': candidate.overall_experience,
+            'overall_rating_summary': candidate.overall_rating_summary,
+            'aggregate_score': candidate.aggregate_score,
             'hiring_recommendation': candidate.hiring_recommendation,
             'suggested_salary_range': convert_to_lpa(candidate.suggested_salary_range), # Salary is converted here
             'final_decision': candidate.final_decision,

@@ -529,445 +529,573 @@ def get_blandai_call_summary(call_id):
         logging.error(f"Error fetching Bland.ai call summary for ID {call_id}: {e}")
         return {"error": f"Failed to fetch call summary: {e}"}
 
-##################### Basic ATS ####################
+##################### Complete Free ATS ####################
+
+
 import re
-from collections import Counter
-import io
-from io import BytesIO, StringIO
+from io import BytesIO
 import logging
-import sys
+import spacy
+from sentence_transformers import SentenceTransformer, util
+from datetime import datetime
+import PyPDF2 
+import docx 
+import os 
 
-# --- Setup Logging for better debugging ---
-# Set the logging level to INFO to see all steps, including keyword counts.
+# --- Configuration & Setup (Unchanged) ---
 logging.basicConfig(level=logging.INFO, format='%(levelname)s: %(message)s')
+SEMANTIC_MODEL_NAME = "all-mpnet-base-v2" 
+SPACY_MODEL_NAME = "en_core_web_sm" 
 
-# --- NLP Setup ---
 nlp = None
+embedding_model = None
+
 try:
-    import spacy
-    # Note: If 'en_core_web_sm' is not installed, the next line will fail. 
-    # Run: python -m spacy download en_core_web_sm
-    nlp = spacy.load("en_core_web_sm") 
-
-    try:
-        import pytextrank
-        # Ensure 'sentencizer' is added before 'textrank' as required by TextRank
-        if 'sentencizer' not in nlp.pipe_names:
-            nlp.add_pipe("sentencizer")
-        if 'textrank' not in nlp.pipe_names:
-            # Added a simple config option
-            nlp.add_pipe("textrank", config={"np_lean": True}) 
-        logging.info("Advanced NLP (spaCy + TextRank) loaded successfully.")
-    except ImportError:
-        logging.warning("pytextrank not installed. Falling back to spaCy Noun Chunking.")
-    except Exception as e:
-        logging.warning(f"Error adding TextRank or Sentencizer: {e}")
-
-except Exception as e:
-    logging.error(f"spaCy setup failed: {e}. Check if 'en_core_web_sm' is installed.")
+    nlp = spacy.load(SPACY_MODEL_NAME) 
+    embedding_model = SentenceTransformer(SEMANTIC_MODEL_NAME)
+    logging.info(f"Loaded Spacy model: {SPACY_MODEL_NAME} and SentenceTransformer model: {SEMANTIC_MODEL_NAME}")
+except OSError as e:
+    logging.error(f"Model loading failed. Ensure '{SPACY_MODEL_NAME}' is downloaded and files are accessible. Error: {e}")
     nlp = None
+    embedding_model = None
 
-# --- Fallback stopwords with resume-specific filler words ---
-FALLBACK_STOPWORDS = {
-    "the", "and", "with", "for", "to", "a", "of", "in", "on", "is", "an", "be", "or",
-    "by", "from", "at", "as", "it", "this", "that", "you", "we", "our", "must", "will",
-    "can", "should", "all", "are", "have", "has", "not", "but", "if", "then", "just",
-    "very", "also", "about", "experience", "years", "role", "work", "job", "ability",
-    "skill", "etc", "responsible", "worked", "assisted", "managed", "developed", "team",
-    "provide", "performed", "using", "tasks", "duties", "ensure", "implemented", "company",
-    "bachelor", "degree", "master", "science", "technology", "systems", "solutions", "project", 
-    "projects", "client", "clients", "data", "business" # Added more common JD filler words
-}
 
-# --- Constants ---
-MIN_KEYWORD_LENGTH = 3
-TOP_N_KEYWORDS = 75
-MATCH_THRESHOLD = 65
+# --- Constants (Unchanged) ---
+SEMANTIC_WEIGHT = 0.1 
+KEYWORD_WEIGHT = 0.9 
+SCORE_SCALING_FACTOR = 3.55 
+MATCH_THRESHOLD = 65 
+WORK_EXPERIENCE_HEADINGS = [
+    "work experience", "professional experience", "employment history", 
+    "relevant experience", "experience", "job history"
+]
+EDUCATION_HEADINGS = [
+    "education", "academic history", "educational qualifications", "qualifications"
+]
+# ------------------------------------------
 
-# --- Utility to normalize file-like objects ---
-def _normalize_file_object(file_obj):
-    """
-    Safely converts a potential file-like object (or wrapper like 'CareerPage') 
-    into a standard io.BytesIO buffer that supports seek(0) and read().
-    """
-    # 1. Check if it's already a standard file object (has seek/read)
-    if hasattr(file_obj, 'seek') and hasattr(file_obj, 'read'):
-        return file_obj
+# --- Existing Functions (Text Extraction, Candidate Info, Experience, Scoring) ---
 
-    # 2. Check for common wrapper patterns (e.g., Django/Flask FileStorage)
-    if hasattr(file_obj, 'file') and hasattr(file_obj.file, 'seek'):
-        if not hasattr(file_obj.file, 'name'):
-            file_obj.file.name = getattr(file_obj, 'filename', 'unknown').lower()
-        return file_obj.file
-
-    # 3. Fallback: Assume the object is the non-standard wrapper (like CareerPage)
-    logging.warning(f"Non-standard object {type(file_obj)} detected. Attempting content extraction.")
+# def extract_text(file_obj):
+#     # ... (function body remains the same)
+#     text = ""
+#     fname = os.path.basename(getattr(file_obj, 'name', 'unknown_file')).lower()
     
-    # CRITICAL HYPOTHETICAL STEP: This list must contain the attribute name 
-    # where your file data is stored in the 'CareerPage' object.
-    content_attr_names = ['data', 'content', 'file_data', 'binary_content', 'file'] 
-    raw_content = None
-    
-    for attr in content_attr_names:
-        if hasattr(file_obj, attr):
-            raw_content = getattr(file_obj, attr)
-            if raw_content:
-                 logging.debug(f"Found content via attribute: '{attr}'")
-                 break
+#     try:
+#         file_obj.seek(0)
+        
+#         if fname.endswith(".pdf"):
+#             reader = PyPDF2.PdfReader(file_obj)
+#             for page in reader.pages:
+#                 page_text = page.extract_text()
+#                 if page_text: text += page_text + "\n"
+#         elif fname.endswith(".docx"):
+#             doc = docx.Document(file_obj)
+#             for para in doc.paragraphs:
+#                 text += para.text + "\n"
+#         else:
+#             text = file_obj.read().decode('utf-8', errors='ignore')
             
-    if raw_content is None:
-        logging.error(f"Could not find file content on non-standard object {type(file_obj)}.")
-        return None
+#     except Exception as e:
+#         logging.error(f"Text extraction failed for {fname}: {e}")
+#         return ""
+        
+#     return re.sub(r'[^\S\r\n]+', ' ', text).strip()
 
-    # Wrap content in BytesIO for file processing
-    if isinstance(raw_content, bytes):
-        buffer = BytesIO(raw_content)
-    elif isinstance(raw_content, str):
-        buffer = BytesIO(raw_content.encode('utf-8', errors='ignore'))
-    else:
-        logging.error(f"Extracted content is neither bytes nor string ({type(raw_content)}). Cannot process.")
-        return None
-
-    # Attach the necessary 'name' attribute
-    buffer.name = getattr(file_obj, 'filename', getattr(file_obj, 'name', 'unknown.txt')).lower()
-    
-    return buffer
-
-def extract_text_from_file(file_obj):
-    
-    file_obj = _normalize_file_object(file_obj)
-    
-    if file_obj is None:
-        return ""
-    
+def extract_text(file_obj):
     text = ""
-    filename = getattr(file_obj, "name", "unknown").lower()
     
-    # Safely seek to the beginning
+    # Get filename if it exists
+    fname = os.path.basename(getattr(file_obj, 'name', 'unknown_file')).lower()
+    
     try:
-        file_obj.seek(0)
-    except Exception as e:
-        logging.error(f"Failed to seek on normalized object: {e}")
-        return ""
-
-    # --- File Extraction Logic ---
-    try:
-        if filename.endswith(".pdf"):
-            import PyPDF2
-            reader = PyPDF2.PdfReader(file_obj)
-            for page in reader.pages:
-                page_text = page.extract_text()
-                if page_text:
-                    text += page_text + "\n"
-        elif filename.endswith(".docx"):
-            import docx
-            doc = docx.Document(file_obj)
-            for para in doc.paragraphs:
-                text += para.text + "\n"
+        # Check if file_obj has 'seek' and 'read' methods (i.e., behaves like a file)
+        if hasattr(file_obj, 'seek') and hasattr(file_obj, 'read'):
+            file_obj.seek(0)
+            
+            if fname.endswith(".pdf"):
+                reader = PyPDF2.PdfReader(file_obj)
+                for page in reader.pages:
+                    page_text = page.extract_text()
+                    if page_text:
+                        text += page_text + "\n"
+            elif fname.endswith(".docx"):
+                doc = docx.Document(file_obj)
+                for para in doc.paragraphs:
+                    text += para.text + "\n"
+            else:
+                # For other file types, try to read as text
+                raw_bytes = file_obj.read()
+                # Decode bytes if needed
+                if isinstance(raw_bytes, bytes):
+                    text = raw_bytes.decode('utf-8', errors='ignore')
+                else:
+                    text = raw_bytes
         else:
-            # Generic text file (txt, json, etc.)
-            file_obj.seek(0)
-            binary_content = file_obj.read()
-            text = binary_content.decode("utf-8", errors="ignore")
-
-    except ImportError as ie:
-        logging.error(f"Missing dependency for file type ({filename}): {ie}")
-        # Fallback to plain text read
-        try:
-            file_obj.seek(0)
-            binary_content = file_obj.read()
-            text = binary_content.decode("utf-8", errors="ignore")
-        except Exception as e:
-            logging.error(f"File extraction fallback failed: {e}")
-            return ""
-
+            # If not a file-like object, maybe it's a model instance.
+            # You can customize this block based on your model's fields
+            
+            # Example: If this is a CareerPage model, extract from text fields
+            # Adjust these fields as per your actual model structure
+            if hasattr(file_obj, 'title'):
+                text += str(getattr(file_obj, 'title', '')) + "\n"
+            if hasattr(file_obj, 'qualifications'):
+                text += str(getattr(file_obj, 'qualifications', '')) + "\n"
+            if hasattr(file_obj, 'responsibilities'):
+                text += str(getattr(file_obj, 'responsibilities', '')) + "\n"
+            if hasattr(file_obj, 'skills'):
+                text += str(getattr(file_obj, 'skills', '')) + "\n"
+            # Add any other fields you want to extract
+            
+            # If none of the above, fallback to empty string or str conversion
+            if not text:
+                text = str(file_obj)
+    
     except Exception as e:
-        logging.error(f"File extraction error for {filename}: {e}")
+        logging.error(f"Text extraction failed for {fname}: {e}")
         return ""
+    
+    # Normalize whitespace (preserve new lines)
+    return re.sub(r'[^\S\r\n]+', ' ', text).strip()
 
-    if not text.strip():
-        logging.warning(f"File {filename} extracted no meaningful text.")
+def is_header_or_title(text, job_role=""):
+    # ... (function body remains the same)
+    clean_text = text.strip().lower()
+    
+    common_headers_and_titles = {
+        "resume", "curriculum vitae", "contact", "experience", "education",
+        "profile", "summary", "objective", "skills", "declaration", "project",
+        "career objective", "career summary", "references", "developer", 
+        "engineer", "manager", "architect", "analyst", "specialist", "portfolio"
+    }
+    
+    if job_role:
+        common_headers_and_titles.add(job_role.lower())
+        
+    if len(clean_text.split()) > 5 or any(c.isdigit() or c in '()[]{}|@' for c in clean_text): 
+        return True 
+    
+    if any(header in clean_text for header in common_headers_and_titles):
+        if clean_text in common_headers_and_titles or job_role.lower() in clean_text:
+             return True
+            
+    return False
 
-    # Clean up whitespace
-    text = re.sub(r'[^\S\r\n]+', ' ', text).strip()
-    return text
+def extract_candidate_info(text, job_role=""):
+    # ... (function body remains the same)
+    if nlp is None: return "N/A", "N/A", "N/A"
 
-
-def extract_candidate_info(text):
-    # (Existing logic for email and phone remains the same)
     email_match = re.search(r"[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}", text)
     email = email_match.group(0) if email_match else "N/A"
 
-    phone = "N/A"
-    try:
-        import phonenumbers
-        # ... (phone extraction logic) ...
-        for match in phonenumbers.PhoneNumberMatcher(text, None):
-            phone = phonenumbers.format_number(match.number, phonenumbers.PhoneNumberFormat.E164)
-            break
-    except ImportError:
-        phone_match = re.search(r'(\+?\d{1,3}[-. ]?)?\(?\d{3}\)?[-. ]?\d{3}[-. ]?\d{4}', text)
-        phone = phone_match.group(0) if phone_match else "N/A"
-    except Exception as e:
-        logging.warning(f"Phone extraction failed: {e}")
+    phone_match = re.search(r'(\+?\d{1,3}[-. ]?)?\(?\d{3}\)?[-. ]?\d{3}[-. ]?\d{4}', text)
+    phone = phone_match.group(0) if phone_match else "N/A"
 
     name = "N/A"
-    if nlp:
-        try:
-            # 1. Focus on the first 500 characters where the name is most likely.
-            doc = nlp(text[:500])
+    
+    significant_lines = [line.strip() for line in text.split('\n') if line.strip() and len(line.strip()) > 5][:3]
+
+    for line in significant_lines:
+        words = line.split()
+        if not (2 <= len(words) <= 4):
+            continue
             
-            potential_persons = []
-            for ent in doc.ents:
-                clean_name = ent.text.strip()
-                word_count = len(clean_name.split())
-                
-                # 2. STRICT FILTERING: Only consider entities labelled as 'PERSON'
-                if ent.label_ == 'PERSON':
-                    
-                    # 3. Word Count Heuristic: 
-                    #    A good name is typically 2-4 words. Reject single-word names 
-                    #    unless they are long (>= 5 chars) to catch first names or rare cases.
-                    if word_count == 1 and len(clean_name) < 5:
-                        logging.debug(f"Rejecting single-word name (too short): {clean_name}")
-                        continue
-                    
-                    # 4. Filter short, multi-word junk (e.g., "M. D.")
-                    if len(clean_name) < 4:
-                        logging.debug(f"Rejecting name (too short): {clean_name}")
-                        continue
-                        
-                    potential_persons.append({
-                        'name': clean_name, 
-                        'length': len(clean_name),
-                        'start': ent.start_char # Use position for tie-breaking
-                    })
+        is_title_cased = all(word.istitle() or not word.isalpha() for word in words)
+        is_all_caps = line.isupper() and all(word.isalpha() for word in words)
+        
+        if (is_title_cased or is_all_caps) and not is_header_or_title(line, job_role):
+            name = line
+            return name, email, phone
 
-            if potential_persons:
-                # 5. Final Selection: Sort by length (descending) and then position (ascending).
-                #    This favors the most complete name, and if lengths are equal, the one at the top.
-                potential_persons.sort(key=lambda p: (p['length'], -p['start']), reverse=True)
-                
-                name = potential_persons[0]['name']
+    doc = nlp(text[:1000])
+    person_entities = [
+        ent.text.strip() for ent in doc.ents 
+        if ent.label_ == "PERSON" and len(ent.text.strip().split()) >= 2
+    ]
+    
+    if person_entities:
+        best_name = None
+        for person in person_entities:
+            if 2 <= len(person.split()) <= 4 and not is_header_or_title(person, job_role):
+                best_name = person
+                break 
+
+        if best_name:
+            name = best_name
+            return name, email, phone
             
-            # 6. Fallback: If NER fails entirely, grab the first title-cased line as a last resort.
-            if name == "N/A" and text.strip():
-                first_line = text.split('\n')[0].strip()
-                if 2 <= len(first_line.split()) <= 4 and first_line.istitle():
-                    name = first_line
-
-        except Exception as e:
-            logging.warning(f"NER failed for name extraction: {e}")
-            name = "N/A"
-
     return name, email, phone
 
-
-def extract_keywords(text):
-    keywords = set()
-
-    if not text.strip():
-        logging.warning("Input text for keyword extraction is empty.")
-        return keywords
-    
-    # --- Attempt Advanced NLP ---
-    if nlp:
-        try:
-            doc = nlp(text)
-
-            if 'textrank' in nlp.pipe_names and hasattr(doc._, 'phrases'):
-                for p in doc._.phrases[:TOP_N_KEYWORDS]:
-                    phrase = re.sub(r'[^a-z0-9\s-]', '', p.text.lower()).strip()
-                    if phrase and len(phrase.split()) <= 5:
-                        keywords.add(phrase)
-
-            for chunk in doc.noun_chunks:
-                phrase = re.sub(r'[^a-z0-9\s-]', '', chunk.text.lower()).strip()
-                if phrase and phrase not in FALLBACK_STOPWORDS and len(phrase.split()) <= 5:
-                    keywords.add(phrase)
-
-            if keywords:
-                logging.info(f"Advanced NLP extracted {len(keywords)} keywords.")
-                return set(list(keywords)[:TOP_N_KEYWORDS])
-
-        except Exception as e:
-            logging.warning(f"NLP keyword extraction failed (falling back): {e}")
-
-    # --- Fallback: Counter-based keywords (Unigrams and Bigrams) ---
-    words = re.findall(r"[a-zA-Z]+", text.lower())
-    logging.info(f"Fallback: Found {len(words)} total word tokens.")
-    
-    filtered_words = [
-        w for w in words
-        if len(w) >= MIN_KEYWORD_LENGTH and w not in FALLBACK_STOPWORDS
+def extract_date_ranges(text):
+    # ... (function body remains the same)
+    date_patterns = [
+        r'(\b(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*[.,]?\s+\d{4})\s*[\-–]\s*(\b(?:Present|Current|Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*[.,]?\s*\d{4}|\bPresent|\bCurrent)',
+        r'(\d{4})\s*[\-–]\s*(\d{4}|\bPresent|\bCurrent)',
+        r'(\b\d{1,2}/\d{4})\s*[\-–]\s*(\b\d{1,2}/\d{4}|\bPresent|\bCurrent)'
     ]
-    logging.info(f"Fallback: Filtered to {len(filtered_words)} meaningful unigram tokens.")
-
-
-    bigrams = []
-    original_words = [w for w in words if len(w) >= 2]
-    # Only create bigrams if there are enough words left after initial filtering
-    if len(original_words) > 1:
-        for i in range(len(original_words) - 1):
-            w1, w2 = original_words[i], original_words[i+1]
-            # Bigram inclusion logic: include if AT LEAST one word is not a stopword
-            if w1 not in FALLBACK_STOPWORDS or w2 not in FALLBACK_STOPWORDS:
-                bigrams.append(f"{w1} {w2}")
     
-    logging.info(f"Fallback: Found {len(bigrams)} potential bigram tokens.")
-
-
-    all_tokens = filtered_words + bigrams
-    keyword_counts = Counter(all_tokens)
+    date_ranges = []
     
-    # Filter out keywords that appear only once, unless the text is very short
-    min_count = 1 if len(all_tokens) < 100 else 2 
-    
-    keywords = {
-        word for word, count in keyword_counts.most_common(TOP_N_KEYWORDS)
-        if count >= min_count
-    }
-    
-    # If filter was too harsh, keep the top N even if count is 1
-    if not keywords and all_tokens:
-        keywords = {word for word, count in keyword_counts.most_common(TOP_N_KEYWORDS)}
+    def parse_date(date_string):
+        date_string = date_string.replace('Current', '').replace('Present', '').strip()
+        if not date_string:
+            return datetime.now()
+        
+        formats = ["%b %Y", "%B %Y", "%m/%Y", "%Y"]
+        for fmt in formats:
+            try:
+                if len(date_string.split()) > 1 and date_string.split()[0].isalpha():
+                    return datetime.strptime(date_string.split()[0][:3] + " " + date_string.split()[-1], "%b %Y")
+                elif re.match(r'\d{4}', date_string) and len(date_string) == 4:
+                    return datetime.strptime(date_string, "%Y")
+                else:
+                    return datetime.strptime(date_string, fmt)
+            except ValueError:
+                continue
+        return None
 
-    logging.info(f"Fallback extracted {len(keywords)} final keywords.")
+    for pattern in date_patterns:
+        matches = re.findall(pattern, text, re.IGNORECASE)
+        for start_str, end_str in matches:
+            start_date = parse_date(start_str)
+            end_date = parse_date(end_str)
+            
+            if start_date and end_date and start_date < end_date:
+                date_ranges.append((start_date, end_date))
+                
+    return date_ranges
+
+def get_work_experience_text(resume_text):
+    # ... (function body remains the same)
+    text_lines = resume_text.split('\n')
+    experience_text = []
+    in_experience_section = False
+    
+    header_pattern = re.compile(r'^\s*([A-Z\s]{4,}|[A-Z][a-z]+ [A-Z][a-z]+)\s*$')
+
+    for line in text_lines:
+        line_lower = line.strip().lower()
+        is_header = header_pattern.match(line)
+        
+        if not in_experience_section:
+            if any(h in line_lower for h in WORK_EXPERIENCE_HEADINGS) and len(line_lower.split()) <= 4:
+                in_experience_section = True
+                continue 
+
+        if in_experience_section:
+            if is_header and any(h in line_lower for h in EDUCATION_HEADINGS):
+                break
+            
+            experience_text.append(line)
+
+    return "\n".join(experience_text)
+
+def calculate_duration_in_years_and_months(start_date, end_date):
+    # ... (function body remains the same)
+    diff = end_date - start_date
+    total_months = diff.days // 30 
+    years = total_months // 12
+    months = total_months % 12
+    return years, months
+
+def extract_total_experience(resume_text):
+    # ... (function body remains the same)
+    work_exp_text = get_work_experience_text(resume_text)
+    date_ranges = extract_date_ranges(work_exp_text)
+    
+    if not date_ranges:
+        return 0.0, "N/A"
+
+    date_ranges.sort(key=lambda x: x[0])
+
+    merged_ranges = []
+    
+    if date_ranges:
+        current_start, current_end = date_ranges[0]
+
+        for next_start, next_end in date_ranges[1:]:
+            if next_start <= current_end:
+                current_end = max(current_end, next_end)
+            else:
+                merged_ranges.append((current_start, current_end))
+                current_start, current_end = next_start, next_end
+
+        merged_ranges.append((current_start, current_end))
+
+    total_duration_months = 0
+    for start, end in merged_ranges:
+        years, months = calculate_duration_in_years_and_months(start, end)
+        total_duration_months += (years * 12) + months
+
+    total_years = total_duration_months / 12.0
+    
+    years_int = int(total_years)
+    months_int = int(round((total_years - years_int) * 12))
+    
+    experience_str = f"{years_int} Years, {months_int} Months"
+    
+    return round(total_years, 1), experience_str
+
+def extract_required_experience(jd_text):
+    # ... (function body remains the same)
+    matches = re.findall(r'(\d+)(?:\s*[\+\-]\s*\d+)?\s*(?:to)?\s*years?', jd_text, re.IGNORECASE)
+    
+    if matches:
+        min_exp = min(int(match[0]) for match in matches)
+        return float(min_exp)
+    
+    min_match = re.search(r'(?:minimum|min|at least)\s*(\d+)\s*years?', jd_text, re.IGNORECASE)
+    if min_match:
+        return float(min_match.group(1))
+
+    return 0.0 
+
+def experience_match_score(candidate_years, required_years):
+    # ... (function body remains the same)
+    if required_years <= 0:
+        return 100.0, "No Requirement Found"
+        
+    if candidate_years >= required_years:
+        return 100.0, "Requirement Met or Exceeded"
+    else:
+        score = (candidate_years / required_years) * 100
+        return round(min(score, 99.0), 1), f"Short by {round(required_years - candidate_years, 1)} years"
+
+def semantic_similarity(resume_text, jd_text):
+    # ... (function body remains the same)
+    if nlp is None or embedding_model is None or not jd_text or not resume_text:
+        return 0.0
+    
+    try:
+        def filter_sentences(text):
+            sents = [sent.text.lower() for sent in nlp(text).sents 
+                     if len(sent.text.strip()) > 10 and any(c.isalpha() for c in sent.text)]
+            return sents
+
+        resume_sents = filter_sentences(resume_text)
+        jd_sents = filter_sentences(jd_text)
+        
+        if not resume_sents or not jd_sents:
+            logging.warning("Insufficient sentences for semantic analysis after filtering.")
+            return 0.0
+
+        emb_resume = embedding_model.encode(resume_sents, convert_to_tensor=True)
+        emb_jd = embedding_model.encode(jd_sents, convert_to_tensor=True)
+        
+        cos_scores = util.cos_sim(emb_resume, emb_jd)
+        
+        max_scores_per_jd_sent = cos_scores.max(dim=0).values
+        
+        semantic_score = float(max_scores_per_jd_sent.mean() * 100)
+        
+        return round(semantic_score, 2)
+        
+    except Exception as e:
+        logging.warning(f"Semantic similarity failed: {e}")
+        return 0.0
+
+def get_keywords(text):
+    # ... (function body remains the same)
+    if nlp is None: return set()
+
+    doc = nlp(text.lower())
+    keywords = set()
+    
+    irrelevant = {"etc", "description", "cv", "ltd", "solution", "university", "ability", "requirement", "pvt"}
+    
+    for chunk in doc.noun_chunks:
+        phrase = chunk.text.strip()
+        if 2 <= len(phrase.split()) <= 5 and len(phrase) > 3 and phrase not in irrelevant:
+            keywords.add(phrase)
+            
+    for token in doc:
+        if token.pos_ in ('NOUN', 'PROPN') and token.is_alpha and not token.is_stop and len(token.text) > 2:
+            if token.text not in irrelevant:
+                keywords.add(token.text)
+            
     return keywords
 
-
-def calculate_keyword_match_score(resume_text, jd_keywords):
-    # (No changes here, as this part was working)
+def keyword_match_score(resume_text, jd_text):
+    # ... (function body remains the same)
+    jd_keywords = get_keywords(jd_text)
+    resume_keywords = get_keywords(resume_text)
+    
     if not jd_keywords:
-        return 0, []
+        return 0.0
 
-    resume_text_lower = resume_text.lower()
-    matched_keywords = set()
-
-    for keyword in jd_keywords:
-        pattern = r'\b' + re.escape(keyword) + r'\b'
-        if re.search(pattern, resume_text_lower):
-            matched_keywords.add(keyword)
-
+    matched_keywords = jd_keywords.intersection(resume_keywords)
     score = (len(matched_keywords) / len(jd_keywords)) * 100
-    return score, sorted(list(matched_keywords))
-
-
-def analyze_resume_basic_ats(resume_file_obj, job_description_file_obj, job_role="Unspecified"):
     
-    resume_text = extract_text_from_file(resume_file_obj)
-    jd_text = extract_text_from_file(job_description_file_obj)
+    logging.info(f"JD Keywords extracted ({len(jd_keywords)}): {list(jd_keywords)[:5]}...")
+    logging.info(f"Matched Keywords ({len(matched_keywords)}): {list(matched_keywords)[:5]}...")
 
-    if not resume_text:
-        return {
-            "full_name": "N/A", "contact_number": "N/A", "email": "N/A",
-            "aggregate_score": 0.0, "fitment_verdict": "ERROR: Resume Text Extraction Failed",
-            "hiring_recommendation": "Not Applicable", "matched_keywords": [],
-            "analysis_summary": "CRITICAL: Could not extract text from resume. Check file format/content/dependencies."
-        }
+    return round(score, 2)
     
-    name, email, phone = extract_candidate_info(resume_text)
+# ----------------- NEW ALIGNMENT FUNCTION -----------------
 
-    jd_keywords = extract_keywords(jd_text)
-    if not jd_keywords:
-        return {
-            "full_name": name, "contact_number": phone, "email": email,
-            "aggregate_score": 0.0, "fitment_verdict": "ERROR: JD Keyword Extraction Failed",
-            "hiring_recommendation": "Not Applicable", "matched_keywords": [],
-            # Detailed debug info for the JD failure
-            "analysis_summary": f"CRITICAL: Could not extract keywords from JD. JD Text Length: {len(jd_text)}. JD text might be empty, too short, or only contain stopwords."
-        }
+def generate_strategic_alignment(aggregate_score, candidate_years, required_years, sem_score, keyword_score):
+    """
+    Creates the strategic, actionable summary based on all calculated metrics.
+    """
+    alignment = []
 
-    score, matched_keywords = calculate_keyword_match_score(resume_text, jd_keywords)
-    
-    rounded_score = round(score, 2)
-    ai_status = "spaCy/TextRank Used" if nlp and 'textrank' in nlp.pipe_names else ("spaCy Noun Chunking Used" if nlp else "Fallback NLP Used")
-
-    if rounded_score >= MATCH_THRESHOLD:
-        fitment_verdict = "BASIC MATCH: Pass"
-        recommendation = "ATS Recommended"
+    # 1. Overall Recommendation
+    if aggregate_score >= 85:
+        alignment.append("✅ High Priority Candidate: The overall fitment score is excellent. Proceed directly to the interview stage.")
+    elif aggregate_score >= MATCH_THRESHOLD: # 65
+        alignment.append("🔶 Qualified Candidate: The score indicates a strong baseline match. Requires a screening interview to validate experience depth.")
     else:
-        fitment_verdict = "BASIC MATCH: Fail"
-        recommendation = "ATS Not Recommended"
+        alignment.append("🛑 Low Priority Candidate: The score is below the threshold. Reroute only if the talent pipeline is scarce.")
+
+    # 2. Experience Risk
+    if required_years > 0 and candidate_years < required_years * 0.8:
+        gap = round(required_years - candidate_years, 1)
+        alignment.append(f"⚠️ Experience Gap: Candidate is short by {gap} years. Focus interview questions on transferable skills and project ownership to compensate.")
+    elif candidate_years >= required_years:
+        alignment.append("🟢 Experience Met: Candidate meets or exceeds the required professional experience.")
+    else:
+        alignment.append("🔵 Experience Context: No explicit experience requirement found in JD, or candidate is close to target.")
+    
+    # 3. Score Breakdown Insight
+    if sem_score > keyword_score * 2:
+        alignment.append("💡 Semantic Strength: The candidate's *concept* of the role aligns well (high semantic score). They may use different terminology than the JD. Review project descriptions closely.")
+    elif keyword_score > sem_score * 1.5:
+        alignment.append("💡 Keyword Focus: The resume is highly optimized for keywords. Ensure the candidate can articulate their experience (low semantic score suggests a potential knowledge gap beneath the surface.)")
+    else:
+        alignment.append("✅ Balanced Profile: Strong, consistent alignment in both skills (keywords) and conceptual understanding (semantic).")
+        
+    return "\n- " + "\n- ".join(alignment)
+
+
+# ----------------- Overview Generation (Unchanged) -----------------
+def generate_candidate_overview(name, job_role, aggregate_score, sem_score, keyword_score, recommendation, exp_match_score, req_exp):
+    """Generates a descriptive, data-driven summary of the candidate's fit."""
+    
+    fit_level = ""
+    if aggregate_score >= 90:
+        fit_level = "an Exceptional Match"
+        strength = "The alignment is near-perfect, indicating a strong cultural and technical fit."
+    elif aggregate_score >= 80:
+        fit_level = "a Strong Match"
+        strength = "The candidate possesses a high degree of core competency and is immediately hirable."
+    elif aggregate_score >= 65:
+        fit_level = "a Moderate to Strong Match"
+        strength = "The core skills are present, but some key areas may require further evaluation."
+    else:
+        fit_level = "a Borderline Match"
+        strength = "The profile meets minimum conceptual requirements but lacks significant keyword depth."
+
+    if sem_score > keyword_score * 2:
+        match_type = "The high Semantic Score suggests strong conceptual understanding and relevant experience, even if specific keywords were not explicitly matched."
+    elif keyword_score > sem_score * 1.5:
+        match_type = "The profile is heavily keyword-optimized, but conceptual alignment is a concern. A manual review is essential to verify experience depth."
+    else:
+        match_type = "The conceptual and keyword matches are balanced, providing a consistent view of the candidate's profile."
+        
+    candidate_identifier = f"Mr./Ms. {name}" if name != "N/A" else "The Candidate"
+
+    exp_context = ""
+    if req_exp > 0 and exp_match_score < 100.0:
+        exp_context = f"**Experience Alert:** Candidate only meets {exp_match_score:.1f}% of the required {req_exp} years of experience. "
+    elif req_exp > 0:
+        exp_context = f"Experience requirement of {req_exp} years is met. "
+
+
+    overview = (
+        f"{exp_context}"
+        f"{candidate_identifier} is currently rated as {fit_level} for the {job_role} position "
+        f"with an Aggregate Score of {aggregate_score:.2f}%. {strength} "
+        f"The system recommends: {recommendation}. {match_type}"
+    )
+    return overview
+
+
+# ----------------- ATS Analyzer (Main Function) -----------------
+def analyze_resume(resume_file_obj, job_description_file_obj, job_role="general role"):
+    # ... (rest of the function remains the same, but includes the new field)
+    if nlp is None or embedding_model is None:
+        return {"full_name":"N/A","contact_number":"N/A","email":"N/A",
+                "job_role": job_role, "aggregate_score":0.0,"fitment_verdict":"FATAL ERROR",
+                "hiring_recommendation":"Not Applicable", "overall_experience": "N/A", 
+                "experience_match": "N/A", "strategic_alignment": "FATAL ERROR: Models failed to load.",
+                "analysis_summary":"NLP/Embedding models failed to load. Cannot proceed.",
+                "candidate_overview": "Model loading failed."}
+
+
+    logging.info("Starting text extraction...")
+    resume_text = extract_text(resume_file_obj)
+    jd_text = extract_text(job_description_file_obj)
+    
+    if not resume_text or not jd_text: 
+        return {"full_name":"N/A","contact_number":"N/A","email":"N/A",
+                "job_role": job_role, "aggregate_score":0.0,"fitment_verdict":"ERROR",
+                "hiring_recommendation":"Not Applicable", "overall_experience": "N/A", 
+                "experience_match": "N/A", "strategic_alignment": "ERROR: Text extraction failed.",
+                "analysis_summary":"Failed to extract text from one or both files.",
+                "candidate_overview": "Failed to extract necessary text for analysis."}
+
+    # 1. Extract Candidate Info
+    name, email, phone = extract_candidate_info(resume_text, job_role) 
+    
+    # 2. Extract and Score Experience
+    candidate_years, candidate_exp_str = extract_total_experience(resume_text)
+    required_years = extract_required_experience(jd_text)
+    
+    exp_match_score_val, exp_match_verdict = experience_match_score(candidate_years, required_years)
+    
+    overall_experience_display = candidate_exp_str
+    experience_match_display = f"{exp_match_score_val}% ({exp_match_verdict}) [Req: {required_years} Yrs]"
+    
+    # 3. Calculate Scores (Semantic and Keyword)
+    sem_score = semantic_similarity(resume_text, jd_text)
+    keyword_score = keyword_match_score(resume_text, jd_text)
+
+
+    # 4. Aggregate Score
+    weighted_score = (sem_score * SEMANTIC_WEIGHT) + (keyword_score * KEYWORD_WEIGHT)
+    aggregate_score = round(min(weighted_score * SCORE_SCALING_FACTOR, 100.0), 2)
+    
+    logging.info(f"Final Scaled Score: {aggregate_score}%")
+
+    # 5. Determine Verdict and Recommendation
+    if aggregate_score >= 85: 
+        verdict = "Selected / High Match"
+        recommendation = "Hire Recommended"
+    elif aggregate_score >= MATCH_THRESHOLD: # 65
+        verdict = "Borderline / Review"
+        recommendation = "Manual Review Recommended"
+    else:
+        verdict = "Fail / Not Selected"
+        recommendation = "Not Recommended"
+
+    # 6. Generate New Strategic Alignment
+    strategic_alignment = generate_strategic_alignment(
+        aggregate_score, candidate_years, required_years, sem_score, keyword_score
+    )
+
+    # 7. Generate Descriptive Overview
+    overview = generate_candidate_overview(
+        name, job_role, aggregate_score, sem_score, keyword_score, 
+        recommendation, exp_match_score_val, required_years
+    )
 
     return {
         "full_name": name,
         "contact_number": phone,
         "email": email,
         "job_role": job_role,
-        "aggregate_score": rounded_score,
-        "fitment_verdict": fitment_verdict,
+        "overall_experience": overall_experience_display, 
+        "experience_match": experience_match_display,     
+        "aggregate_score": aggregate_score,
+        "fitment_verdict": verdict,
         "hiring_recommendation": recommendation,
-        "matched_keywords": matched_keywords,
         "analysis_summary": (
-            f"Analysis Method: **{ai_status}**. "
-            f"Keyword match score: **{rounded_score}%** "
-            f"(JD Keywords: {len(jd_keywords)}). "
-            f"Matched keywords: {', '.join(matched_keywords) if matched_keywords else 'None'}."
-        )
+            f"Semantic Score: {sem_score}%; Keyword Score: {keyword_score}%; "
+            f"Final Scaled Score: {aggregate_score}%"
+        ),
+        "semantic_score": f"{sem_score}%",
+        "keyword_score": f"{keyword_score}%",
+        "final_scaled_score": f"{aggregate_score}%",
+        "strategic_alignment": strategic_alignment, # NEW FIELD
+        "candidate_overview": overview, 
     }
-
-# --- EXAMPLE USAGE (For Testing Purposes) ---
-
-if __name__ == '__main__':
-    # 1. Mock the problematic 'CareerPage' object
-    class CareerPage:
-        # Assuming the ORM/Web Framework stores the binary data in a 'data' or 'content' attribute
-        def __init__(self, data, filename):
-            self.data = data.encode('utf-8') 
-            self.filename = filename
-            
-    mock_resume_data = """
-    John Doe
-    (555) 123-4567 | john.doe@email.com
-    
-    SUMMARY
-    Senior Python Developer with 10 years of experience in cloud computing and machine learning.
-    
-    EXPERIENCE
-    Lead Developer at TechCorp (2018-Present)
-    * Managed a development team of 5 engineers.
-    * Implemented CI/CD pipelines using Jenkins and Docker.
-    * Developed REST APIs using Flask and Python.
-    * Optimized database performance for PostgreSQL.
-    * Used AWS services like S3 and EC2 for deployment.
-    """
-    
-    mock_jd_data = """
-    Job Title: Senior Cloud Engineer
-    
-    REQUIREMENTS
-    We seek a candidate with 5+ years of experience in cloud computing.
-    Must have hands-on experience with AWS services (EC2, S3, RDS).
-    Proficiency in Python and API development is a must.
-    Experience with CI/CD, Docker, and PostgreSQL is highly valued.
-    Knowledge of Flask or Django frameworks is a plus.
-    """
-    
-    # The problematic object is passed here, but _normalize_file_object will fix it.
-    mock_career_page_resume = CareerPage(mock_resume_data, "John_Doe_resume.txt")
-    
-    # JD is a standard BytesIO object (common in tests/small uploads)
-    jd_file = BytesIO(mock_jd_data.encode('utf-8'))
-    jd_file.name = "job_description.txt"
-
-    print("\n--- Extracted Text Verification ---")
-    print(f"JD Text (Start): {extract_text_from_file(jd_file)[:100]}...")
-    print(f"Resume Text (Start): {extract_text_from_file(mock_career_page_resume)[:100]}...")
-
-
-    print("\n--- Starting ATS Analysis ---")
-    
-    # We must reset the JD file's position as it was read above
-    jd_file.seek(0)
-    
-    result = analyze_resume_basic_ats(mock_career_page_resume, jd_file, job_role="Senior Cloud Engineer")
-    
-    print("\n--- ATS Analysis Result ---")
-    print(f"Name: {result['full_name']}")
-    print(f"Email: {result['email']}")
-    print(f"Score: {result['aggregate_score']}% (Threshold: {MATCH_THRESHOLD}%)")
-    print(f"Verdict: {result['fitment_verdict']}")
-    print(f"\nAnalysis Summary:")
-    print(result['analysis_summary'])
-    print(f"\nMatched Keywords ({len(result['matched_keywords'])}): {', '.join(result['matched_keywords'])}")

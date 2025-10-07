@@ -185,6 +185,8 @@
                                     <th>Name</th>
                                     <th>Job Role</th>
                                     <th>Experience</th>
+                                    <th>Rating</th>
+                                    <th>Aggregate Score</th>
                                     <th>AI Recommendation</th>
                                     <th>Suggested Salary</th>
                                     <th>Final Decision</th>
@@ -201,6 +203,8 @@
                                         <td>{{ candidate.full_name }}</td>
                                         <td>{{ candidate.job_role }}</td>
                                         <td>{{ candidate.overall_experience }}</td>
+                                        <td>{{ candidate.overall_rating_summary }}</td>
+                                        <td>{{ candidate.aggregate_score }}%</td>
                                         <td>
                                             <span class="badge 
                                                 {% if candidate.hiring_recommendation == 'Hire' or candidate.hiring_recommendation == 'Strong Hire' %}bg-success
