@@ -191,12 +191,77 @@ def extract_text_from_document(file_obj, filename):
         return ""
 
 
+# --- HELPER FUNCTIONS FOR SALARY CALCULATION ---
+
+def _parse_experience(experience_str):
+    """Parses experience string (e.g., '5 years 3 months') into total years (float)."""
+    if not experience_str or experience_str == "Not Found":
+        return 0.0
+    
+    years = 0.0
+    
+    # Match years
+    year_match = re.search(r'(\d+)\s+year', experience_str, re.IGNORECASE)
+    if year_match:
+        years += int(year_match.group(1))
+        
+    # Match months
+    month_match = re.search(r'(\d+)\s+month', experience_str, re.IGNORECASE)
+    if month_match:
+        years += int(month_match.group(1)) / 12.0
+        
+    return years
+
+def _calculate_salary_range(job_role, total_years_experience):
+    """
+    Calculates a suggested salary range (in LPA) based on job role and experience.
+    """
+    
+    # 1. Base Salary Tiering (All values are in Lakhs Per Annum - LPA)
+    
+    # 🛑 CUSTOMIZE THESE LPA VALUES BASED ON YOUR SALARY BANDS
+    if total_years_experience < 2:
+        # Example: 2.5 LPA to 4.5 LPA
+        min_lpa, max_lpa = 2.5, 4.5
+    elif 2 <= total_years_experience < 5:
+        # Example: 5.0 LPA to 9.0 LPA
+        min_lpa, max_lpa = 5.0, 9.0
+    elif 5 <= total_years_experience < 8:
+        # Example: 9.0 LPA to 15.0 LPA
+        min_lpa, max_lpa = 9.0, 15.0
+    else: # 8+ years
+        # Example: 14.0 LPA to 25.0 LPA
+        min_lpa, max_lpa = 14.0, 25.0 
+
+    # 2. Role-Based Multiplier (Example)
+    role_multipliers = {
+        "Software Engineer": 1.1,
+        "Data Scientist": 1.2,
+        "QA Tester": 0.9,
+    }
+    
+    normalized_role = job_role.lower().strip()
+    
+    multiplier = 1.0
+    for key, mult in role_multipliers.items():
+        if key.lower() in normalized_role or normalized_role in key.lower():
+            multiplier = mult
+            break
+
+    # Apply multiplier and round to one decimal place for clean LPA display
+    final_min = round(min_lpa * multiplier, 1)
+    final_max = round(max_lpa * multiplier, 1)
+
+    # Returns the value in the requested LPA format
+    return f"₹{final_min} LPA - ₹{final_max} LPA"
+
+
 def llm_call(resume_text, job_role, experience_info, job_description_text=None):
     """
     Calls the LLM (Gemini) to analyze the resume and generate a JSON summary.
     Includes target experience criteria and optional job description in the prompt for tailored analysis.
     """
-    global llm # Access the global llm instance
+    global llm 
 
     if llm is None and GOOGLE_API_KEY:
         try:
@@ -216,21 +281,8 @@ def llm_call(resume_text, job_role, experience_info, job_description_text=None):
 {job_description_text}
 """
 
-    min_years_for_llm = 0
-    max_years_for_llm = 0
-    if "at least" in experience_info:
-        match = re.search(r"at least (\d+) years", experience_info)
-        if match:
-            min_years_for_llm = int(match.group(1))
-    elif "-" in experience_info and "years" in experience_info:
-        match = re.search(r"(\d+)-(\d+) years", experience_info)
-        if match:
-            min_years_for_llm = int(match.group(1))
-            max_years_for_llm = int(match.group(2))
-
-    # --- SIMPLIFIED PROMPT FOR FULL DATA POPULATION (NO JSON SCHEMA EXAMPLE TO AVOID PARSING ISSUES) ---
-    # Removed the explicit `JSON Schema:` section and the `json_schema_string` variable.
-    # We are now relying purely on the LLM's understanding of the desired structure from the textual description.
+    # --- SIMPLIFIED PROMPT ---
+    # 🛑 FIX: Removed Salary Guidelines from the prompt to avoid LLM conflicts.
     summary_template = """
 **YOUR RESPONSE MUST BE A SINGLE, VALID JSON OBJECT. NO OTHER TEXT, NO MARKDOWN FENCES (```json), NO EXPLANATIONS.**
 
@@ -238,11 +290,7 @@ You are an expert HR evaluator. Your primary goal is to provide a **comprehensiv
 
 **Crucial Instruction: YOU MUST FILL ALL FIELDS IN THE JSON SCHEMA BELOW.**
 If a piece of information is genuinely not found in the resume, explicitly state "Not Found" for string fields, "0/X" for scores, or an empty array `[]` for lists, but **DO NOT leave any field missing or null**.
-
-**Salary Guidelines:**
-- Less than 2 years experience: ₹15,000 to ₹25,000
-- 2 to 5 years experience: ₹35,000 to ₹65,000
-- More than 5 years experience: ₹50,000 to ₹80,000
+The 'suggested_salary_range' should contain any salary mentioned in the resume or a placeholder like "To be calculated by system".
 
 **Candidate Resume to Analyze:**
 {resume_text}
@@ -259,7 +307,7 @@ If a piece of information is genuinely not found in the resume, explicitly state
 - **current_company_name**: string (e.g., "Acme Corp" or "Not Found")
 - **current_company_address**: string (e.g., "New York, NY" or "Not Found")
 - **hiring_recommendation**: string ("Hire", "Marginally Fit", or "Reject")
-- **suggested_salary_range**: string (e.g., "₹8 LPA - ₹12 LPA" or "Not Applicable (No Experience)")
+- **suggested_salary_range**: string (The salary found in the resume, or "To be calculated by system")
 - **experience_match**: string ("Good Match", "Underqualified", "Overqualified", or "No Resume Provided")
 - **analysis_summary**: object containing:
     - **candidate_overview**: string (detailed summary, use `\\n` for newlines)
@@ -289,7 +337,6 @@ If a piece of information is genuinely not found in the resume, explicitly state
 - **interview_questions**: array of 7 relevant interview questions (strings).
 """
     
-    # input_variables for PromptTemplate need to reflect the *actual* placeholders in the template string.
     input_variables = ["resume_text", "job_role", "experience_info", "job_description_section"]
 
     summary_prompt = PromptTemplate(
@@ -308,24 +355,14 @@ If a piece of information is genuinely not found in the resume, explicitly state
             "job_description_section": job_description_section
         })
         llm_output = result["text"].strip()
-        logging.info(f"Raw LLM output received (first 500 chars): {llm_output[:500]}...")
-
-        # --- Aggressive cleanup of LLM output before JSON parsing ---
-        # Remove any leading/trailing text that might not be part of the JSON
-        # This regex looks for the first '{' and the last '}'
+        
+        # ... (LLM output trimming and cleanup logic remains the same) ...
         json_match = re.search(r'\{.*\}', llm_output, re.DOTALL)
         if json_match:
             llm_output = json_match.group(0)
-            logging.info("Trimmed LLM output to valid JSON boundaries.")
-        else:
-            logging.warning("Could not find JSON boundaries in LLM output. Attempting raw parse.")
-            # Fallback to original output if boundaries not found, hoping for the best.
-
-        # Remove common markdown fences if they somehow persist
-        llm_output = llm_output.replace('```json', '').replace('```', '').strip()
-        llm_output = llm_output.replace('’', "'").replace('‘', "'").replace('“', '"').replace('”', '"')
-        # ------------------------------------------------------------
-
+            llm_output = llm_output.replace('```json', '').replace('```', '').strip()
+            llm_output = llm_output.replace('’', "'").replace('‘', "'").replace('“', '"').replace('”', '"')
+        
         if not llm_output:
             logging.warning("LLM returned an empty response after cleanup.")
             return {"error": "LLM returned empty response. Cannot parse."}
@@ -334,8 +371,7 @@ If a piece of information is genuinely not found in the resume, explicitly state
             summary = json.loads(llm_output)
             logging.info("Successfully parsed LLM output as JSON.")
         except json.JSONDecodeError as e:
-            logging.error(f"JSON parsing failed: {e}. Raw output:\n```\n{llm_output}\n```")
-            # Attempt a less strict parse as a last resort
+            # ... (Fallback JSON parsing logic remains the same) ...
             try:
                 import ast
                 summary = ast.literal_eval(llm_output)
@@ -343,10 +379,29 @@ If a piece of information is genuinely not found in the resume, explicitly state
                     raise ValueError("`ast.literal_eval` did not result in a dictionary.")
                 logging.warning("Used ast.literal_eval for JSON parsing due to initial failure.")
             except (ValueError, SyntaxError) as e_ast:
-                logging.error(f"Error decoding LLM output even with fallback: {e_ast}. Raw output:\n```\n{llm_output}\n```")
+                logging.error(f"Error decoding LLM output even with fallback: {e_ast}")
                 return {"error": f"Failed to decode LLM output: {e_ast}"}
         
+        
+        # ==========================================================
+        # 🛑 CRITICAL FIX: POST-PROCESSING SALARY CALCULATION
+        # ==========================================================
+        
+        # 1. Get experience from the LLM result
+        overall_experience_str = summary.get("overall_experience", "Not Found")
+        total_years = _parse_experience(overall_experience_str)
+        
+        # 2. Calculate the corrected salary range
+        corrected_salary = _calculate_salary_range(job_role, total_years)
+        
+        # 3. OVERRIDE the LLM's suggested_salary_range
+        summary["suggested_salary_range"] = corrected_salary
+        logging.info(f"Overridden salary for {job_role} ({total_years:.1f} years): {corrected_salary}")
+        
+        # ==========================================================
+
         return summary
+        
     except Exception as e:
         logging.error(f"An unexpected error occurred during LLM call: {e}")
         return {"error": f"An unexpected error occurred during AI analysis: {e}"}
@@ -658,6 +713,8 @@ def extract_text(file_obj):
     # Normalize whitespace (preserve new lines)
     return re.sub(r'[^\S\r\n]+', ' ', text).strip()
 
+
+
 def is_header_or_title(text, job_role=""):
     # ... (function body remains the same)
     clean_text = text.strip().lower()
@@ -681,50 +738,95 @@ def is_header_or_title(text, job_role=""):
             
     return False
 
-def extract_candidate_info(text, job_role=""):
-    # ... (function body remains the same)
-    if nlp is None: return "N/A", "N/A", "N/A"
+import os, re
 
+
+def extract_candidate_info(text, job_role="", resume_filename=""):
+    """
+    Extract full name, email, and phone number from resume text.
+    Strong preference for real human-looking names.
+    Fallback: derive clean name from email username.
+    """
+
+    # ------------------ EMAIL ------------------
     email_match = re.search(r"[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}", text)
-    email = email_match.group(0) if email_match else "N/A"
+    email = email_match.group(0).strip() if email_match else "N/A"
 
-    phone_match = re.search(r'(\+?\d{1,3}[-. ]?)?\(?\d{3}\)?[-. ]?\d{3}[-. ]?\d{4}', text)
-    phone = phone_match.group(0) if phone_match else "N/A"
+    # ------------------ PHONE ------------------
+    phone_match = re.search(
+        r'(\+?\d{1,3}[\s\-\.]?)?\(?\d{2,4}\)?[\s\-\.]?\d{3,4}[\s\-\.]?\d{3,4}', text
+    )
+    phone = phone_match.group(0).strip() if phone_match else "N/A"
 
-    name = "N/A"
-    
-    significant_lines = [line.strip() for line in text.split('\n') if line.strip() and len(line.strip()) > 5][:3]
+    # ------------------ TEXT CLEANUP ------------------
+    lines = [re.sub(r'[^A-Za-z\s]', ' ', line).strip() for line in text.split("\n")]
+    lines = [line for line in lines if line]
 
-    for line in significant_lines:
-        words = line.split()
-        if not (2 <= len(words) <= 4):
-            continue
-            
-        is_title_cased = all(word.istitle() or not word.isalpha() for word in words)
-        is_all_caps = line.isupper() and all(word.isalpha() for word in words)
-        
-        if (is_title_cased or is_all_caps) and not is_header_or_title(line, job_role):
-            name = line
-            return name, email, phone
+    # Words that *cannot* be a name
+    banned_words = {
+        "python", "django", "flask", "developer", "engineer", "java", "sql", "html",
+        "css", "javascript", "react", "node", "git", "github", "aws", "docker",
+        "api", "resume", "curriculum", "vitae", "profile", "objective", "skills",
+        "education", "experience", "project"
+    }
 
-    doc = nlp(text[:1000])
-    person_entities = [
-        ent.text.strip() for ent in doc.ents 
-        if ent.label_ == "PERSON" and len(ent.text.strip().split()) >= 2
-    ]
-    
-    if person_entities:
-        best_name = None
-        for person in person_entities:
-            if 2 <= len(person.split()) <= 4 and not is_header_or_title(person, job_role):
-                best_name = person
-                break 
+    probable_name = "N/A"
 
-        if best_name:
-            name = best_name
-            return name, email, phone
-            
-    return name, email, phone
+    # ------------------ STEP 1: spaCy PERSON ------------------
+    if nlp is not None:
+        doc = nlp(" ".join(lines[:50]))
+        persons = [ent.text.strip() for ent in doc.ents if ent.label_ == "PERSON"]
+        if persons:
+            probable_name = persons[0]
+
+    # ------------------ STEP 2: Manual header scan ------------------
+    if probable_name == "N/A":
+        for line in lines[:15]:
+            if any(w.lower() in banned_words for w in line.lower().split()):
+                continue
+            words = line.split()
+            if 2 <= len(words) <= 4 and all(w[0].isupper() for w in words if w.isalpha()):
+                probable_name = " ".join(words)
+                break
+
+    # ------------------ STEP 3: Validate name ------------------
+    if (
+        probable_name == "N/A"
+        or len(probable_name) < 3
+        or any(w.lower() in banned_words for w in probable_name.lower().split())
+    ):
+        probable_name = "N/A"
+
+    # ------------------ STEP 4: Email-based fallback ------------------
+    if probable_name == "N/A" and email != "N/A":
+        username = email.split("@")[0]
+        username = re.sub(r'[\d\._\-]+', ' ', username)
+        username = re.sub(r'\s+', ' ', username).strip()
+
+        parts = [p.capitalize() for p in username.split() if len(p) > 1]
+
+        # if single chunk like "chiragmodi" → split mid into two
+        if len(parts) == 1 and len(parts[0]) > 6:
+            halves = re.findall(r'[A-Z]?[a-z]+', parts[0]) or [parts[0][:5], parts[0][5:]]
+            probable_name = " ".join(h.capitalize() for h in halves[:2])
+        elif len(parts) >= 2:
+            probable_name = " ".join(parts[:2])
+        elif len(parts) == 1:
+            probable_name = parts[0]
+
+    # ------------------ STEP 5: Filename fallback ------------------
+    if probable_name == "N/A" and resume_filename:
+        base = os.path.basename(resume_filename)
+        base = re.sub(r'[_\-\.]', ' ', os.path.splitext(base)[0])
+        probable_name = " ".join(w.capitalize() for w in base.split()[:2])
+
+    # ------------------ FINAL CLEANUP ------------------
+    probable_name = re.sub(r'\s+', ' ', probable_name).strip()
+    if any(w.lower() in banned_words for w in probable_name.lower().split()):
+        probable_name = "N/A"
+
+    return probable_name or "N/A", email, phone
+
 
 def extract_date_ranges(text):
     # ... (function body remains the same)
@@ -765,75 +867,97 @@ def extract_date_ranges(text):
                 
     return date_ranges
 
+WORK_EXPERIENCE_HEADINGS = [
+    "work experience", "professional experience", "employment history",
+    "relevant experience", "experience", "job history"
+]
+
+EDUCATION_HEADINGS = [
+    "education", "academic history", "educational qualifications", "qualifications"
+]
+
+# --------------------- Helper functions ---------------------
+
 def get_work_experience_text(resume_text):
-    # ... (function body remains the same)
-    text_lines = resume_text.split('\n')
-    experience_text = []
-    in_experience_section = False
-    
-    header_pattern = re.compile(r'^\s*([A-Z\s]{4,}|[A-Z][a-z]+ [A-Z][a-z]+)\s*$')
+    """
+    Extract text between work experience heading and next section (education or end).
+    """
+    lines = resume_text.split("\n")
+    experience_lines = []
+    in_experience = False
 
-    for line in text_lines:
-        line_lower = line.strip().lower()
-        is_header = header_pattern.match(line)
-        
-        if not in_experience_section:
-            if any(h in line_lower for h in WORK_EXPERIENCE_HEADINGS) and len(line_lower.split()) <= 4:
-                in_experience_section = True
-                continue 
+    for line in lines:
+        l = line.strip().lower()
+        if any(h in l for h in WORK_EXPERIENCE_HEADINGS):
+            in_experience = True
+            continue
+        if in_experience and any(h in l for h in EDUCATION_HEADINGS):
+            break
+        if in_experience:
+            experience_lines.append(line)
+    return "\n".join(experience_lines)
 
-        if in_experience_section:
-            if is_header and any(h in line_lower for h in EDUCATION_HEADINGS):
-                break
-            
-            experience_text.append(line)
 
-    return "\n".join(experience_text)
+def parse_date_str(date_str):
+    date_str = date_str.strip().replace(".", "")
+    today = datetime.today()
+    if re.search(r'present|current|now|till date', date_str, re.IGNORECASE):
+        return today
 
-def calculate_duration_in_years_and_months(start_date, end_date):
-    # ... (function body remains the same)
-    diff = end_date - start_date
-    total_months = diff.days // 30 
-    years = total_months // 12
-    months = total_months % 12
-    return years, months
+    patterns = ["%b %Y", "%B %Y", "%m/%Y", "%Y"]
+    for fmt in patterns:
+        try:
+            return datetime.strptime(date_str, fmt)
+        except:
+            continue
+    return None
+
+
+
+
+
+def calculate_duration_in_years_and_months(start, end):
+    months = (end.year - start.year) * 12 + (end.month - start.month)
+    years = months // 12
+    rem_months = months % 12
+    return years, rem_months
+
+
+# --------------------- Main Function ---------------------
 
 def extract_total_experience(resume_text):
-    # ... (function body remains the same)
     work_exp_text = get_work_experience_text(resume_text)
+    if not work_exp_text.strip():
+        return 0.0, "N/A"
+
     date_ranges = extract_date_ranges(work_exp_text)
-    
     if not date_ranges:
         return 0.0, "N/A"
 
+    # Sort & merge overlapping ranges
     date_ranges.sort(key=lambda x: x[0])
+    merged = []
+    cur_start, cur_end = date_ranges[0]
 
-    merged_ranges = []
-    
-    if date_ranges:
-        current_start, current_end = date_ranges[0]
+    for next_start, next_end in date_ranges[1:]:
+        if next_start <= cur_end:
+            cur_end = max(cur_end, next_end)
+        else:
+            merged.append((cur_start, cur_end))
+            cur_start, cur_end = next_start, next_end
+    merged.append((cur_start, cur_end))
 
-        for next_start, next_end in date_ranges[1:]:
-            if next_start <= current_end:
-                current_end = max(current_end, next_end)
-            else:
-                merged_ranges.append((current_start, current_end))
-                current_start, current_end = next_start, next_end
+    # Total duration
+    total_months = 0
+    for s, e in merged:
+        y, m = calculate_duration_in_years_and_months(s, e)
+        total_months += y * 12 + m
 
-        merged_ranges.append((current_start, current_end))
+    total_years = total_months / 12
+    y_int = int(total_years)
+    m_int = int(round((total_years - y_int) * 12))
+    experience_str = f"{y_int} Years, {m_int} Months"
 
-    total_duration_months = 0
-    for start, end in merged_ranges:
-        years, months = calculate_duration_in_years_and_months(start, end)
-        total_duration_months += (years * 12) + months
-
-    total_years = total_duration_months / 12.0
-    
-    years_int = int(total_years)
-    months_int = int(round((total_years - years_int) * 12))
-    
-    experience_str = f"{years_int} Years, {months_int} Months"
-    
     return round(total_years, 1), experience_str
 
 def extract_required_experience(jd_text):
@@ -1012,27 +1136,43 @@ def generate_candidate_overview(name, job_role, aggregate_score, sem_score, keyw
 
 # ----------------- ATS Analyzer (Main Function) -----------------
 def analyze_resume(resume_file_obj, job_description_file_obj, job_role="general role"):
-    # ... (rest of the function remains the same, but includes the new field)
     if nlp is None or embedding_model is None:
-        return {"full_name":"N/A","contact_number":"N/A","email":"N/A",
-                "job_role": job_role, "aggregate_score":0.0,"fitment_verdict":"FATAL ERROR",
-                "hiring_recommendation":"Not Applicable", "overall_experience": "N/A", 
-                "experience_match": "N/A", "strategic_alignment": "FATAL ERROR: Models failed to load.",
-                "analysis_summary":"NLP/Embedding models failed to load. Cannot proceed.",
-                "candidate_overview": "Model loading failed."}
-
+        return {
+            "full_name":"N/A",
+            "contact_number":"N/A",
+            "email":"N/A",
+            "job_role": job_role,
+            "aggregate_score":0.0,
+            "fitment_verdict":"FATAL ERROR",
+            "hiring_recommendation":"Not Applicable",
+            "overall_experience": "N/A",
+            "experience_match": "N/A",
+            "strategic_alignment": "FATAL ERROR: Models failed to load.",
+            "analysis_summary":"NLP/Embedding models failed to load. Cannot proceed.",
+            "candidate_overview": "Model loading failed.",
+            "overall_rating_summary": "N/A"
+        }
 
     logging.info("Starting text extraction...")
     resume_text = extract_text(resume_file_obj)
     jd_text = extract_text(job_description_file_obj)
     
     if not resume_text or not jd_text: 
-        return {"full_name":"N/A","contact_number":"N/A","email":"N/A",
-                "job_role": job_role, "aggregate_score":0.0,"fitment_verdict":"ERROR",
-                "hiring_recommendation":"Not Applicable", "overall_experience": "N/A", 
-                "experience_match": "N/A", "strategic_alignment": "ERROR: Text extraction failed.",
-                "analysis_summary":"Failed to extract text from one or both files.",
-                "candidate_overview": "Failed to extract necessary text for analysis."}
+        return {
+            "full_name":"N/A",
+            "contact_number":"N/A",
+            "email":"N/A",
+            "job_role": job_role,
+            "aggregate_score":0.0,
+            "fitment_verdict":"ERROR",
+            "hiring_recommendation":"Not Applicable",
+            "overall_experience": "N/A",
+            "experience_match": "N/A",
+            "strategic_alignment": "ERROR: Text extraction failed.",
+            "analysis_summary":"Failed to extract text from one or both files.",
+            "candidate_overview": "Failed to extract necessary text for analysis.",
+            "overall_rating_summary": "N/A"
+        }
 
     # 1. Extract Candidate Info
     name, email, phone = extract_candidate_info(resume_text, job_role) 
@@ -1050,14 +1190,16 @@ def analyze_resume(resume_file_obj, job_description_file_obj, job_role="general 
     sem_score = semantic_similarity(resume_text, jd_text)
     keyword_score = keyword_match_score(resume_text, jd_text)
 
-
     # 4. Aggregate Score
     weighted_score = (sem_score * SEMANTIC_WEIGHT) + (keyword_score * KEYWORD_WEIGHT)
     aggregate_score = round(min(weighted_score * SCORE_SCALING_FACTOR, 100.0), 2)
     
-    logging.info(f"Final Scaled Score: {aggregate_score}%")
+    # 5. Calculate Overall Rating (0-5 scale)
+    overall_rating_summary = f"{round((aggregate_score / 100) * 5, 1)}/5"
 
-    # 5. Determine Verdict and Recommendation
+    logging.info(f"Final Scaled Score: {aggregate_score}% | Overall Rating: {overall_rating_summary}")
+
+    # 6. Determine Verdict and Recommendation
     if aggregate_score >= 85: 
         verdict = "Selected / High Match"
         recommendation = "Hire Recommended"
@@ -1068,12 +1210,12 @@ def analyze_resume(resume_file_obj, job_description_file_obj, job_role="general 
         verdict = "Fail / Not Selected"
         recommendation = "Not Recommended"
 
-    # 6. Generate New Strategic Alignment
+    # 7. Generate Strategic Alignment
     strategic_alignment = generate_strategic_alignment(
         aggregate_score, candidate_years, required_years, sem_score, keyword_score
     )
 
-    # 7. Generate Descriptive Overview
+    # 8. Generate Descriptive Overview
     overview = generate_candidate_overview(
         name, job_role, aggregate_score, sem_score, keyword_score, 
         recommendation, exp_match_score_val, required_years
@@ -1096,6 +1238,7 @@ def analyze_resume(resume_file_obj, job_description_file_obj, job_role="general 
         "semantic_score": f"{sem_score}%",
         "keyword_score": f"{keyword_score}%",
         "final_scaled_score": f"{aggregate_score}%",
-        "strategic_alignment": strategic_alignment, # NEW FIELD
-        "candidate_overview": overview, 
+        "strategic_alignment": strategic_alignment,
+        "candidate_overview": overview,
+        "overall_rating_summary": overall_rating_summary  # ✅ Added
     }

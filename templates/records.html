@@ -103,12 +103,25 @@
     .empty-state h3 {
         font-weight: 600;
     }
-    .btn-primary, .btn-info, .btn-outline-dark {
+    .btn-primary, .btn-info, .btn-outline-dark, .btn-upgrade {
         transition: all 0.2s ease-in-out;
     }
     .btn-primary:hover, .btn-info:hover, .btn-outline-dark:hover {
         transform: translateY(-2px);
         box-shadow: 0 4px 6px rgba(0,0,0,.1);
+    }
+    .btn-upgrade {
+        background-color: #ff8c00; /* Darker orange for upgrade */
+        color: #fff;
+        border: none;
+        font-size: 0.75rem;
+        padding: 0.35rem 0.75rem;
+        font-weight: 600;
+        border-radius: 0.5rem;
+    }
+    .btn-upgrade:hover {
+        background-color: #cc7000;
+        color: #fff;
     }
     .table-success {
         background-color: #d1e7dd !important;
@@ -129,8 +142,6 @@
 
 {% block content %}
 <div class="container-fluid py-4">
-    <!-- <h1 class="page-heading mb-4">Candidate Records</h1> -->
-
     {% if candidates %}
         <div class="row g-4">
             <div class="col-12">
@@ -185,13 +196,14 @@
                                     <th>Name</th>
                                     <th>Job Role</th>
                                     <th>Experience</th>
-                                    <th>Rating</th>
+                                    <th>Over All Rating</th>
                                     <th>Aggregate Score</th>
+                                    <!-- <th>Interview Status</th> -->
                                     <th>AI Recommendation</th>
                                     <th>Suggested Salary</th>
-                                    <th>Final Decision</th>
+                                    <th>Interview Status</th>
                                     <th>Final Salary</th>
-                                    <th>ATS</th>
+                                    <th>Analysis Type</th>
                                     <th>Resume</th>
                                     <th>Actions</th>
                                 </tr>
@@ -205,16 +217,24 @@
                                         <td>{{ candidate.overall_experience }}</td>
                                         <td>{{ candidate.overall_rating_summary }}</td>
                                         <td>{{ candidate.aggregate_score }}%</td>
+                                        <!-- <td>{{ candidate.interview_status }}</td> -->
                                         <td>
-                                            <span class="badge 
+                                            <span class="badge text-capitalize
                                                 {% if candidate.hiring_recommendation == 'Hire' or candidate.hiring_recommendation == 'Strong Hire' %}bg-success
                                                 {% elif candidate.hiring_recommendation == 'Reject' %}bg-danger
-                                                {% else %}bg-warning{% endif %}">
+                                                {% else %}bg-warning{% endif %}" style=" font-size: 15px;">
                                                 {{ candidate.hiring_recommendation }}
                                             </span>
                                         </td>
                                         <td>
-                                            {{ candidate.suggested_salary_range }}
+                                            {% if candidate.analysis_type == 'Basic' %}
+                                                <button class="btn btn-upgrade btn-sm" title="Upgrade to Advanced Analysis for Salary Range" 
+                                                    onclick="window.location.href=''" style="background-color: orangered; color: white;">
+                                                    <i class="fas fa-arrow-alt-circle-up"></i> Upgrade ATS
+                                                </button>
+                                            {% else %}
+                                                {{ candidate.suggested_salary_range }}
+                                            {% endif %}
                                         </td>
                                         <td>
                                             <span class="badge 
@@ -222,27 +242,33 @@
                                                 {% elif candidate.final_decision == 'Rejected' %}bg-danger
                                                 {% elif candidate.final_decision == 'Interview Scheduled' %}bg-primary
                                                 {% elif candidate.final_decision == 'shortlisted' %}bg-info
-                                                {% else %}bg-secondary{% endif %}">
+                                                {% else %}bg-secondary{% endif %}" style=" font-size: 15px;">
                                                 {{ candidate.final_decision|default:"Pending" }}
                                             </span>
                                         </td>
-                                        <td>₹{{ candidate.final_salary|floatformat:2|default:"N/A" }}</td>
                                         <td>
-                                            {% if candidate.analysis_type == 'Advance' %}
-                                                <span class="badge bg-primary">Advance</span>
-                                            {% elif candidate.analysis_type == 'Basic' %}
-                                                <span class="badge bg-secondary">Basic</span>
+                                            {% if candidate.final_salary_display %}
+                                                ₹{{ candidate.final_salary_display|floatformat:0 }}
                                             {% else %}
-                                                <span class="badge bg-dark">Manual</span>
+                                                <button type="button" class="btn btn-sm btn-secondary" style="background-color: yellow; color: black;">Not Decide</button>
                                             {% endif %}
                                         </td>
                                         <td>
-                                            <a href="{{ candidate.resume_file_path }}" target="_blank" class="btn btn-outline-dark btn-sm" title="View Resume">
-                                                <i class="fas fa-file-alt"></i>
+                                            {% if candidate.analysis_type == 'Advance' %}
+                                                <span class="badge bg-primary" style=" font-size: 15px;">Advance ATS</span>
+                                            {% elif candidate.analysis_type == 'Basic' %}
+                                                <span class="badge bg-secondary" style=" font-size: 15px;">Basic ATS</span>
+                                            {% else %}
+                                                <span class="badge bg-dark" style=" font-size: 15px;">Manual</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                           <a href="/media/{{ candidate.resume_file_path }}" target="_blank" class="btn btn-outline-dark btn-sm" title="View Resume" style="background-color: rgb(191, 19, 19);">
+                                                <i class="fas fa-file-alt" style="color: white; "></i>
                                             </a>
                                         </td>
                                         <td>
-                                            <a href="{% url 'candidate_profile' candidate.id %}" class="btn btn-info btn-sm" title="View Details">
+                                            <a href="{% url 'candidate_profile' candidate.id %}" class="btn btn-info btn-sm" title="View Details" style="background-color: green; color: white;">
                                                 <i class="fas fa-eye"></i>
                                             </a>
                                         </td>
@@ -284,6 +310,7 @@
                 "lengthMenu": "Show _MENU_ entries"
             },
             "columnDefs": [
+                // Targets 8 (Suggested Salary) and 9 (Final Decision) are set to non-orderable/non-searchable
                 { "orderable": false, "targets": [8, 9] }, 
                 { "searchable": false, "targets": [8, 9] }
             ],
@@ -313,14 +340,17 @@
             var maxExp = parseInt($('#max-exp').val(), 10);
 
             // Apply filters to columns
-            table.column(5).search(decisionFilter === '' ? '' : '^' + decisionFilter + '$', true, false);
-            table.column(1).search(jobRoleFilter === '' ? '' : '^' + jobRoleFilter + '$', true, false);
+            // Column 9 (Final Decision) - Index 9 in the table (0-indexed), or check index 9 (Final Decision) for the DataTable search
+            // NOTE: The original script incorrectly targeted column 5 and 1, I'm sticking to the column structure of the template provided.
+            // Decision is column 9, Job Role is column 2
+            table.column(9).search(decisionFilter === '' ? '' : '^' + decisionFilter + '$', true, false);
+            table.column(2).search(jobRoleFilter === '' ? '' : '^' + jobRoleFilter + '$', true, false);
             
-            // Re-apply the custom experience filter logic
+            // Re-apply the custom experience filter logic (Experience is column 3)
             $.fn.dataTable.ext.search.pop(); // Remove previous function to avoid duplicates
             $.fn.dataTable.ext.search.push(
                 function(settings, data, dataIndex) {
-                    var experience = parseFloat(data[2]) || 0;
+                    var experience = parseFloat(data[3]) || 0; // Column index 3 is Experience
                     if (
                         (isNaN(minExp) || experience >= minExp) &&
                         (isNaN(maxExp) || experience <= maxExp)

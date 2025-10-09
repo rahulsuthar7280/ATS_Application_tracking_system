@@ -665,19 +665,19 @@ class CareerAdvanceAnalysis(models.Model):
 class CandidateAnalysis(models.Model):
     # Link to the incoming application (only one analysis per application)
     application = models.OneToOneField(
-    Apply_career,
-    on_delete=models.CASCADE,
-    null=True,  # allow NULL
-    blank=True  
+        'Apply_career', # Assuming Apply_career is in the same app or imported
+        on_delete=models.CASCADE,
+        null=True,  # allow NULL
+        blank=True
     )
-    # application = models.ForeignKey(
-    #     Apply_career,
-    #     on_delete=models.CASCADE,
-    #     related_name="analyses"
-    # )
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     full_name = models.CharField(max_length=255, null=True, blank=True)
     job_role = models.CharField(max_length=255, null=True, blank=True)
+    
+    # Keep these file tracking fields
+    resume_file_path = models.CharField(max_length=255, null=True, blank=True)
+    original_file_name = models.CharField(max_length=255, null=True, blank=True) 
+    
     phone_no = models.CharField(max_length=50, null=True, blank=True)
     hiring_recommendation = models.CharField(max_length=50, null=True, blank=True)
     suggested_salary_range = models.CharField(max_length=100, null=True, blank=True)
@@ -737,7 +737,12 @@ class CandidateAnalysis(models.Model):
     conclusion_summary = models.TextField(null=True, blank=True)
     bland_call_id = models.CharField(max_length=100, blank=True, null=True)
     interview_status = models.CharField(max_length=50, null=True, blank=True, default='Pending')
-    resume_file_path = models.CharField(max_length=255, null=True, blank=True)
+    
+    # Note: original_file_name is redundant here since it's above. I'm removing the duplicate.
+    # original_file_name = models.CharField(max_length=255, null=True, blank=True) 
+
+    # Resume Hash Field
+    resume_hash = models.CharField(max_length=64, blank=True, null=True, db_index=True)
 
     ANALYSIS_TYPES = (
         ('Manual', 'Manual ATS Analysis'),
@@ -754,6 +759,11 @@ class CandidateAnalysis(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
+    class Meta:
+        # CRITICAL FIX: Re-introduce the database constraint.
+        # This combination must be unique: the file content (hash), the user, and the job.
+        unique_together = ('resume_hash', 'user', 'job_role') 
+
     def __str__(self):
         """Always return a safe string for admin display"""
         if self.full_name:
@@ -761,7 +771,6 @@ class CandidateAnalysis(models.Model):
         if hasattr(self.application, "full_name") and self.application.full_name:
             return self.application.full_name
         return f"CandidateAnalysis #{self.pk}"
-    
 
 
 class Category(models.Model):

@@ -8,266 +8,6 @@
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap">
 <link rel="stylesheet" href="../static/css/style_ats.css">
 
-<!-- <style>
-    /* Custom CSS Variables & Base Styles */
-    :root {
-        --primary-color: #3e4f47; /* Dark Teal/Green - Primary Action Color */
-        --secondary-color: #6c757d; /* Gray */
-        --background-color: #f8f9fa; /* Light Gray */
-        --card-bg-color: #ffffff; /* White */
-        --border-color: #e0e0e0; /* Light Gray Border */
-        --shadow-color: rgba(0, 0, 0, 0.08); /* Soft Shadow */
-        --text-color-primary: #343a40; /* Dark Gray */
-        --text-color-secondary: #6c757d; /* Gray */
-        --success-color: #198754; /* Green */
-        --danger-color: #dc3545; /* Red */
-        --warning-color: #ffc107; /* Yellow */
-    }
-
-    /* General containers and cards */
-    .container-main {
-        max-width: 1700px;
-    }
-    .card {
-        border: 1px solid var(--border-color);
-        box-shadow: 0 0.25rem 0.5rem var(--shadow-color);
-        border-radius: 0.75rem;
-    }
-    .text-primary-color {
-        color: var(--primary-color) !important;
-    }
-    .summary-tile {
-        padding: 1rem;
-        border-radius: 0.5rem;
-        background-color: #f5f5f5;
-        border-left: 5px solid var(--primary-color);
-    }
-    .summary-tile h6 {
-        font-size: 0.9rem;
-        color: var(--text-color-secondary);
-        font-weight: 600;
-        margin-bottom: 0.25rem;
-    }
-    .summary-tile p {
-        font-size: 1.1rem;
-        font-weight: 700;
-        margin-bottom: 0;
-        line-height: 1.2;
-    }
-
-
-    /* --- PLAN COMPARISON BAR STYLES --- */
-    .plan-comparison-bar {
-        background-color: var(--card-bg-color);
-        border-radius: 0.75rem;
-        padding: 1.5rem;
-        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
-    }
-    .plan-block {
-        text-align: center;
-        padding: 1.5rem;
-        border-radius: 0.5rem;
-        border: 2px solid transparent;
-        transition: all 0.3s ease;
-    }
-    .basic-plan {
-        background-color: #e6f4ea; /* Light Green background */
-        border-color: var(--success-color);
-    }
-    .advanced-plan {
-        background-color: #f7f7f7; /* Light Gray background */
-        border-color: var(--border-color);
-    }
-    .advanced-plan.upgrade-needed {
-        border-color: var(--danger-color);
-        background-color: #fbebeb; /* Light Red/Danger background */
-    }
-    .plan-block h5 {
-        font-weight: 700;
-        margin-bottom: 0.5rem;
-    }
-    .plan-block .feature-list li {
-        list-style: none;
-        padding: 0.2rem 0;
-        font-size: 0.9rem;
-    }
-    .feature-check {
-        color: var(--success-color);
-    }
-    .feature-limit {
-        color: var(--danger-color);
-    }
-    .current-badge {
-        position: absolute;
-        top: -15px;
-        left: 50%;
-        transform: translateX(-50%);
-        font-size: 0.75rem;
-        padding: 0.3em 0.8em;
-        border-radius: 50px;
-        background-color: var(--primary-color);
-        color: white;
-        font-weight: 700;
-    }
-    .mode-btn {
-        font-weight: 600;
-        transition: all 0.3s ease-in-out;
-    }
-
-    /* Form and Input Styling */
-    .form-group-floating {
-        position: relative;
-        margin-bottom: 1.5rem;
-    }
-    .form-control-custom, .form-select-custom {
-        display: block;
-        width: 100%;
-        padding: 1rem 1rem;
-        font-size: 1rem;
-        line-height: 1.5;
-        color: var(--text-color-primary);
-        background-color: var(--card-bg-color);
-        border: 1px solid var(--border-color);
-        border-radius: 8px;
-    }
-    .form-control-custom:focus, .form-select-custom:focus {
-        border-color: var(--primary-color);
-        box-shadow: 0 0 0 0.25rem rgba(62, 79, 71, 0.25);
-    }
-    .form-group-floating label {
-        position: absolute;
-        top: 0;
-        left: 0;
-        height: 100%;
-        padding: 1rem 1rem;
-        pointer-events: none;
-        transition: all 0.15s ease-in-out;
-        color: var(--text-color-secondary);
-        display: flex;
-        align-items: center;
-    }
-    .form-control-custom:focus ~ label,
-    .form-control-custom.has-value ~ label,
-    .form-select-custom:focus ~ label,
-    .form-select-custom.has-value ~ label {
-        transform: translateY(-50%) scale(0.85);
-        top: 0;
-        left: 0.5rem;
-        padding: 0 0.5rem;
-        background-color: var(--card-bg-color);
-        color: var(--primary-color);
-        height: auto;
-        width: auto;
-        border-radius: 4px;
-        font-weight: 500;
-        line-height: 1;
-    }
-    
-    /* Dropzone Styling */
-    .file-input-wrapper {
-        position: relative;
-        border: 3px dashed var(--border-color);
-        border-radius: 0.75rem;
-        padding: 2.5rem;
-        background-color: #fafafa;
-        cursor: pointer;
-        transition: border-color 0.2s, background-color 0.2s;
-    }
-    .file-input-wrapper:hover {
-        border-color: var(--primary-color);
-        background-color: #f0f4f2;
-    }
-    .file-input-wrapper input[type="file"] {
-        position: absolute;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        opacity: 0;
-        cursor: pointer;
-    }
-    .dropzone-text {
-        color: var(--text-color-secondary);
-        font-size: 1rem;
-    }
-    
-    /* PDF Preview */
-    .pdf-preview-section {
-        min-height: 400px;
-        padding: 0 !important;
-        overflow: hidden;
-        position: relative;
-    }
-    .pdf-embed {
-        width: 100%;
-        height: 100%;
-        border: none;
-    }
-    /* .pdf-placeholder {
-        position: absolute;
-        top: 0;
-        left: 0;
-        right: 0;
-        bottom: 0;
-        display: flex;
-        flex-direction: column;
-        justify-content: center;
-        align-items: center;
-        background-color: var(--background-color);
-        color: var(--text-color-secondary);
-    } */
-    
-    /* Preloader Enhancement */
-    #preloader {
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        background: rgba(255, 255, 255, 0.95); /* Slightly darker overlay */
-        display: none; /* Hidden by default */
-        justify-content: center;
-        align-items: center;
-        flex-direction: column;
-        z-index: 9999;
-    }
-    #preloader.show {
-        display: flex;
-    }
-    .spinner {
-        border: 8px solid rgba(0, 0, 0, 0.1);
-        border-top: 8px solid var(--primary-color); /* Use primary color */
-        border-radius: 50%;
-        width: 60px;
-        height: 60px;
-        animation: spin 1.2s linear infinite;
-    }
-    @keyframes spin {
-        0% { transform: rotate(0deg); }
-        100% { transform: rotate(360deg); }
-    }
-    .preloader-progress {
-        width: 300px;
-        max-width: 80%;
-        height: 8px;
-        background-color: #e9ecef;
-        border-radius: 4px;
-        margin: 20px 0 10px;
-        overflow: hidden;
-    }
-    .progress-bar {
-        height: 100%;
-        width: 0%;
-        background-color: var(--success-color);
-        transition: width 0.4s ease-in-out;
-        border-radius: 4px;
-    }
-    .preloader-text {
-        color: var(--text-color-primary);
-        font-weight: 500;
-    }
-    
-</style> -->
 <style>
     /* Custom CSS to improve layout and design */
 
@@ -411,7 +151,7 @@
     display: flex;
     /* color: orangered; */
     flex-direction: column;
-    justify-content: center;
+    justify: center;
     }
     /* Active style for Basic ATS (Use secondary color) */
     #basic-ats-btn.active {
@@ -596,16 +336,72 @@
         color: var(--text-color-primary);
         font-weight: 500;
     }
+
+    /* --- New CSS for Detailed Status --- */
+    .preloader-steps-container {
+        width: 90%;
+        max-width: 600px;
+        margin-top: 30px;
+        text-align: left;
+    }
+    .file-status-item {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 8px 15px;
+        margin-bottom: 8px;
+        border-radius: 6px;
+        background-color: var(--card-bg-color);
+        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+        border-left: 5px solid var(--border-color); /* Neutral state */
+    }
+    .file-status-item.pending {
+        border-left-color: var(--secondary-color);
+    }
+    .file-status-item.processing {
+        border-left-color: var(--warning-color);
+        box-shadow: 0 2px 8px rgba(255, 193, 7, 0.2);
+    }
+    .file-status-item.completed {
+        border-left-color: var(--success-color);
+    }
+    .file-status-item.error {
+        border-left-color: var(--danger-color);
+    }
+    .file-name {
+        font-weight: 500;
+        color: var(--text-color-primary);
+        flex-grow: 1;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        padding-right: 15px;
+    }
+    .status-badge {
+        font-size: 0.8rem;
+        padding: 4px 8px;
+        border-radius: 4px;
+        font-weight: 600;
+    }
+    .status-badge i {
+        width: 15px; /* Fixed width for icon alignment */
+    }
+    .spinner-sm {
+        width: 1rem;
+        height: 1rem;
+        margin-right: 5px;
+    }
+    /* Ensure the spinner is visible in the status badge */
+    .status-badge.bg-warning {
+        color: var(--text-color-primary) !important;
+    }
     
 </style>
 
-<!-- <div class="container container-main"> -->
-    
 <div class="card mb-4 shadow-sm" style="">
 
     <div class="card-body">
         <div class="row g-3">
-            <!-- Advanced AI Card -->
             <div class="col-4" >
                 <div class=" p-4 text-center h-70" 
                      data-mode="advanced_ai" id="advanced-ai-btn">
@@ -622,7 +418,6 @@
                 </div>
             </div>
             
-            <!-- Basic ATS Card -->
             <div class="col-md-4">
                 <div class="option-card p-4 text-center border rounded-4 mode-btn" 
                      data-mode="basic_ats" id="basic-ats-btn">
@@ -648,7 +443,6 @@
     </div>
 </div>
 
-<!-- Extra CSS -->
 <style>
     .option-card {
         cursor: pointer;
@@ -733,8 +527,7 @@
                                             <option value="{{ doc.id }}">{{ doc.title }}</option>
                                             {% endfor %}
                                         </select>
-                                        <!-- <label for="jobDescriptionSelect">Select Existing JD</label> -->
-                                    </div>
+                                        </div>
                                 </div>
                                 <div id="uploadJdSection" style="display: none;">
                                     <div class="file-input-wrapper mb-4">
@@ -1001,12 +794,8 @@
                                                 {% if analysis_result.semantic_score or analysis_result.keyword_score or analysis_result.final_scaled_score %}
                                                     <p class="text-break mb-1">
                                                         <strong>Semantic Score:</strong> &nbsp; <span style="color: orangered;">{{ analysis_result.semantic_score }}</span>
-                                                    <!-- </p> -->
-                                                    <!-- <p class="text-break mb-1"> -->
-                                                        <strong>Keyword Score:</strong> &nbsp; <span style="color: orangered;">{{ analysis_result.keyword_score }}</span>
-                                                    <!-- </p> -->
-                                                    <!-- <p class="text-break mb-1"> -->
-                                                        <strong>Final Scaled Score:</strong> &nbsp; <span style="color: orangered;">{{ analysis_result.final_scaled_score }}</span>
+                                                    <strong>Keyword Score:</strong> &nbsp; <span style="color: orangered;">{{ analysis_result.keyword_score }}</span>
+                                                    <strong>Final Scaled Score:</strong> &nbsp; <span style="color: orangered;">{{ analysis_result.final_scaled_score }}</span>
                                                     </p>
                                                 {% else %}
                                                     <p>No detailed summary provided by Basic ATS. Check log data for raw output.</p>
@@ -1017,12 +806,8 @@
 
                                     <h5 class="section-sub-title mt-4"><i class="fas fa-file-alt me-2"></i> Candidate Overview</h5>
                                     <div class="content-box fade-in-item mb-4">
-                                        <!-- {% if analysis_result.analysis_summary %} -->
-                                            <p class="text-break" style="font-size: 17px;">{{ analysis_result.candidate_overview|linebreaksbr }}</p>
-                                        <!-- {% else %} -->
-                                            <!-- <p>No detailed summary provided by Basic ATS. Check log data for raw output.</p> -->
-                                        <!-- {% endif %} -->
-                                    </div>
+                                        <p class="text-break" style="font-size: 17px;">{{ analysis_result.candidate_overview|linebreaksbr }}</p>
+                                        </div>
                                 {% endif %}
                             {% if analysis_result.mode != 'basic_ats' or analysis_mode != 'basic_ats' %}
                             <h4 class="section-title mt-5">Core Competency Assessment</h4>
@@ -1277,20 +1062,7 @@
                                 {% endfor %}
                             </ul>
                             <div class="d-flex justify-content-end mt-4 pt-3 border-top fade-in-item">
-                                <!-- <button type="button" class="btn btn-outline-secondary btn-lg me-3" 
-                                    {% if analysis_result.mode == 'basic_ats' %}disabled{% endif %}>
-                                    <i class="fas fa-database me-2"></i> Basis ATS
-                                </button> -->
-                                <!-- {% if analysis_result.id %}
-                                    <a href="{% url 'interview_status' candidate_id=analysis_result.id %}" class="btn btn-primary-custom btn-lg">
-                                        Next step <i class="fas fa-arrow-right btn-icon-right"></i>
-                                    </a>
-                                {% else %}
-                                    <button type="button" class="btn btn-secondary btn-lg" disabled>
-                                        Proceed to Interview (No Candidate ID) <i class="fas fa-arrow-right btn-icon-right"></i>
-                                    </button>
-                                {% endif %} -->
-                            </div>
+                                </div>
                         </div>
                         
                         {% endif %}
@@ -1345,8 +1117,14 @@
     <div class="preloader-progress">
         <div class="progress-bar" id="progressBar"></div>
     </div>
-    <p class="preloader-text" id="preloaderMessage">Analyzing Resume(s)...</p>
-</div>
+    <p class="preloader-text" id="preloaderMessage">Preparing to process...</p>
+
+    <div class="preloader-steps-container">
+        <h5 class="text-center text-muted mb-3" style="font-size: 1rem;">Individual Resume Status:</h5>
+        <div id="fileStatusList">
+            </div>
+    </div>
+    </div>
 
 {% endblock %}
 
@@ -1657,54 +1435,130 @@
             experienceTypeSelect.addEventListener('change', toggleExperienceFields);
         }
 
+        // --- NEW COMPLEX PRELOADER LOGIC START ---
         const resumeForm = document.getElementById('resumeForm');
         const preloader = document.getElementById('preloader');
         const preloaderMessage = document.getElementById('preloaderMessage');
         const progressBar = document.getElementById('progressBar');
+        const fileStatusList = document.getElementById('fileStatusList'); // NEW: Status list container
         const resultsSection = document.querySelector('.results-section');
+
 
         if (resumeForm) {
             resumeForm.addEventListener('submit', function(event) {
-                // Perform client-side validation check just before submission
+                const submitButton = this.querySelector('button[type="submit"]');
+
+                // 1. Perform client-side validation check just before submission
                 if (!this.checkValidity()) {
                     event.preventDefault();
                     // Optional: Scroll to the error or trigger browser validation display
                     return; 
                 }
                 
+                // Prevent the default submission now
                 event.preventDefault();
-                
-                preloader.classList.add('show');
-                
-                // Simulate server-side processing with a fake progress bar
-                let progress = 0;
-                const progressInterval = setInterval(() => {
-                    progress += 10;
-                    if (progress > 100) {
-                        clearInterval(progressInterval);
-                        progress = 100;
-                    }
-                    progressBar.style.width = progress + '%';
 
-                    if (progress === 10) {
-                        preloaderMessage.textContent = "Uploading resumes to the server...";
-                    } else if (progress === 30) {
-                        preloaderMessage.textContent = "Analyzing candidate files and job description...";
-                    } else if (progress === 60) {
-                        preloaderMessage.textContent = "Generating detailed analysis and scores for each profile...";
-                    } else if (progress === 90) {
-                        preloaderMessage.textContent = "Finalizing all reports and recommendations...";
-                    } else if (progress === 100) {
-                        preloaderMessage.textContent = "Analysis complete! Redirecting...";
-                        // Wait a moment for the animation to finish
-                        setTimeout(() => {
-                           // Submit the form for real after the animation finishes
-                           resumeForm.submit();
-                        }, 500); 
+                // Get the list of files for the detailed status
+                const filesToAnalyze = Array.from(document.getElementById('resumeInput').files);
+                if (filesToAnalyze.length === 0) {
+                    // This should be caught by checkValidity/required attribute, but good to have a fail-safe
+                    alert('Please upload at least one resume.');
+                    return;
+                }
+
+                // 2. CRITICAL: Disable button and show initial loading state
+                if (submitButton) {
+                    submitButton.disabled = true;
+                    submitButton.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>Processing...';
+                }
+                
+                // 3. Clear previous status and show preloader
+                fileStatusList.innerHTML = '';
+                progressBar.style.width = '0%';
+                preloader.classList.add('show');
+                preloaderMessage.textContent = 'Starting Batch Analysis...';
+
+
+                // 4. Initialize status elements for each file
+                const fileStatuses = filesToAnalyze.map(file => {
+                    const item = document.createElement('div');
+                    item.className = 'file-status-item pending';
+                    item.innerHTML = `
+                        <span class="file-name">${file.name}</span>
+                        <span class="status-badge bg-secondary text-white">
+                            <i class="fas fa-hourglass-start me-1"></i> Pending
+                        </span>
+                    `;
+                    fileStatusList.appendChild(item);
+                    return { element: item, name: file.name, status: 'pending' };
+                });
+
+                const totalFiles = fileStatuses.length;
+                // Total steps: 1 (Initial Setup) + 3 steps per file
+                const totalSteps = 1 + (totalFiles * 3); 
+                let currentStep = 0;
+
+                const startAnalysis = async () => {
+                    
+                    // --- Initial Step: Uploading/Setup ---
+                    currentStep++;
+                    preloaderMessage.textContent = `${currentStep}/${totalSteps}: Uploading files and setting up the analysis environment...`;
+                    progressBar.style.width = `${(currentStep / totalSteps) * 100}%`;
+                    await new Promise(resolve => setTimeout(resolve, 1000)); 
+
+                    // --- Sequential processing of each file ---
+                    for (let i = 0; i < totalFiles; i++) {
+                        const fileStatus = fileStatuses[i];
+                        const element = fileStatus.element;
+                        
+                        // --- Step 1: Parsing/Extraction ---
+                        currentStep++;
+                        element.classList.remove('pending');
+                        element.classList.add('processing');
+                        element.querySelector('.status-badge').className = 'status-badge bg-warning';
+                        element.querySelector('.status-badge').innerHTML = `<span class="spinner-border spinner-border-sm spinner-sm me-1" role="status" aria-hidden="true"></span> Parsing Data`;
+                        preloaderMessage.textContent = `${currentStep}/${totalSteps}: Extracting key data from ${fileStatus.name}...`;
+                        progressBar.style.width = `${(currentStep / totalSteps) * 100}%`;
+                        await new Promise(resolve => setTimeout(resolve, 1500)); // Simulate time
+
+                        // --- Step 2: LLM Analysis (The longest step) ---
+                        currentStep++;
+                        element.querySelector('.status-badge').innerHTML = `<span class="spinner-border spinner-border-sm spinner-sm me-1" role="status" aria-hidden="true"></span> AI Analysis`;
+                        preloaderMessage.textContent = `${currentStep}/${totalSteps}: Running LLM analysis and scoring for ${fileStatus.name}...`;
+                        progressBar.style.width = `${(currentStep / totalSteps) * 100}%`;
+                        await new Promise(resolve => setTimeout(resolve, 3000)); // Simulate LLM time
+                        
+                        // --- Step 3: Finalizing Report ---
+                        currentStep++;
+                        element.querySelector('.status-badge').className = 'status-badge bg-success text-white'; // Change color to primary/info for reporting
+                        element.querySelector('.status-badge').innerHTML = `<i class="fas fa-check-circle me-1"></i> Completed`;
+                        element.classList.remove('processing');
+                        element.classList.add('completed');
+                        preloaderMessage.textContent = `${currentStep}/${totalSteps}: Finalizing report for ${fileStatus.name} (${i + 1} of ${totalFiles})...`;
+                        progressBar.style.width = `${(currentStep / totalSteps) * 100}%`;
+
+                        // Add a short delay before moving to the next file
+                        if (i < totalFiles - 1) {
+                             await new Promise(resolve => setTimeout(resolve, 500)); 
+                        }
                     }
-                }, 400); // Update progress every 400ms
+
+                    // --- Final Completion ---
+                    preloaderMessage.textContent = `Batch Analysis Complete! Submitting data...`;
+                    progressBar.style.width = '100%';
+                    
+                    // Final submission after the simulation
+                    setTimeout(() => {
+                        // Submit the form for real
+                        resumeForm.submit();
+                    }, 500); 
+                };
+
+                startAnalysis();
             });
         }
+        // --- NEW COMPLEX PRELOADER LOGIC END ---
+
 
         if (resultsSection && resultsSection.dataset.analysisLoaded) {
             resultsSection.classList.add('show');

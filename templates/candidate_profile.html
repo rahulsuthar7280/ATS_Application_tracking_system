@@ -43,7 +43,7 @@
         overflow-x: hidden;
     }
     .container-main {
-        max-width: 1400px;
+        max-width: 1600px;
         width: 100%;
     }
     .page-heading {
@@ -788,25 +788,55 @@
             </div>
         </div>
         <div class="col-md-6">
-            <div class="modern-card h-100">
+            <div class="modern-card h-100 position-relative">
                 <h5 class="fw-bold mb-3"><i class="bi bi-robot me-2 text-primary"></i> Initiate AI Interview</h5>
-                <form method="post" action="" class="d-grid gap-3">
+                <form method="post" action="" class="d-grid gap-3 blur-disabled">
                     {% csrf_token %}
                     <input type="hidden" name="form_type" value="initiate_interview_form">
+
                     <div class="form-group">
                         <label for="id_phone_number" class="card-section-heading">Phone Number for Interview</label>
-                        <input type="text" name="phone_number" class="form-control form-control-lg mt-2" placeholder="e.g. +919876543210" required id="id_phone_number" value="{{ candidate.phone_no|default:'' }}">
+                        <input type="text" name="phone_number" class="form-control form-control-lg mt-2" 
+                            placeholder="e.g. +919876543210" required id="id_phone_number" 
+                            value="+91 {{ candidate.phone_no|default:'' }}" disabled>
                     </div>
-                    <button type="submit" class="btn ai-interview-btn">
+
+                    <button type="submit" class="btn ai-interview-btn" disabled>
                         <i class="bi bi-telephone-inbound me-2"></i> Start Interview Call
                     </button>
+
                     <p class="text-muted mt-3 mb-0">
                         <i class="bi bi-phone me-1"></i> Candidate Phone No.
-                        <span class="fw-bold text-dark ms-2">{{ candidate.phone_no|default:"N/A" }}</span>
+                        <span class="fw-bold text-dark ms-2">+91 {{ candidate.phone_no|default:"N/A" }}</span>
                     </p>
                 </form>
+
+                <!-- Upcoming Feature Badge -->
+                <span class="upcoming-feature-badge">Upcoming Feature</span>
             </div>
+            <style>
+                .blur-disabled {
+                    filter: blur(1px); /* blur content */
+                    pointer-events: none; /* disable interactions */
+                }
+
+                .upcoming-feature-badge {
+                    position: absolute;
+                    top: 10px;
+                    right: 10px;
+                    background-color: #0d6efd; /* blue */
+                    color: #fff;
+                    padding: 0.25rem 0.5rem;
+                    font-size: 20px;
+                    font-weight: 600;
+                    border-radius: 0.25rem;
+                    z-index: 10;
+                }
+
+            </style>
         </div>
+
+
         <div class="col-md-6">
             <div class="modern-card h-100">
                 <h5 class="fw-bold mb-3"><i class="bi bi-wallet2 me-2 text-success"></i> Finalize Decision & Salary</h5>
@@ -840,6 +870,15 @@
                                     <option value="Complete" {% if candidate.interview_status == 'Complete' %}selected{% endif %}>Complete</option>
                                     <option value="Cancelled" {% if candidate.interview_status == 'Cancelled' %}selected{% endif %}>Cancelled</option>
                                 </select>
+                            </div>
+                        </div>
+                        <div class="col-md-6 mt-3">
+                            <label for="id_interview_date" class="card-section-heading">Interview Date & Time</label>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="bi bi-calendar2-event"></i></span>
+                                <input type="datetime-local" name="interview_date" class="form-control form-control-lg"
+                                    id="id_interview_date"
+                                    value="{{ candidate.interview_date|date:'Y-m-d\\TH:i' }}">
                             </div>
                         </div>
                     </div>

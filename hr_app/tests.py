@@ -91,50 +91,94 @@ def is_header_or_title(text, job_role=""):
             
     return False
 
-def extract_candidate_info(text, job_role=""):
-    # ... (function body remains the same)
-    if nlp is None: return "N/A", "N/A", "N/A"
+import os, re
 
+def extract_candidate_info(text, job_role="", resume_filename=""):
+    """
+    Extract full name, email, and phone number from resume text.
+    Strong preference for real human-looking names.
+    Fallback: derive clean name from email username.
+    """
+
+    # ------------------ EMAIL ------------------
     email_match = re.search(r"[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}", text)
-    email = email_match.group(0) if email_match else "N/A"
+    email = email_match.group(0).strip() if email_match else "N/A"
 
-    phone_match = re.search(r'(\+?\d{1,3}[-. ]?)?\(?\d{3}\)?[-. ]?\d{3}[-. ]?\d{4}', text)
-    phone = phone_match.group(0) if phone_match else "N/A"
+    # ------------------ PHONE ------------------
+    phone_match = re.search(
+        r'(\+?\d{1,3}[\s\-\.]?)?\(?\d{2,4}\)?[\s\-\.]?\d{3,4}[\s\-\.]?\d{3,4}', text
+    )
+    phone = phone_match.group(0).strip() if phone_match else "N/A"
 
-    name = "N/A"
-    
-    significant_lines = [line.strip() for line in text.split('\n') if line.strip() and len(line.strip()) > 5][:3]
+    # ------------------ TEXT CLEANUP ------------------
+    lines = [re.sub(r'[^A-Za-z\s]', ' ', line).strip() for line in text.split("\n")]
+    lines = [line for line in lines if line]
 
-    for line in significant_lines:
-        words = line.split()
-        if not (2 <= len(words) <= 4):
-            continue
-            
-        is_title_cased = all(word.istitle() or not word.isalpha() for word in words)
-        is_all_caps = line.isupper() and all(word.isalpha() for word in words)
-        
-        if (is_title_cased or is_all_caps) and not is_header_or_title(line, job_role):
-            name = line
-            return name, email, phone
+    # Words that *cannot* be a name
+    banned_words = {
+        "python", "django", "flask", "developer", "engineer", "java", "sql", "html",
+        "css", "javascript", "react", "node", "git", "github", "aws", "docker",
+        "api", "resume", "curriculum", "vitae", "profile", "objective", "skills",
+        "education", "experience", "project"
+    }
 
-    doc = nlp(text[:1000])
-    person_entities = [
-        ent.text.strip() for ent in doc.ents 
-        if ent.label_ == "PERSON" and len(ent.text.strip().split()) >= 2
-    ]
-    
-    if person_entities:
-        best_name = None
-        for person in person_entities:
-            if 2 <= len(person.split()) <= 4 and not is_header_or_title(person, job_role):
-                best_name = person
-                break 
+    probable_name = "N/A"
 
-        if best_name:
-            name = best_name
-            return name, email, phone
-            
-    return name, email, phone
+    # ------------------ STEP 1: spaCy PERSON ------------------
+    if nlp is not None:
+        doc = nlp(" ".join(lines[:50]))
+        persons = [ent.text.strip() for ent in doc.ents if ent.label_ == "PERSON"]
+        if persons:
+            probable_name = persons[0]
+
+    # ------------------ STEP 2: Manual header scan ------------------
+    if probable_name == "N/A":
+        for line in lines[:15]:
+            if any(w.lower() in banned_words for w in line.lower().split()):
+                continue
+            words = line.split()
+            if 2 <= len(words) <= 4 and all(w[0].isupper() for w in words if w.isalpha()):
+                probable_name = " ".join(words)
+                break
+
+    # ------------------ STEP 3: Validate name ------------------
+    if (
+        probable_name == "N/A"
+        or len(probable_name) < 3
+        or any(w.lower() in banned_words for w in probable_name.lower().split())
+    ):
+        probable_name = "N/A"
+
+    # ------------------ STEP 4: Email-based fallback ------------------
+    if probable_name == "N/A" and email != "N/A":
+        username = email.split("@")[0]
+        username = re.sub(r'[\d\._\-]+', ' ', username)
+        username = re.sub(r'\s+', ' ', username).strip()
+
+        parts = [p.capitalize() for p in username.split() if len(p) > 1]
+
+        # if single chunk like "chiragmodi" → split mid into two
+        if len(parts) == 1 and len(parts[0]) > 6:
+            halves = re.findall(r'[A-Z]?[a-z]+', parts[0]) or [parts[0][:5], parts[0][5:]]
+            probable_name = " ".join(h.capitalize() for h in halves[:2])
+        elif len(parts) >= 2:
+            probable_name = " ".join(parts[:2])
+        elif len(parts) == 1:
+            probable_name = parts[0]
+
+    # ------------------ STEP 5: Filename fallback ------------------
+    if probable_name == "N/A" and resume_filename:
+        base = os.path.basename(resume_filename)
+        base = re.sub(r'[_\-\.]', ' ', os.path.splitext(base)[0])
+        probable_name = " ".join(w.capitalize() for w in base.split()[:2])
+
+    # ------------------ FINAL CLEANUP ------------------
+    probable_name = re.sub(r'\s+', ' ', probable_name).strip()
+    if any(w.lower() in banned_words for w in probable_name.lower().split()):
+        probable_name = "N/A"
+
+    return probable_name or "N/A", email, phone
+
 
 def extract_date_ranges(text):
     # ... (function body remains the same)
@@ -208,42 +252,100 @@ def calculate_duration_in_years_and_months(start_date, end_date):
     months = total_months % 12
     return years, months
 
+import re
+from datetime import datetime
+
+# --------------------- Helper functions ---------------------
+
+def parse_date_str(date_str):
+    """Convert fuzzy month-year strings into datetime objects."""
+    date_str = date_str.strip().replace(".", "")
+    today = datetime.today()
+
+    # If mentions "present" or "current", return today's date
+    if re.search(r'present|current|till date|now', date_str, re.IGNORECASE):
+        return today
+
+    patterns = [
+        ("%b %Y", r"^[A-Za-z]{3,}\s+\d{4}$"),  # Jan 2020
+        ("%B %Y", r"^[A-Za-z]{3,}\s+\d{4}$"),  # January 2020
+        ("%m/%Y", r"^\d{1,2}/\d{4}$"),         # 05/2020
+        ("%Y", r"^\d{4}$"),                    # 2020
+    ]
+
+    for fmt, regex in patterns:
+        try:
+            return datetime.strptime(date_str, fmt)
+        except Exception:
+            continue
+    return None
+
+
+def extract_date_ranges(text):
+    """Extract all date ranges from the resume text."""
+    # Common range patterns
+    date_pattern = (
+        r"(?P<start>(?:Jan(?:uary)?|Feb(?:ruary)?|Mar(?:ch)?|Apr(?:il)?|"
+        r"May|Jun(?:e)?|Jul(?:y)?|Aug(?:ust)?|Sep(?:tember)?|"
+        r"Oct(?:ober)?|Nov(?:ember)?|Dec(?:ember)?|\d{1,2}[\/\-]\d{4}|\d{4}))"
+        r"\s*(?:to|\-|–|—|until|till|upto)\s*"
+        r"(?P<end>(?:Present|Current|Now|Till Date|"
+        r"Jan(?:uary)?|Feb(?:ruary)?|Mar(?:ch)?|Apr(?:il)?|"
+        r"May|Jun(?:e)?|Jul(?:y)?|Aug(?:ust)?|Sep(?:tember)?|"
+        r"Oct(?:ober)?|Nov(?:ember)?|Dec(?:ember)?|\d{1,2}[\/\-]\d{4}|\d{4}))"
+    )
+
+    matches = re.findall(date_pattern, text, re.IGNORECASE)
+    ranges = []
+
+    for start_str, end_str in matches:
+        start_date = parse_date_str(start_str)
+        end_date = parse_date_str(end_str)
+        if start_date and end_date and start_date <= end_date:
+            ranges.append((start_date, end_date))
+    return ranges
+
+
+def calculate_duration_in_years_and_months(start, end):
+    """Return duration between two datetimes as (years, months)."""
+    months = (end.year - start.year) * 12 + (end.month - start.month)
+    years = months // 12
+    rem_months = months % 12
+    return years, rem_months
+
+# --------------------- Main Function ---------------------
+
 def extract_total_experience(resume_text):
-    # ... (function body remains the same)
-    work_exp_text = get_work_experience_text(resume_text)
+    work_exp_text = resume_text  # you can call get_work_experience_text(resume_text) if needed
     date_ranges = extract_date_ranges(work_exp_text)
-    
+
     if not date_ranges:
         return 0.0, "N/A"
 
+    # Sort & merge overlapping ranges
     date_ranges.sort(key=lambda x: x[0])
+    merged = []
+    cur_start, cur_end = date_ranges[0]
 
-    merged_ranges = []
-    
-    if date_ranges:
-        current_start, current_end = date_ranges[0]
+    for next_start, next_end in date_ranges[1:]:
+        if next_start <= cur_end:
+            cur_end = max(cur_end, next_end)
+        else:
+            merged.append((cur_start, cur_end))
+            cur_start, cur_end = next_start, next_end
+    merged.append((cur_start, cur_end))
 
-        for next_start, next_end in date_ranges[1:]:
-            if next_start <= current_end:
-                current_end = max(current_end, next_end)
-            else:
-                merged_ranges.append((current_start, current_end))
-                current_start, current_end = next_start, next_end
+    # Total duration
+    total_months = 0
+    for s, e in merged:
+        y, m = calculate_duration_in_years_and_months(s, e)
+        total_months += y * 12 + m
 
-        merged_ranges.append((current_start, current_end))
+    total_years = total_months / 12
+    y_int = int(total_years)
+    m_int = int(round((total_years - y_int) * 12))
+    experience_str = f"{y_int} Years, {m_int} Months"
 
-    total_duration_months = 0
-    for start, end in merged_ranges:
-        years, months = calculate_duration_in_years_and_months(start, end)
-        total_duration_months += (years * 12) + months
-
-    total_years = total_duration_months / 12.0
-    
-    years_int = int(total_years)
-    months_int = int(round((total_years - years_int) * 12))
-    
-    experience_str = f"{years_int} Years, {months_int} Months"
-    
     return round(total_years, 1), experience_str
 
 def extract_required_experience(jd_text):
@@ -511,7 +613,7 @@ def analyze_resume(resume_file_obj, job_description_file_obj, job_role="general 
 if __name__ == '__main__':
     # !!! --- IMPORTANT: UPDATE THESE FILE PATHS TO MATCH YOUR LOCAL FILES --- !!!
     JD_FILE_PATH = r"C:\Users\rahul.suthar\Downloads\JD-202402-Python-Developer.pdf"
-    RESUME_FILE_PATH = r"C:\Users\rahul.suthar\Downloads\Mr.Rahul_Suthar_Resume.pdf"
+    RESUME_FILE_PATH = r"C:\Users\rahul.suthar\Downloads\Chirag Modi (1) (1).pdf"
     JOB_TITLE = "Python Developer"
     
     print("--- ATS Analysis Tool Initializing ---")
