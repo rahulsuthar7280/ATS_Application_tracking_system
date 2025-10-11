@@ -121,3 +121,4 @@ sentence-transformers
 Pillow
 pdf2image
 pytesseract
+gunicorn==22.0.0
