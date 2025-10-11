@@ -1,4 +1,5 @@
 {
+  "version": 2,
   "builds": [
     {
       "src": "Application_tracking_system/wsgi.py",
@@ -11,8 +12,19 @@
   ],
   "routes": [
     {
+      "src": "/static/(.*)",
+      "dest": "/static/$1"
+    },
+    {
       "src": "/(.*)",
       "dest": "Application_tracking_system/wsgi.py"
     }
-  ]
+  ],
+  "env": {
+    "DJANGO_SETTINGS_MODULE": "Application_tracking_system.settings",
+    "PYTHONUNBUFFERED": "1",
+    "DEBUG": "True",
+    "SECRET_KEY": "django-insecure-dg*kx70rcfr1ve@n!5i2umhxg0#7g1z35u3-$ta_0%ih^x!0r&"
+  },
+  "buildCommand": "pip install --no-cache-dir -r requirements.txt && python manage.py collectstatic --noinput"
 }
