@@ -26,5 +26,5 @@
     "DEBUG": "True",
     "SECRET_KEY": "django-insecure-dg*kx70rcfr1ve@n!5i2umhxg0#7g1z35u3-$ta_0%ih^x!0r&"
   },
-  "buildCommand": "pip install --no-cache-dir -r requirements.txt && python manage.py collectstatic --noinput"
+  "buildCommand": "pip install --no-cache-dir -r requirement.txt && python manage.py collectstatic --noinput"
 }
