@@ -118,3 +118,6 @@ PyPDF2
 python-docx
 spacy
 sentence-transformers
+Pillow
+pdf2image
+pytesseract
