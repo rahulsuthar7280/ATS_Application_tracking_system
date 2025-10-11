@@ -80,7 +80,7 @@ from django.contrib.auth import get_user_model
 
 
 from django.shortcuts import get_object_or_404
-# from sentence_transformers import SentenceTransformer, util
+from sentence_transformers import util
 import os
 
 from django.utils.dateparse import parse_date

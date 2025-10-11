@@ -118,3 +118,4 @@ PyPDF2
 python-docx
 spacy
 gunicorn
+sentence-transformers
