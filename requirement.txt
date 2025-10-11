@@ -119,3 +119,4 @@ python-docx
 spacy
 sentence-transformers
 whitenoise
+collectstatic 
