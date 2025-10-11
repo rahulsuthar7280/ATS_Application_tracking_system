@@ -2,7 +2,7 @@ acres==0.5.0
 annotated-types==0.7.0
 anyio==4.10.0
 asgiref==3.9.1
-blis==1.3.0
+blis==0.7.9
 cachetools==5.5.2
 catalogue==2.0.10
 certifi==2025.8.3
@@ -21,7 +21,7 @@ docx2txt==0.9
 etelemetry==0.3.1
 filelock==3.19.1
 filetype==1.2.0
-fitz==1.0.0  # Please verify the version, `fitz` might be a part of `PyMuPDF`
+fitz
 google-api-core==2.25.1
 google-api-python-client==2.179.0
 google-auth==2.40.3
@@ -43,6 +43,7 @@ jsonpointer==3.0.0
 langchain==0.3.26
 langchain-core==0.3.75
 langchain-text-splitters==0.3.10
+langchain-google-genai
 langcodes==3.5.0
 langsmith==0.4.21
 language_data==1.3.0
@@ -56,12 +57,12 @@ murmurhash==1.0.13
 networkx==3.5
 nibabel==5.3.2
 nipype==1.10.0
-numpy==1.23.3  # Use a valid version of numpy
+numpy==2.3.2
 orjson==3.11.3
 packaging==25.0
 pandas==2.3.2
 pathlib==1.0.1
-phonenumbers==8.13.2  # Added a version
+phonenumbers
 preshed==3.0.10
 proto-plus==1.26.1
 protobuf==4.23.4
@@ -106,17 +107,15 @@ wasabi==1.1.3
 weasel==0.4.1
 wrapt==1.17.3
 zstandard==0.24.0
-google-genai==1.7.0  # Please verify if this is available in PyPI or use an alternative
-frontend  # Needs to be replaced with a valid package name or removed
-tools  # Needs to be replaced with a valid package name or removed
-reportlab==3.6.12  # Valid reportlab version
-selenium==4.7.0  # Added version for compatibility
-webdriver-manager==3.8.5  # Added version for compatibility
-PyPDF2==3.0.0  # Updated version for PyPDF2
-python-docx==0.8.11  # Updated version
-spacy==3.5.0  # Latest stable version
-sentence-transformers==2.2.2  # Latest stable version
-Pillow==10.4.0
-pdf2image==1.17.0
-pytesseract==0.3.13
-gunicorn==22.0.0
+google-genai==1.7.0
+google-generativeai
+frontend
+tools
+reportlab
+selenium
+webdriver-manager
+PyPDF2
+python-docx
+spacy==3.7.4
+gunicorn
+sentence-transformers
