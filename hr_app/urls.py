@@ -83,7 +83,7 @@ urlpatterns = [
     # path('results/<uuid:email_id>/<str:analysis_type>/<uuid:job_description_id>/', views.analysis_page, name='analysis_page_with_jd'),
     path('calendar_scheduler/', views.calendar_scheduler, name='calendar_scheduler'),
 
-    path('post-jobs/', views.post_jobs, name='post_jobs_view'),
+    # path('post-jobs/', views.post_jobs, name='post_jobs_view'),
 
     path('career_portal/', views.list_careers, name='career_portal'),
     
