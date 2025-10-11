@@ -1,0 +1,18 @@
+{
+  "builds": [
+    {
+      "src": "Applicatiton_tracking_system/wsgi.py",
+      "use": "@vercel/python",
+      "config": {
+        "maxLambdaSize": "50mb",
+        "runtime": "python3.11"
+      }
+    }
+  ],
+  "routes": [
+    {
+      "src": "/(.*)",
+      "dest": "Applicatiton_tracking_system/wsgi.py"
+    }
+  ]
+}

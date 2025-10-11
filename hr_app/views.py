@@ -41,7 +41,6 @@ import google.api_core.exceptions
 import os
 import logging
 from hr_app.UserCreationForm import AdminUserCreationForm
-from hr_app.linkedin_multi_poster import post_jobs_to_linkedin
 from hr_app.models import EmailConfiguration
 import email
 import imaplib
@@ -3497,41 +3496,41 @@ from selenium.webdriver.common.by import By
 
 
 
-@login_required
-def post_jobs(request):
-    """
-    A Django view to retrieve job descriptions from the database
-    and post them to LinkedIn.
-    """
-    try:
-        # Fetch all job descriptions from the database.
-        # This is a simplified query; you can add filters (e.g., jobs not yet posted).
-        jobs_to_post = JobDescriptionDocument.objects.all()
+# @login_required
+# def post_jobs(request):
+#     """
+#     A Django view to retrieve job descriptions from the database
+#     and post them to LinkedIn.
+#     """
+#     try:
+#         # Fetch all job descriptions from the database.
+#         # This is a simplified query; you can add filters (e.g., jobs not yet posted).
+#         jobs_to_post = JobDescriptionDocument.objects.all()
 
-        # Convert the Django queryset to a list of dictionaries
-        jobs_data = list(jobs_to_post.values(
-            'title', 'company_name', 'job_level', 'employment_type',
-            'country', 'state', 'city', 'overview', 'responsibilities',
-            'required_skills', 'preferred_skills', 'education_experience',
-            'benefits'
-        ))
+#         # Convert the Django queryset to a list of dictionaries
+#         jobs_data = list(jobs_to_post.values(
+#             'title', 'company_name', 'job_level', 'employment_type',
+#             'country', 'state', 'city', 'overview', 'responsibilities',
+#             'required_skills', 'preferred_skills', 'education_experience',
+#             'benefits'
+#         ))
 
-        # Check if any jobs were found
-        if not jobs_data:
-            return HttpResponse("No job descriptions found to post.", status=200)
+#         # Check if any jobs were found
+#         if not jobs_data:
+#             return HttpResponse("No job descriptions found to post.", status=200)
 
-        # Call the Selenium function to post the jobs
-        post_jobs_to_linkedin(
-            jobs_data=jobs_data,
-            username="rahulsuthar7280@gmail.com",
-            password="rahul@7280"
-        )
+#         # Call the Selenium function to post the jobs
+#         post_jobs_to_linkedin(
+#             jobs_data=jobs_data,
+#             username="rahulsuthar7280@gmail.com",
+#             password="rahul@7280"
+#         )
 
-        return HttpResponse(f"Successfully started the job posting process for {len(jobs_data)} jobs.", status=200)
+#         return HttpResponse(f"Successfully started the job posting process for {len(jobs_data)} jobs.", status=200)
     
-    except Exception as e:
-        # In a real-world scenario, you would log this error and return a more user-friendly message.
-        return HttpResponse(f"An error occurred while trying to post the jobs: {str(e)}", status=500)
+#     except Exception as e:
+#         # In a real-world scenario, you would log this error and return a more user-friendly message.
+#         return HttpResponse(f"An error occurred while trying to post the jobs: {str(e)}", status=500)
 
 
 
