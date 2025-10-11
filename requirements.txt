@@ -118,6 +118,7 @@ PyPDF2
 python-docx
 spacy
 sentence-transformers
-whitenoise==2.1.0
+whitenoise==6.11.0
 collectstatic
 gunicorn
+
