@@ -116,3 +116,6 @@ selenium
 webdriver-manager
 PyPDF2
 python-docx
+spacy
+sentence-transformers
+whitenoise
