@@ -55,3 +55,4 @@ wrapt
 # Selenium if using browser automation
 selenium
 webdriver-manager
+google.generativeai
