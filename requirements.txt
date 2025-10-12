@@ -114,3 +114,5 @@ python-docx
 spacy
 gunicorn
 sentence-transformers
+google.generativeai
+
