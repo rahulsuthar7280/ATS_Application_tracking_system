@@ -61,4 +61,5 @@ pandas
 numpy
 pypdf
 langchain-google-genai
+langchain
 
