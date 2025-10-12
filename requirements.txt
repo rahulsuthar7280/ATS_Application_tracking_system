@@ -62,4 +62,5 @@ numpy
 pypdf
 langchain-google-genai
 langchain
+spacy
 
