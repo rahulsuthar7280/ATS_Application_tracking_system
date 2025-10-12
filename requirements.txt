@@ -59,4 +59,5 @@ google.generativeai
 phonenumbers
 pandas
 numpy
+pypdf
 
