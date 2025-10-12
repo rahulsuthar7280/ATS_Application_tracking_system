@@ -60,4 +60,5 @@ phonenumbers
 pandas
 numpy
 pypdf
+langchain-google-genai
 
