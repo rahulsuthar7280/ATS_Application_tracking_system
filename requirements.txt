@@ -56,3 +56,5 @@ wrapt
 selenium
 webdriver-manager
 google.generativeai
+phonenumbers
+
