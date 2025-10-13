@@ -64,4 +64,5 @@ langchain-google-genai
 langchain
 spacy
 sentence-transformers
+reportlab
 
