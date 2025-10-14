@@ -62,7 +62,8 @@ numpy
 pypdf
 langchain-google-genai
 langchain
-spacy
+#spacy
 sentence-transformers
 reportlab
-
+spacy==3.6.1
+en-core-web-sm==3.6.0
