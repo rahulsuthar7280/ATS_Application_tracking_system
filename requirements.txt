@@ -61,13 +61,14 @@ phonenumbers
 pandas
 
 # AI / NLP
-numpy==1.26.4
-spacy==3.6.1
-sentence-transformers==2.2.2
-langchain==0.1.0
-langchain-google-genai==0.0.9
-reportlab==4.0.4
-huggingface_hub==0.16.4
+numpy
+spacy
+sentence-transformers
+langchain
+langchain-google-genai
+reportlab
+huggingface_hub
+
 
 
 
