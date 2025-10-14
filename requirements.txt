@@ -26,33 +26,33 @@ charset-normalizer
 idna
 
 # Google API (if used)
-google-api-python-client==2.86.0
-google-auth==2.22.0
-google-auth-httplib2==0.1.0
-google-api-core==2.11.0
-googleapis-common-protos==1.59.0
-google.generativeai==0.0.2
+google-api-python-client
+google-auth
+google-auth-httplib2
+google-api-core
+googleapis-common-protos
+google.generativeai
 
 # Utilities
-python-dateutil==2.9.1
-PyYAML==6.0
-pydot==1.4.2
-tqdm==4.66.1
-rich==13.5.3
-colorama==0.4.6
-click==8.2.2
-wrapt==1.15.0
+python-dateutil
+PyYAML
+pydot
+tqdm
+rich
+colorama
+click
+wrapt
 
 # Parsing / Serialization
-pydantic==2.5.1
-pyparsing==3.1.1
-typing-extensions==4.7.1
-typing-inspection==0.8.0
+pydantic
+pyparsing
+typing-extensions
+typing-inspection
 
 # Other
-pathlib==1.0.1
-tzdata==2025.3
-pytz==2025.7
+pathlib
+tzdata
+pytz
 
 # Selenium if using browser automation
 selenium==4.18.1
@@ -67,4 +67,5 @@ sentence-transformers==2.2.2
 langchain==0.1.0
 langchain-google-genai==0.0.9
 reportlab==4.0.4
+
 
