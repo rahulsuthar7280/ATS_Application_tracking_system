@@ -58,14 +58,15 @@ webdriver-manager
 google.generativeai
 phonenumbers
 pandas
-numpy==1.26.4
+numpy
 pypdf
 langchain-google-genai
 langchain
-#spacy
+spacy
 sentence-transformers
 reportlab
-spacy==3.6.1
+
+
 
 
 
