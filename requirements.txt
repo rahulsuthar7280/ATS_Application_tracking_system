@@ -55,10 +55,10 @@ tzdata
 pytz
 
 # Selenium if using browser automation
-selenium==4.18.1
-webdriver-manager==3.8.6
-phonenumbers==8.14.13
-pandas==2.2.3
+selenium
+webdriver-manager
+phonenumbers
+pandas
 
 # AI / NLP
 numpy==1.26.4
@@ -67,5 +67,6 @@ sentence-transformers==2.2.2
 langchain==0.1.0
 langchain-google-genai==0.0.9
 reportlab==4.0.4
+
 
 
