@@ -1,7 +1,7 @@
 # Django framework
 Django==4.2.25
 gunicorn==21.2.0
-django-widget-tweaks==1.4.13
+django-widget-tweaks==1.5.0
 sqlparse==0.4.4
 
 # Templating & rendering
