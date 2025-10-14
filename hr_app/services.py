@@ -598,21 +598,41 @@ import docx
 import os 
 
 # --- Configuration & Setup (Unchanged) ---
+# logging.basicConfig(level=logging.INFO, format='%(levelname)s: %(message)s')
+# SEMANTIC_MODEL_NAME = "all-mpnet-base-v2" 
+# SPACY_MODEL_NAME = "en_core_web_sm" 
+
+# nlp = None
+# embedding_model = None
+
+# try:
+#     nlp = spacy.load(SPACY_MODEL_NAME) 
+#     embedding_model = SentenceTransformer(SEMANTIC_MODEL_NAME)
+#     logging.info(f"Loaded Spacy model: {SPACY_MODEL_NAME} and SentenceTransformer model: {SEMANTIC_MODEL_NAME}")
+# except OSError as e:
+#     logging.error(f"Model loading failed. Ensure '{SPACY_MODEL_NAME}' is downloaded and files are accessible. Error: {e}")
+#     nlp = None
+#     embedding_model = None
+
+from spacy.cli import download
 logging.basicConfig(level=logging.INFO, format='%(levelname)s: %(message)s')
-SEMANTIC_MODEL_NAME = "all-mpnet-base-v2" 
-SPACY_MODEL_NAME = "en_core_web_sm" 
+
+SEMANTIC_MODEL_NAME = "all-mpnet-base-v2"
+SPACY_MODEL_NAME = "en_core_web_sm"
 
 nlp = None
 embedding_model = None
 
 try:
-    nlp = spacy.load(SPACY_MODEL_NAME) 
+    nlp = spacy.load(SPACY_MODEL_NAME)
     embedding_model = SentenceTransformer(SEMANTIC_MODEL_NAME)
     logging.info(f"Loaded Spacy model: {SPACY_MODEL_NAME} and SentenceTransformer model: {SEMANTIC_MODEL_NAME}")
-except OSError as e:
-    logging.error(f"Model loading failed. Ensure '{SPACY_MODEL_NAME}' is downloaded and files are accessible. Error: {e}")
-    nlp = None
-    embedding_model = None
+except OSError:
+    logging.warning(f"Spacy model '{SPACY_MODEL_NAME}' not found. Downloading automatically...")
+    download(SPACY_MODEL_NAME)
+    nlp = spacy.load(SPACY_MODEL_NAME)
+    embedding_model = SentenceTransformer(SEMANTIC_MODEL_NAME)
+    logging.info(f"Successfully downloaded and loaded Spacy model: {SPACY_MODEL_NAME}")
 
 
 # --- Constants (Unchanged) ---
