@@ -32,14 +32,13 @@ DEBUG = True
 #     "https://application-tracking-system-3haf.onrender.com"
 # ]
 ALLOWED_HOSTS = [
-    os.getenv("RAILWAY_STATIC_URL", "localhost"),
+    "atsapplicationtrackingsystem-production.up.railway.app",
     "localhost",
     "127.0.0.1",
-    "*"
 ]
 
 CSRF_TRUSTED_ORIGINS = [
-    f"https://{os.getenv('RAILWAY_STATIC_URL', 'localhost')}",
+    "https://atsapplicationtrackingsystem-production.up.railway.app",
 ]
 
 # Application definition
