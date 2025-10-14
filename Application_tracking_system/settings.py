@@ -27,9 +27,19 @@ SECRET_KEY = 'django-insecure-dg*kx70rcfr1ve@n!5i2umhxg0#7g1z35u3-$ta_0%ih^x!0r&
 DEBUG = True
 
 # ALLOWED_HOSTS = ["*", "https://application-tracking-system-3haf.onrender.com"]
-ALLOWED_HOSTS = ['.vercel.app', 'localhost','*']
+# ALLOWED_HOSTS = ['.vercel.app', 'localhost','*']
+# CSRF_TRUSTED_ORIGINS = [
+#     "https://application-tracking-system-3haf.onrender.com"
+# ]
+ALLOWED_HOSTS = [
+    os.getenv("RAILWAY_STATIC_URL", "localhost"),
+    "localhost",
+    "127.0.0.1",
+    "*"
+]
+
 CSRF_TRUSTED_ORIGINS = [
-    "https://application-tracking-system-3haf.onrender.com"
+    f"https://{os.getenv('RAILWAY_STATIC_URL', 'localhost')}",
 ]
 
 # Application definition
