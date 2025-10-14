@@ -18,9 +18,9 @@ pypdf==3.15.1
 
 # HTTP / APIs
 requests==2.31.0
-httpx==0.26.1
+httpx==0.27.5
 urllib3==2.0.5
-httpcore==0.17.0
+httpcore==0.18.1
 certifi==2025.8.3
 charset-normalizer==3.4.3
 idna==3.4
