@@ -1,9 +1,230 @@
 {% extends 'base.html' %}
+{% load static %}
 
 {% block title %}Incoming Applications{% endblock %}
 
 {% block content %}
+<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" rel="stylesheet">
+<style>
+    /* ------------------------------------------- */
+    /* === CUSTOM COLOR PALETTE IMPLEMENTATION === */
+    /* ------------------------------------------- */
+    :root {
+        --color-primary: #3e4f47; /* Dark Slate/Green */
+        --color-accent: orangered; /* Action/Danger */
+        --color-neutral: #bab3a9; /* Muted Tan */
+        --color-dark-text: #333333; /* Dark Gray for general text/outline */
+    }
+
+    /* Override Bootstrap primary color for table header and other components */
+    .bg-primary {
+        background-color: var(--color-primary) !important;
+    }
+    .text-primary {
+        color: var(--color-primary) !important;
+    }
+    
+    /* ------------------------------------------- */
+    /* === TABLE FORMAT IMPROVEMENTS === */
+    /* ------------------------------------------- */
+    
+    /* Ensure outer container has rounded corners */
+    .rounded-3 {
+        border-radius: 0.5rem !important;
+        overflow: hidden; /* Crucial for rounded corners on inner table elements */
+    }
+
+    /* Table Header Styling */
+    .table thead th {
+        vertical-align: middle;
+        white-space: nowrap; 
+        background-color: var(--color-primary); 
+        color: white;
+        /* Added vertical padding for a cleaner header bar */
+        padding-top: 0.75rem; 
+        padding-bottom: 0.75rem;
+    }
+    
+    /* Add a subtle border to separate rows more clearly for a cleaner look */
+    /* This overrides the default minimal striped look */
+    .table-striped tbody tr {
+        border-top: 1px solid #e9ecef; /* Light gray border */
+    }
+
+    .table-hover tbody tr:hover {
+        background-color: #f5f5f5;
+    }
+
+    /* Center text in key score/action columns for better visual balance */
+    .table thead th:nth-child(5), /* Aggregate Score Header */
+    .table tbody td:nth-child(5), /* Aggregate Score Data */
+    .table tbody td:nth-child(8), /* Basic ATS Score */
+    .table tbody td:nth-child(9), /* Advanced ATS */
+    .table tbody td:nth-child(10), /* View Profile */
+    .table tbody td:nth-child(11), /* Resume */
+    .table tbody td:nth-child(12) { /* Actions */
+        text-align: center;
+    }
+
+    /* Score Badge Styling (VISUALLY IMPLEMENTED) */
+    .badge {
+        font-size: 0.85em;
+        padding: 0.4em 0.6em;
+        min-width: 80px; /* Reduced min-width slightly for tighter columns */
+        display: inline-flex; 
+        align-items: center;
+        justify-content: center;
+        font-weight: 600;
+        border-radius: 0.35rem; 
+    }
+    .score-badge-high { background-color: #28a745; color: white; } /* Green */
+    .score-badge-medium { background-color: #ffc107; color: #343a40; } /* Yellow/Orange */
+    .score-badge-low { background-color: var(--color-accent); color: white; } /* Orangered/Red */
+
+
+    /* Filter Button Styles (Unchanged) */
+    .btn-filter-date, .btn-filter-source, .btn-filter-ats {
+        background-color: var(--color-neutral); /* Muted Tan for inactive */
+        color: var(--color-dark-text); /* Dark text */
+        border: 1px solid var(--color-neutral);
+        font-weight: 500;
+        padding: 0.25rem 0.6rem;
+    }
+    .btn-filter-date.active, .btn-filter-source.active, .btn-filter-ats.active {
+        background-color: var(--color-primary); /* Dark Slate/Green for active */
+        color: white;
+        border-color: var(--color-primary);
+    }
+    .filter-group {
+        display: flex;
+        align-items: center;
+        margin-right: 1.5rem !important;
+    }
+    .filter-label {
+        font-weight: 600; 
+        margin-right: 8px;
+        white-space: nowrap;
+    }
+
+    /* Action Button Customization: Run ATS Button */
+    .btn-outline-dark, .btn-outline-secondary, .btn-outline-primary {
+        border-color: var(--color-primary);
+        color: var(--color-primary);
+        transition: all 0.2s;
+        /* Ensure Run ATS buttons are small and compact */
+        padding: 0.25rem 0.5rem;
+        font-size: 0.85rem;
+    }
+    .btn-outline-dark:hover, .btn-outline-secondary:hover, .btn-outline-primary:hover {
+        background-color: var(--color-primary);
+        color: white;
+        border-color: var(--color-primary);
+    }
+    
+    /* Style for the View ATS Links (for when analysis exists) */
+    .btn-ats-view {
+        color: var(--color-primary) !important; 
+        font-weight: 600; /* Made slightly bolder */
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        padding: 0.5rem;
+        font-size: 0.9rem; /* Slightly smaller text */
+    }
+    .btn-ats-view:hover {
+        text-decoration: underline;
+    }
+
+
+    /* Icon-Only Buttons (View Profile, Resume, Delete) */
+    .btn-icon-action {
+        width: 35px; /* Fixed width for better alignment */
+        height: 35px; /* Fixed height for better alignment */
+        padding: 0;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.1rem; /* Larger icon size */
+        border-radius: 0.25rem;
+    }
+    .btn-info {
+        background-color: #17a2b8 !important; /* Standard info blue */
+        border-color: #17a2b8 !important;
+    }
+    .btn-danger {
+        background-color: var(--color-accent) !important; 
+        border-color: var(--color-accent) !important;
+        color: white !important;
+    }
+    
+    /* Loader/Modal styles (Unchanged) */
+    .loader-content h4 {
+        color: var(--color-primary); 
+    }
+    
+    #fullPageLoader {
+        display: none; 
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(255, 255, 255, 0.95); 
+        z-index: 1050; 
+        justify-content: center;
+        align-items: center;
+        flex-direction: column;
+        text-align: center;
+        padding: 20px;
+    }
+
+    .loader-content {
+        max-width: 400px;
+        padding: 30px;
+        background: #ffffff;
+        border-radius: 10px;
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+    }
+    
+    @keyframes robot-float {
+        0% { transform: translateY(0); }
+        50% { transform: translateY(-10px); }
+        100% { transform: translateY(0); }
+    }
+    .robot-floating {
+        animation: robot-float 2s ease-in-out infinite; 
+    }
+
+</style>
+
+<div id="fullPageLoader">
+    <div class="loader-content">
+        <i class="fas fa-robot fa-3x text-primary mb-3 robot-floating"></i>
+        <h4>Running ATS Analysis...</h4>
+        <p class="text-muted">This may take a moment while the AI analyzes the resume against the job description.</p>
+        <div class="progress">
+            <div id="loaderProgressBar" class="progress-bar" role="progressbar" style="width: 0%;" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100">
+                <strong id="progressPercentage">0%</strong>
+            </div>
+        </div>
+        <small class="text-secondary mt-2" id="progressStatus">Starting analysis...</small>
+    </div>
+</div>
 <div class="content-wrapper">
+    <div id="alertMessageContainer" class="position-fixed top-0 start-50 translate-middle-x mt-3" style="z-index: 2000; min-width: 400px;">
+        </div>
+
+    {% if messages %}
+        <div class="messages">
+            {% for message in messages %}
+                <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            {% endfor %}
+        </div>
+    {% endif %}
+
     {% if emails %}
     <div class="card p-3 mb-4 shadow-subtle rounded-3">
         <div class="row align-items-center g-3">
@@ -18,707 +239,461 @@
                 <div class="filter-group me-3 mb-2 mb-md-0">
                     <span class="filter-label">Date:</span>
                     <div class="btn-group" role="group" id="dateFilterGroup">
-                        <button id="allApplicationsBtn" type="button" class="btn btn-filter-date active">All</button>
-                        <button id="todaysApplicationsBtn" type="button" class="btn btn-filter-date">Today</button>
+                        <button id="allApplicationsBtn" type="button" class="btn btn-filter-date active" data-filter="all">All</button>
+                        <button id="todaysApplicationsBtn" type="button" class="btn btn-filter-date" data-filter="today">Today</button>
                     </div>
                 </div>
 
                 <div class="filter-group me-3 mb-2 mb-md-0">
                     <span class="filter-label">Source:</span>
                     <div class="btn-group" role="group" id="sourceFilterGroup">
-                        <button type="button" class="btn btn-filter-source active" data-source=""><i class="fas fa-filter"></i></button>
-                        <button type="button" class="btn btn-filter-source" data-source="Gmail"><i class="fas fa-envelope icon-gmail"></i></button>
-                        <button type="button" class="btn btn-filter-source" data-source="Naukri"><i class="fas fa-briefcase icon-naukri"></i></button>
-                        <button type="button" class="btn btn-filter-source" data-source="LinkedIn"><i class="fab fa-linkedin-in icon-linkedin"></i></button>
-                        <button type="button" class="btn btn-filter-source" data-source="Glassdoor"><i class="fas fa-building icon-glassdoor"></i></button>
-                        <button type="button" class="btn btn-filter-source" data-source="Indeed"><i class="fas fa-file-alt icon-indeed"></i></button>
+                        <button type="button" class="btn btn-filter-source active" data-filter="all">All</button>
+                        <button type="button" class="btn btn-filter-source" data-filter="web">Web</button>
+                        <button type="button" class="btn btn-filter-source" data-filter="referral">Referral</button>
                     </div>
                 </div>
-
+                
                 <div class="filter-group mb-2 mb-md-0">
-                    <span class="filter-label">ATS Analysis:</span>
+                    <span class="filter-label">ATS Score:</span>
                     <div class="btn-group" role="group" id="atsFilterGroup">
-                        <button type="button" class="btn btn-filter-ats active" data-ats-type="">All</button>
-                        <button type="button" class="btn btn-filter-ats" data-ats-type="Basic">Basic</button>
-                        <button type="button" class="btn btn-filter-ats" data-ats-type="Advance">Advanced</button>
+                        <button type="button" class="btn btn-filter-ats active" data-filter="all">All</button>
+                        <button type="button" class="btn btn-filter-ats" data-filter="high">High (> 70%)</button>
+                        <button type="button" class="btn btn-filter-ats" data-filter="medium">Medium (40%-70%)</button>
+                        <button type="button" class="btn btn-filter-ats" data-filter="low">Low (< 40%)</button>
                     </div>
                 </div>
             </div>
         </div>
     </div>
+    
+    <div class="card shadow-subtle rounded-3">
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover table-striped table-sm rounded-3 overflow-hidden" id="applicationsTable">
+                    <thead class="bg-primary text-white">
+                        <tr class="text-center">
+                            <th scope="col">Id</th>
+                            <th scope="col">Applicant Name</th>
+                            <th scope="col">Email</th>
+                            <th scope="col">Phone No.</th>
+                            <th scope="col" class="text-center">Aggregate Score</th> 
+                            <th scope="col">Job Role</th>
+                            <th scope="col">Applied Date</th>
+                            <th scope="col">Interview Status</th>
+                            <th scope="col" class="text-center">Basic ATS Score</th>
+                            <th scope="col" class="text-center">Advanced ATS</th>
+                            <th scope="col" class="text-center">Profile</th>
+                            <th scope="col" class="text-center">Resume</th>
+                            <th scope="col" class="text-center">Actions</th> </tr>
+                    </thead>
+                    <tbody>
+                        {% for email in emails %}
+                        <tr class="text-center" data-date="{{ email.date_applied|date:'Y-m-d' }}" data-source="{{ email.source|lower|default:'web' }}" data-ats="{{ email.basic_ats_score|default:'0' }}" id="application-row-{{ email.pk }}">
+                            <td>
+                                <strong>{{forloop.counter}}</strong>
+                            </td>
+                            <td>
+                                <strong>{{ email.first_name }} {{ email.last_name }}</strong>
+                            </td>
+                            <td>
+                                {{ email.email }}
+                            </td>
+                            <td>
+                                {{email.phone}}
+                            </td>
+                            <td class="text-center">      
+                                <span class="badge score-badge-high">{{ email.aggregate_score }}%</span>
+                            </td>
+                            <td>{{ email.career.title }}</td>
+                            <td>{{ email.date_applied|date:"Y-m-d H:i" }}</td>
+                            <!-- <td>{{ email.final_decision }}</td> -->
+                            <td class="text-center">
+                                {% if "Interview" in email.final_decision %}
+                                    <span class="badge bg-success">{{ email.final_decision }}</span>
+                                {% elif "Review" in email.final_decision %}
+                                    <span class="badge bg-warning text-dark">{{ email.final_decision }}</span>
+                                {% elif "Pending" in email.final_decision %}
+                                    <span class="badge bg-secondary">{{ email.final_decision }}</span>
+                                {% else %}
+                                    <span class="badge bg-danger">{{ email.final_decision }}</span>
+                                {% endif %}
+                            </td>
 
-    <div class="card p-4 shadow-subtle rounded-3">
-        <div class="table-responsive">
-            <table id="incomingApplicationsTable" class="table universal-table">
-                <thead>
-                    <tr>
-                        <th scope="col">Id</th>
-                        <th scope="col">Candidate Name</th>
-                        <th scope="col">Date Applied</th>
-                        <th scope="col">Job Title</th>
-                        <th scope="col">Phone Number</th>
-                        <th scope="col">LinkedIn</th>
-                        <th scope="col">Email</th>
-                        <th scope="col">Resume</th>
-                        <th scope="col">Job Description</th>
-                        <th scope="col">Basic ATS</th>
-                        <th scope="col">Advanced ATS</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for application in emails %}
-                    <tr data-delivery-date="{{ application.date_applied|date:'Y-m-d' }}" 
-                        data-email-id="{{ application.pk }}"
-                        data-source="{{ application.source|default:'N/A' }}"
-                        data-ats-type="{% if application.candidateanalysis.analysis_type %}{{ application.candidateanalysis.analysis_type }}{% else %}Manual{% endif %}"
-                        data-job-desc-id="{{ application.selected_job_desc_id|default:'' }}">
-                        <td>{{ forloop.counter }}</td>
-                        <td class="candidate-name">{{ application.first_name }} {{ application.last_name }}</td>
-                        <td>{{ application.date_applied|date:"Y-m-d" }}</td>
-                        <td>{{ application.career.title|default:"N/A" }}</td>
-                        <td>{{ application.phone|default:"N/A" }}</td>
-                        <td>
-                            {% if application.linkedin_url %}
-                                <a href="{{ application.linkedin_url }}" target="_blank" class="text-primary">View Profile</a>
-                            {% else %}
-                                <span class="text-muted">N/A</span>
-                            {% endif %}
-                        </td>
-                        <td>{{ application.email }}</td>
-                        <td class="text-center">
-                            {% if application.resume %}
-                                <a href="{{ application.resume.url }}" target="_blank" class="btn btn-sm btn-outline-secondary btn-view-resume">View</a>
-                            {% else %}
-                                <span class="text-muted">N/A</span>
-                            {% endif %}
-                        </td>
-                         <td>
-                             <select class="form-control form-control-sm job-description-select">
-                                <option value="">-- Select a Job Description --</option>
-                                {% for job_description in job_descriptions %}
-                                    <option value="{{ job_description.id }}" {% if job_description.id == application.selected_job_desc_id %}selected{% endif %}>{{ job_description.title }}</option>
-                                {% endfor %}
-                            </select>
-                         </td>
-                         <td class="text-center">
-                            {% if application.basic_ats_score != "N/A" %}
-                                <button type="button" class="btn btn-sm btn-success text-white view-basic-ats-btn" data-bs-toggle="modal" data-bs-target="#analysisResultModal" data-application-id="{{ application.pk }}" data-job-desc-id="{{ application.selected_job_desc_id }}">
-                                    {{ application.basic_ats_score }}%
+
+                            <td class="text-center">
+                                {% if email.basic_analysis_exists and not email.basic_ats_in_progress %}
+                                    <a href="{% url 'candidate_profile' email.basic_analysis_id %}" class="btn-ats-view" title="View Basic Analysis Details"> 
+                                        <i class="fas fa-eye me-1"></i>&nbsp;View Basic ATS
+                                    </a>
+                                {% elif email.basic_ats_in_progress %}
+                                    <span class="text-warning d-flex align-items-center justify-content-center">
+                                        <div class="spinner-border spinner-border-sm me-2" role="status">
+                                            <span class="visually-hidden">Processing...</span>
+                                        </div>
+                                        Processing...
+                                    </span>
+                                {% elif email.selected_job_desc_id %}
+                                    <a href="{% url 'resume_analysis' %}?app_id={{ email.pk }}&jd_id={{ email.selected_job_desc_id }}&analysis_mode=basic_ats" class="btn btn-sm btn-outline-dark run-ats-btn" data-type="Basic" title="Run Basic ATS Analysis">
+                                        <i class="fas fa-robot btn-icon"></i> <span class="btn-text">Run Basic ATS</span>
+                                    </a>
+                                {% else %}
+                                    <span class="text-muted" data-bs-toggle="tooltip" title="No matching Job Description found.">N/A</span>
+                                {% endif %}
+                            </td>
+
+                            <td class="text-center">
+                                {% if email.advanced_analysis_exists and not email.advanced_ats_in_progress %}
+                                    <a href="{% url 'candidate_profile' email.advanced_analysis_id %}" class="btn-ats-view" title="View Advanced AI Analysis Details"> 
+                                        <i class="fas fa-eye me-1"></i>&nbsp;View Advance ATS
+                                    </a>
+                                {% elif email.advanced_ats_in_progress %}
+                                    <span class="text-warning d-flex align-items-center justify-content-center">
+                                        <div class="spinner-border spinner-border-sm me-2" role="status">
+                                            <span class="visually-hidden">Processing...</span>
+                                        </div>
+                                        Processing...
+                                    </span>
+                                {% elif email.selected_job_desc_id %}
+                                    <a href="{% url 'resume_analysis' %}?app_id={{ email.pk }}&jd_id={{ email.selected_job_desc_id }}&analysis_mode=advanced_ai" class="btn btn-sm btn-outline-dark run-ats-btn" data-type="Advance" title="Run Advanced AI Analysis">
+                                        <i class="fas fa-robot btn-icon"></i> <span class="btn-text">Run Advance ATS</span>
+                                    </a>
+                                {% else %}
+                                    <span class="text-muted" data-bs-toggle="tooltip" title="No matching Job Description found.">N/A</span>
+                                {% endif %}
+                            </td>
+                            <td class="text-center" >
+                                <a href="{{ email.linkedin_url}}" target="_blank" class="btn btn-icon-action" title="View Candidate Profile"> 
+                                    <i class="fas fa-eye"></i>
+                                </a>
+                            </td>
+
+                            <td class="text-center">
+                                <a href="{{ email.resume.url }}" target="_blank" class="btn btn-icon-action" title="Download/View Resume" style="color: red;">
+                                    <i class="fas fa-file-pdf"></i>
+                                </a>
+                            </td>
+                            
+                            <td class="text-center">
+                                <button class="btn btn-icon-action" data-app-id="{{ email.pk }}" data-app-name="{{ email.first_name }} {{ email.last_name }}" title="Delete Application" data-bs-toggle="modal" data-bs-target="#deleteConfirmationModal">
+                                    <i class="fas fa-trash"></i>
                                 </button>
-                            {% else %}
-                                <button type="button" class="btn btn-sm btn-info text-white view-details-btn" data-bs-toggle="modal" data-application-id="{{ application.pk }}">View</button>
-                            {% endif %}
-                         </td>
-                         <td class="text-center">
-                             <button class="btn btn-primary btn-sm advance-ats-btn" data-bs-toggle="modal" data-bs-target="#analysisResultModal" data-application-id="{{ application.pk }}">Generate</button>
-                         </td>
-                        
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            
+            <div id="noResults" class="text-center p-5" style="display:none;">
+                <p class="lead">No applications match your current filters.</p>
+            </div>
         </div>
-        <div id="noApplicationsMessage" class="text-center p-5 text-muted" style="display: none;">
-            <p><i class="fas fa-inbox fa-3x mb-3"></i></p>
-            <h4 class="fw-light">No applications found for this filter.</h4>
-        </div>
-        
-        <nav aria-label="Page navigation" class="mt-4">
-            <ul class="pagination justify-content-center" id="pagination-controls"></ul>
-        </nav>
     </div>
     {% else %}
-    <div class="text-center card p-5 mt-5 shadow-lg custom-card">
-        <h3 class="text-muted">No incoming applications found.</h3>
-        <p>This section will display new job applications.</p>
+    <div class="alert alert-info">
+        No applications found.
     </div>
     {% endif %}
-</div>
 
-<div class="modal fade" id="analysisResultModal" tabindex="-1" aria-labelledby="analysisResultModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered modal-xl">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="analysisResultModalLabel">Analysis Results</h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body" id="analysisResultBody">
-                <div id="loader" class="text-center my-5" style="display:none;">
-                    <div class="spinner-border text-primary" role="status">
-                        <span class="visually-hidden">Loading...</span>
-                    </div>
-                    <p class="mt-3">Analyzing... <span id="progress-percentage">0%</span></p>
-                    <div class="progress mt-2" style="width: 50%; margin: auto;">
-                        <div id="progress-bar" class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar" style="width: 0%;" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100"></div>
-                    </div>
+    
+    <div class="modal fade" id="analysisModal" tabindex="-1" aria-labelledby="analysisModalLabel" aria-hidden="true" >
+        </div>
+    
+    <div class="modal fade" id="deleteConfirmationModal" tabindex="-1" aria-labelledby="deleteConfirmationModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header bg-danger text-white">
+                    <h5 class="modal-title" id="deleteConfirmationModalLabel"><i class="fas fa-exclamation-triangle"></i> Confirm Permanent Deletion</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
-                <div id="analysisContent"></div>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <div class="modal-body">
+                    <p>You are about to permanently delete the application for: <strong><span id="appNamePlaceholder"></span></strong>.</p>
+                    <p class="text-danger">This action cannot be undone. All associated data (including analysis scores) will be lost.</p>
+                    <p>Are you sure you want to proceed?</p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-danger" id="confirmDeleteBtn" data-app-id="">Delete Permanently</button>
+                </div>
             </div>
         </div>
     </div>
-</div>
+    </div>
 
 {% endblock %}
 
-{% block extra_head %}
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
-<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-<style>
-    /* Your CSS code provided in the prompt */
-    :root {
-        --primary-color: #174D8C;
-        --secondary-color: #6c757d;
-        --light-bg-color: #f4f7f9;
-        --card-bg: #ffffff;
-        --input-border: #d4d8de;
-        --table-header-bg: var(--primary-color);
-        --table-row-hover: #eaf1f7;
-        --date-filter-bg: #e0f2f7;
-        --date-filter-border: #b3e0ed;
-        --date-filter-active-bg: #007bff;
-        --date-filter-active-color: white;
-        --source-filter-bg: #e6e6e6;
-        --source-filter-border: #d4d4d4;
-        --source-filter-active-bg: #6c757d;
-        --source-filter-active-color: white;
-        --ats-filter-bg: #e0e0e0;
-        --ats-filter-border: #cccccc;
-        --ats-filter-active-bg: #28a745;
-        --ats-filter-active-color: white;
-        --icon-gmail-color: #EA4335;
-        --icon-naukri-color: #FF7B00;
-        --icon-linkedin-color: #0A66C2;
-        --icon-glassdoor-color: #0CCE8D;
-        --icon-indeed-color: #00305E;
-        --icon-filter-color: #6c757d;
-    }
-    body { font-family: 'Inter', sans-serif; background-color: var(--light-bg-color); color: #343a40; }
-    .page-heading { font-size: 2.5rem; color: var(--primary-color); margin-bottom: 2rem; text-align: center; font-weight: 700; text-shadow: 1px 1px 2px rgba(0,0,0,0.05); }
-    .card { border: none; box-shadow: 0 0.5rem 1rem rgba(0,0,0,0.05) !important; background-color: var(--card-bg); }
-    .shadow-subtle { box-shadow: 0 0.25rem 0.5rem rgba(0,0,0,0.08) !important; }
-    .filter-group { display: flex; align-items: center; white-space: nowrap; }
-    .filter-label { font-weight: 600; color: #495057; margin-right: 0.5rem; }
-    .search-box .input-group-text { background-color: #f8f9fa; border: 1px solid var(--input-border); border-right: none; color: var(--secondary-color); }
-    .search-box .form-control { border: 1px solid var(--input-border); }
-    .search-box .form-control:focus { border-color: var(--primary-color); box-shadow: 0 0 0 0.25rem rgba(23, 77, 140, 0.1); }
-    .btn-group .btn { font-weight: 500; padding: 0.5rem 0.75rem; border-radius: 0.375rem; transition: all 0.2s ease-in-out; margin-right: -1px; }
-    .btn-group .btn:first-child { border-top-left-radius: 0.375rem; border-bottom-left-radius: 0.375rem; }
-    .btn-group .btn:last-child { border-top-right-radius: 0.375rem; border-bottom-right-radius: 0.375rem; margin-right: 0; }
-    .btn-group .btn + .btn { margin-left: -1px; }
-    .btn-filter-date { border: 1px solid var(--date-filter-border); color: #333; background-color: var(--date-filter-bg); }
-    .btn-filter-date.active, .btn-filter-date:hover { background-color: var(--date-filter-active-bg); color: var(--date-filter-active-color); border-color: var(--date-filter-active-bg); z-index: 1; }
-    .btn-filter-date:hover:not(.active) { background-color: var(--date-filter-bg); filter: brightness(95%); }
-    .btn-filter-source { border: 1px solid var(--source-filter-border); color: #333; background-color: var(--source-filter-bg); min-width: 45px; text-align: center; }
-    .btn-filter-source.active, .btn-filter-source:hover { background-color: var(--source-filter-active-bg); border-color: var(--source-filter-active-bg); color: var(--source-filter-active-color); z-index: 1; }
-    .btn-filter-source:hover:not(.active) { background-color: var(--source-filter-bg); filter: brightness(95%); }
-    .btn-filter-source[data-source=""] i { color: var(--icon-filter-color); }
-    .btn-filter-source[data-source="Gmail"] i { color: var(--icon-gmail-color); }
-    .btn-filter-source[data-source="Naukri"] i { color: var(--icon-naukri-color); }
-    .btn-filter-source[data-source="LinkedIn"] i { color: var(--icon-linkedin-color); }
-    .btn-filter-source[data-source="Glassdoor"] i { color: var(--icon-glassdoor-color); }
-    .btn-filter-source[data-source="Indeed"] i { color: var(--icon-indeed-color); }
-    .btn-filter-source.active i, .btn-filter-source:hover i { color: white !important; }
-    .btn-filter-ats { border: 1px solid var(--ats-filter-border); color: #333; background-color: var(--ats-filter-bg); }
-    .btn-filter-ats.active, .btn-filter-ats:hover { background-color: var(--ats-filter-active-bg); color: var(--ats-filter-active-color); border-color: var(--ats-filter-active-bg); z-index: 1; }
-    .btn-filter-ats:hover:not(.active) { background-color: var(--ats-filter-bg); filter: brightness(95%); }
-    .universal-table { border-collapse: separate; border-spacing: 0; width: 100%; table-layout: fixed; }
-    .universal-table thead th { background-color: var(--table-header-bg); color: white; text-transform: uppercase; font-size: 0.8rem; padding: 1rem 0.75rem; border: none; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-    .universal-table thead th:first-child { border-top-left-radius: 0.5rem; }
-    .universal-table thead th:last-child { border-top-right-radius: 0.5rem; }
-    .universal-table tbody tr { transition: background-color 0.2s; border-bottom: 1px solid #e9ecef; }
-    .universal-table tbody tr:hover { background-color: var(--table-row-hover); }
-    .universal-table td { padding: 1rem 0.75rem; vertical-align: middle; font-size: 0.9rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-    .universal-table tbody tr:last-child { border-bottom: none; }
-    .table-responsive { border-radius: 0.5rem; overflow-x: auto; }
-    .candidate-name { font-weight: 600; color: var(--primary-color); }
-    .btn-view-resume { padding: 0.25rem 0.75rem; font-size: 0.8rem; }
-    .btn-analyze { font-size: 0.8rem; padding: 0.25rem 0.75rem; }
-    .job-description-select { font-size: 0.85rem; padding: 0.375rem 0.75rem; height: auto; width: 100%; border-color: var(--input-border); }
-    .remark-input { background-color: #f8f9fa; border-color: var(--input-border); cursor: pointer; }
-    .modal-header { background-color: var(--primary-color) !important; }
-    .modal-body p { font-size: 1rem; }
-    .modal-body .btn-lg { font-size: 1.1rem; font-weight: 600; transition: transform 0.2s; }
-    .modal-body .btn-lg:hover { transform: translateY(-2px); }
-    
-    /* New styles for improved layout */
-    .nav-tabs .nav-link {
-        font-weight: 500;
-        color: var(--secondary-color);
-    }
-    .nav-tabs .nav-link.active {
-        color: var(--primary-color);
-        border-color: var(--primary-color) !important;
-        background-color: #f8f9fa;
-    }
-    .tab-content {
-        border: 1px solid #dee2e6;
-        border-top: none;
-        padding: 1.5rem;
-        border-bottom-left-radius: 0.5rem;
-        border-bottom-right-radius: 0.5rem;
-        background-color: #fdfdfd;
-    }
-    .tab-pane h5 {
-        font-weight: 600;
-        color: var(--primary-color);
-        margin-bottom: 1rem;
-    }
-    .tab-pane .row {
-        margin-bottom: 0.5rem;
-    }
-    .table-striped > tbody > tr:nth-of-type(odd) {
-        background-color: #f0f4f7;
-    }
-    .progress-bar-container {
-        display: flex;
-        align-items: center;
-        margin-top: 10px;
-    }
-    .progress-bar-container .progress {
-        flex-grow: 1;
-        margin-left: 10px;
-    }
-    .badge {
-        font-size: 0.9em;
-        padding: 0.5em 0.8em;
-    }
-    .list-group-item strong {
-        color: var(--primary-color);
-    }
-
-    /* FIX: Custom CSS to center the modal */
-    .modal-dialog-centered {
-        display: flex;
-        align-items: center;
-        min-height: calc(100vh - 1rem);
-    }
-</style>
-{% endblock %}
 
 {% block extra_js %}
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-
 <script>
+    // Helper function to get Django's CSRF token for secure POST/DELETE requests
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+    const csrftoken = getCookie('csrftoken');
+    
+    // === NEW FUNCTION: Replaces the disruptive alert() with a Bootstrap alert ===
+    function displayAlert(message, type = 'success') {
+        const icon = type === 'success' ? 'fas fa-check-circle' : 'fas fa-times-circle';
+        const alertHtml = `
+            <div class="alert alert-${type} alert-dismissible fade show" role="alert">
+                <i class="${icon} me-2"></i>
+                ${message}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        `;
+        
+        const $container = $('#alertMessageContainer');
+        $container.html(alertHtml);
+        
+        // Auto-dismiss after 5 seconds
+        setTimeout(() => {
+            $container.find('.alert').alert('close');
+        }, 5000);
+    }
+
+
     $(document).ready(function() {
-        const rows = $("#incomingApplicationsTable tbody tr");
-        const paginationControls = $("#pagination-controls");
-        const rowsPerPage = 10;
-        let currentPage = 1;
-
-        function getCookie(name) {
-            let cookieValue = null;
-            if (document.cookie && document.cookie !== '') {
-                const cookies = document.cookie.split(';');
-                for (let i = 0; i < cookies.length; i++) {
-                    const cookie = cookies[i].trim();
-                    if (cookie.startsWith(name + '=')) {
-                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
-                        break;
-                    }
-                }
-            }
-            return cookieValue;
-        }
-
-        function displayRows(page) {
-            const visibleRows = $("#incomingApplicationsTable tbody tr:visible");
-            visibleRows.hide();
-            let start = (page - 1) * rowsPerPage;
-            let end = start + rowsPerPage;
-            visibleRows.slice(start, end).show();
-        }
-
-        function setupPagination() {
-            const numRows = $("#incomingApplicationsTable tbody tr:visible").length;
-            const numPages = Math.ceil(numRows / rowsPerPage);
-            paginationControls.empty();
-
-            if (numPages > 1) {
-                for (let i = 1; i <= numPages; i++) {
-                    const li = $('<li>').addClass('page-item');
-                    const a = $('<a>').addClass('page-link').attr('href', '#').text(i);
-                    if (i === currentPage) {
-                        li.addClass('active');
-                    }
-                    a.on('click', function(e) {
-                        e.preventDefault();
-                        currentPage = i;
-                        displayRows(currentPage);
-                        $('.page-item').removeClass('active');
-                        li.addClass('active');
-                        window.scrollTo({ top: 0, behavior: 'smooth' });
-                    });
-                    li.append(a);
-                    paginationControls.append(li);
-                }
-                paginationControls.show();
-            } else {
-                paginationControls.hide();
-            }
-        }
-
-        function filterAndPaginate() {
-            const filterText = $('#searchInput').val().toLowerCase();
-            const isToday = $('#todaysApplicationsBtn').hasClass('active');
-            const activeSourceFilter = $('#sourceFilterGroup .btn.active').data('source') || '';
-            const activeAtsFilter = $('#atsFilterGroup .btn.active').data('ats-type') || '';
-            
-            const todayDate = new Date().toISOString().slice(0, 10);
-            
-            let hasVisibleRows = false;
-            rows.each(function() {
-                const row = $(this);
-                const rowText = row.text().toLowerCase();
-                const deliveryDate = row.data('delivery-date');
-                const analysisType = String(row.data('ats-type') || '');
-                const source = String(row.data('source') || '');
-                
-                const textMatch = rowText.includes(filterText);
-                const dateMatch = !isToday || (deliveryDate === todayDate);
-                const sourceMatch = (activeSourceFilter === '') || (source.toLowerCase() === activeSourceFilter.toLowerCase());
-                const typeMatch = (activeAtsFilter === '') || (analysisType.toLowerCase() === activeAtsFilter.toLowerCase());
-
-                if (textMatch && dateMatch && sourceMatch && typeMatch) {
-                    row.show();
-                    hasVisibleRows = true;
-                } else {
-                    row.hide();
-                }
-            });
-
-            if (hasVisibleRows) {
-                $('#noApplicationsMessage').hide();
-                currentPage = 1;
-                displayRows(currentPage);
-                setupPagination();
-            } else {
-                $('#noApplicationsMessage').show();
-                paginationControls.empty();
-            }
-        }
         
-        function performBasicAnalysis(applicationId, jobDescriptionId) {
-            if (!jobDescriptionId) {
-                alert("Please select a Job Description first.");
-                return;
-            }
-
-            // Simulating a more accurate analysis with a backend call
-            $.ajax({
-                url: `/basic-ats/${applicationId}/${jobDescriptionId}/`,
-                type: 'GET',
-                success: function(response) {
-                    if (response.success) {
-                        displayBasicAnalysis(response.analysis);
-                        const row = $(`tr[data-email-id="${applicationId}"]`);
-                        row.attr('data-ats-type', 'Basic');
-                        const modalInstance = new bootstrap.Modal(document.getElementById('analysisResultModal'));
-                        modalInstance.show();
-                    } else {
-                        alert('Error: ' + response.error);
-                    }
-                },
-                error: function() {
-                    alert('An error occurred during basic analysis.');
-                }
-            });
-        }
-
-        $('#incomingApplicationsTable').on('click', '.view-details-btn', function() {
-            const $row = $(this).closest('tr');
-            const applicationId = $row.data('email-id');
-            const jobDescriptionId = $row.find('.job-description-select').val();
-            const $button = $(this);
-            const originalText = $button.text();
+        // Function to handle the actual AJAX deletion
+        function executeDelete(appId, appName) {
             
-            if (!jobDescriptionId) {
-                alert("Please select a Job Description before running an analysis.");
-                return;
-            }
-
-            $button.prop('disabled', true).text('Analyzing...');
-
-            // Simulating an asynchronous call with a timeout for demonstration
-            setTimeout(() => {
-                performBasicAnalysis(applicationId, jobDescriptionId);
-                $button.prop('disabled', false).text(originalText);
-            }, 500); // Wait 500ms before showing the result
-        });
-        
-        // New event handler for the clickable basic score button
-        $('#incomingApplicationsTable').on('click', '.view-basic-ats-btn', function() {
-            const $row = $(this).closest('tr');
-            const applicationId = $row.data('email-id');
-            const jobDescriptionId = $row.data('job-desc-id');
-            
-            if (!jobDescriptionId) {
-                alert("The job description for this application was not found. Please select one manually from the dropdown to run a new analysis.");
-                return;
-            }
-
-            // The analysis is already done, so we can directly make the AJAX call to get the data
-            performBasicAnalysis(applicationId, jobDescriptionId);
-        });
-
-        $('#incomingApplicationsTable').on('click', '.advance-ats-btn', function() {
-            const $row = $(this).closest('tr');
-            const applicationId = $row.data('email-id');
-            const jobDescriptionId = $row.find('.job-description-select').val();
-
-            if (!jobDescriptionId) {
-                alert("Please select a Job Description before running an advanced analysis.");
-                return;
-            }
-            
-            $('#analysisContent').hide();
-            $('#loader').show();
-
-            const modalInstance = new bootstrap.Modal(document.getElementById('analysisResultModal'));
-            modalInstance.show();
-
-            let progress = 0;
-            const progressInterval = setInterval(() => {
-                progress += 10;
-                if (progress <= 90) { 
-                    $('#progress-percentage').text(progress + '%');
-                    $('#progress-bar').css('width', progress + '%').attr('aria-valuenow', progress);
-                } else {
-                    clearInterval(progressInterval);
-                }
-            }, 300);
+            // Disable button during process
+            const $btn = $('#confirmDeleteBtn');
+            $btn.html('<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Deleting...');
+            $btn.prop('disabled', true);
 
             $.ajax({
-                url: `/advance-ats/${applicationId}/`,
-                type: 'POST',
-                headers: { 'X-CSRFToken': getCookie('csrftoken') },
-                data: { job_description_id: jobDescriptionId },
+                url: `/api/delete-application/${appId}/`, // Assuming your Django URL is here
+                method: 'POST', 
+                headers: {
+                    'X-CSRFToken': csrftoken, 
+                },
+                data: {
+                    '_method': 'DELETE' 
+                },
                 success: function(response) {
-                    clearInterval(progressInterval);
-                    $('#progress-percentage').text('100%');
-                    $('#progress-bar').css('width', '100%').attr('aria-valuenow', 100);
-
+                    $('#deleteConfirmationModal').modal('hide');
                     if (response.success) {
-                        displayAdvancedAnalysis(response.analysis);
-                        $(`tr[data-email-id="${applicationId}"]`).attr('data-ats-type', 'Advance');
+                        // Use custom function instead of alert()
+                        displayAlert(`Application for ${appName} successfully deleted.`, 'success');
+                        
+                        // Remove the row from the table on success with a fade out effect
+                        $(`#application-row-${appId}`).fadeOut(500, function() {
+                            $(this).remove();
+                            // Re-run filterAndPaginate to update counts if necessary
+                            filterAndPaginate(); 
+                        });
                     } else {
-                        alert('Error: ' + response.error);
-                        $('#loader').hide();
-                        $('#analysisContent').html('<div class="alert alert-danger">Error: ' + response.error + '</div>').show();
+                        // Use custom function instead of alert()
+                        displayAlert(`Error deleting application: ${response.message || 'Unknown error.'}`, 'danger');
                     }
                 },
-                error: function() {
-                    clearInterval(progressInterval);
-                    alert('An error occurred during advanced analysis.');
-                    $('#loader').hide();
-                    $('#analysisContent').html('<div class="alert alert-danger">An error occurred during advanced analysis.</div>').show();
+                error: function(xhr) {
+                    $('#deleteConfirmationModal').modal('hide');
+                    let message = "An error occurred during the deletion process. Please check your server logs.";
+                    if (xhr.responseJSON && xhr.responseJSON.message) {
+                        message = xhr.responseJSON.message;
+                    } else if (xhr.status === 404) {
+                        message = `Application not found (ID: ${appId}).`;
+                    }
+                    // Use custom function instead of alert()
+                    displayAlert(`Deletion Error: ${message}`, 'danger');
                 },
                 complete: function() {
-                    $('#loader').hide();
-                    $('#analysisContent').show();
+                    // Reset button state
+                    $btn.html('Delete Permanently');
+                    $btn.prop('disabled', false);
+                    $btn.removeData('app-id'); // Clear data
+                    $btn.removeData('app-name');
                 }
             });
-        });
-        
-        function displayBasicAnalysis(data) {
-            $('#analysisResultModalLabel').text('Basic ATS Analysis');
-            $('#loader').hide();
-            $('#analysisContent').show();
-
-            // Logic for a better rating description based on semantic score
-            let rating, ratingClass, comments;
-            const score = data.match_percentage;
-
-            if (score >= 75) {
-                rating = "Excellent";
-                ratingClass = "badge bg-success";
-                comments = "Candidate is a great fit for the role. High semantic similarity to the job description.";
-            } else if (score >= 50) {
-                rating = "Good";
-                ratingClass = "badge bg-warning text-dark";
-                comments = "Candidate has a good number of matching skills and relevant experience.";
-            } else {
-                rating = "Fair";
-                ratingClass = "badge bg-danger";
-                comments = "Candidate has limited matching skills. May need further manual review.";
-            }
-
-            let html = `
-                <div class="row mb-4">
-                    <div class="col-md-6">
-                        <div class="card p-3 h-100">
-                            <h5>Match Score</h5>
-                            <h2 class="display-4 fw-bold text-primary">${data.match_percentage}%</h2>
-                            <p class="text-muted">A semantic match based on the meaning of the content.</p>
-                        </div>
-                    </div>
-                    <div class="col-md-6">
-                        <div class="card p-3 h-100">
-                            <h5>Candidate Rating</h5>
-                            <h2 class="fw-bold mt-2"><span class="${ratingClass}">${rating}</span></h2>
-                            <p class="text-muted">An overall assessment based on the score.</p>
-                        </div>
-                    </div>
-                </div>
-                
-                <div class="card p-3">
-                    <h5>Analysis Details</h5>
-                    <hr>
-                    <p><strong>Summary:</strong> ${comments}</p>
-                </div>
-            `;
-            
-            $('#analysisContent').html(html);
         }
 
-        function displayAdvancedAnalysis(data) {
-            $('#analysisResultModalLabel').text('Advanced ATS Analysis');
-            
-            const verdictClass = data.fitment_verdict === 'SELECTED' ? 'badge bg-success' : 
-                                 data.fitment_verdict === 'MARGINALLY FIT' ? 'badge bg-warning text-dark' :
-                                 'badge bg-danger';
-            
-            let html = `
-                <div class="row">
-                    <div class="col-md-6 mb-3">
-                        <div class="card h-100 p-3">
-                            <h5 class="card-title">Candidate Summary</h5>
-                            <ul class="list-group list-group-flush">
-                                <li class="list-group-item"><strong>Name:</strong> ${data.full_name}</li>
-                                <li class="list-group-item"><strong>Contact:</strong> ${data.contact_number}</li>
-                                <li class="list-group-item"><strong>Overall Experience:</strong> ${data.overall_experience}</li>
-                                <li class="list-group-item"><strong>Experience Match:</strong> ${data.experience_match}</li>
-                                <li class="list-group-item"><strong>Suggested Salary:</strong> ${data.suggested_salary_range}</li>
-                            </ul>
-                        </div>
-                    </div>
-                    <div class="col-md-6 mb-3">
-                        <div class="card h-100 p-3">
-                            <h5 class="card-title">Hiring Insights</h5>
-                            <ul class="list-group list-group-flush">
-                                <li class="list-group-item"><strong>Hiring Recommendation:</strong> <span class="${verdictClass}">${data.hiring_recommendation}</span></li>
-                                <li class="list-group-item"><strong>Fitment Verdict:</strong> <span class="${verdictClass}">${data.fitment_verdict}</span></li>
-                                <li class="list-group-item"><strong>Aggregate Score:</strong> ${data.aggregate_score}</li>
-                                <li class="list-group-item"><strong>Red Flags:</strong> ${data.automated_recruiter_insights.red_flag_detection}</li>
-                                <li class="list-group-item"><strong>Growth Indicators:</strong> ${data.automated_recruiter_insights.growth_indicators}</li>
-                            </ul>
-                        </div>
-                    </div>
-                </div>
 
-                <div class="card p-3 mt-4">
-                    <ul class="nav nav-tabs" id="analysisTabs" role="tablist">
-                        <li class="nav-item" role="presentation">
-                            <button class="nav-link active" id="summary-tab" data-bs-toggle="tab" data-bs-target="#summary" type="button" role="tab" aria-controls="summary" aria-selected="true">Summary</button>
-                        </li>
-                        <li class="nav-item" role="presentation">
-                            <button class="nav-link" id="fitment-tab" data-bs-toggle="tab" data-bs-target="#fitment" type="button" role="tab" aria-controls="fitment" aria-selected="false">Fitment Analysis</button>
-                        </li>
-                        <li class="nav-item" role="presentation">
-                            <button class="nav-link" id="scoring-tab" data-bs-toggle="tab" data-bs-target="#scoring" type="button" role="tab" aria-controls="scoring" aria-selected="false">Scoring Matrix</button>
-                        </li>
-                        <li class="nav-item" role="presentation">
-                            <button class="nav-link" id="questions-tab" data-bs-toggle="tab" data-bs-target="#questions" type="button" role="tab" aria-controls="questions" aria-selected="false">Interview Qs</button>
-                        </li>
-                    </ul>
-                    <div class="tab-content" id="analysisTabsContent">
-                        <div class="tab-pane fade show active" id="summary" role="tabpanel" aria-labelledby="summary-tab">
-                            <br>
-                            <h5>Overall Summary</h5>
-                            <p>${data.analysis_summary.candidate_overview.replace(/\\n/g, '<br>')}</p>
-                            <p><strong>Conclusion:</strong> ${data.analysis_summary.conclusion.replace(/\\n/g, '<br>')}</p>
-                            
-                            <h5 class="mt-4">Technical Prowess</h5>
-                            <ul class="list-group list-group-flush">`;
+        // === 1. FULL PAGE LOADER LOGIC (For 'Run ATS' buttons) ===
+        $('.run-ats-btn').on('click', function(e) {
+            e.preventDefault(); 
             
-            for (const key in data.analysis_summary.technical_prowess) {
-                if (data.analysis_summary.technical_prowess[key].length > 0) {
-                    const skillCategory = key.charAt(0).toUpperCase() + key.slice(1).replace('_', ' ');
-                    html += `<li class="list-group-item"><strong>${skillCategory}:</strong> ${data.analysis_summary.technical_prowess[key].join(', ')}</li>`;
+            const targetUrl = $(this).attr('href');
+            const $loader = $('#fullPageLoader');
+            const $progressBar = $('#loaderProgressBar');
+            const $percentageText = $('#progressPercentage');
+            const $statusText = $('#progressStatus');
+            const $robotIcon = $('.robot-floating');
+            
+            // Add the floating class if it's missing (it was removed from the html class attribute)
+            if (!$robotIcon.hasClass('robot-floating')) {
+                $robotIcon.addClass('robot-floating');
+            }
+
+            // Reset and show the loader immediately
+            $progressBar.css('width', '0%').attr('aria-valuenow', 0).removeClass('bg-success');
+            $percentageText.text('0%');
+            $statusText.text('Starting analysis...');
+            $loader.css('display', 'flex'); 
+            
+            // Configuration for time-based progress
+            const MIN_DURATION = 5000; 
+            const startTime = Date.now();
+            let progress = 0;
+            
+            // Status updates linked to time milestones
+            const statusSteps = [
+                { time: 500, status: 'Initializing AI model...' },
+                { time: 1500, status: 'Parsing resume and job description...' },
+                { time: 3000, status: 'Performing skills and experience matching...' },
+                { time: 4500, status: 'Generating fitment score and recommendations...' }
+            ];
+            let nextStatusIndex = 0;
+
+            function updateProgress() {
+                const elapsedTime = Date.now() - startTime;
+                let linearProgress = (elapsedTime / MIN_DURATION) * 100;
+                
+                let visualProgress;
+                let isComplete = false;
+                
+                if (elapsedTime >= MIN_DURATION) {
+                    visualProgress = 100;
+                    isComplete = true;
+                } else {
+                    visualProgress = Math.min(99, Math.floor(linearProgress));
+                }
+
+                if (visualProgress > progress) {
+                    progress = visualProgress;
+                    $progressBar.css('width', progress + '%').attr('aria-valuenow', progress);
+                    $percentageText.text(progress + '%');
+                }
+
+                if (nextStatusIndex < statusSteps.length && elapsedTime >= statusSteps[nextStatusIndex].time) {
+                    $statusText.text(statusSteps[nextStatusIndex].status);
+                    nextStatusIndex++;
+                } else if (progress === 100) {
+                    $statusText.text('Analysis complete! Redirecting...');
+                }
+
+                if (isComplete) {
+                    clearInterval(interval);
+                    
+                    $progressBar.css('width', '100%').attr('aria-valuenow', 100).addClass('bg-success');
+                    $percentageText.text('100%');
+                    
+                    setTimeout(() => {
+                        window.location.href = targetUrl;
+                    }, 500); 
                 }
             }
 
-            html += `
-                            </ul>
-                            <h5 class="mt-4">Education & Certifications</h5>
-                            <ul class="list-group list-group-flush">
-                                <li class="list-group-item"><strong>Education:</strong> ${data.analysis_summary.education_certifications.education.join(', ') || 'Not Found'}</li>
-                                <li class="list-group-item"><strong>Certifications:</strong> ${data.analysis_summary.education_certifications.certifications.join(', ') || 'Not Found'}</li>
-                            </ul>
-                        </div>
-                        <div class="tab-pane fade" id="fitment" role="tabpanel" aria-labelledby="fitment-tab">
-                            <br>
-                            <h5>Candidate Fitment Analysis</h5>
-                            <div class="mb-3"><strong>Strategic Alignment:</strong><br>${data.candidate_fitment_analysis.strategic_alignment}</div>
-                            <div class="mb-3"><strong>Quantifiable Impact:</strong><br>${data.candidate_fitment_analysis.quantifiable_impact}</div>
-                            <div class="mb-3"><strong>Comparable Experience:</strong><br>${data.candidate_fitment_analysis.comparable_experience_analysis}</div>
-                            <div class="mb-3"><strong>Potential Gaps & Risks:</strong><br>${data.candidate_fitment_analysis.potential_gaps_risks}</div>
-                        </div>
-                        <div class="tab-pane fade" id="scoring" role="tabpanel" aria-labelledby="scoring-tab">
-                            <br>
-                            <h5>Scoring Matrix</h5>
-                            <table class="table table-striped table-bordered">
-                                <thead>
-                                    <tr>
-                                        <th>Dimension</th>
-                                        <th>Weight</th>
-                                        <th>Score</th>
-                                        <th>Justification</th>
-                                    </tr>
-                                </thead>
-                                <tbody>`;
-            
-            if (data.scoring_matrix && data.scoring_matrix.length > 0) {
-                data.scoring_matrix.forEach(item => {
-                    html += `<tr>
-                                <td>${item.dimension}</td>
-                                <td>${item.weight}</td>
-                                <td>${item.score}</td>
-                                <td>${item.justification}</td>
-                            </tr>`;
-                });
-            } else {
-                html += `<tr><td colspan="4">No scoring data available.</td></tr>`;
-            }
+            const interval = setInterval(updateProgress, 50); 
+        });
 
-            html += `
-                                </tbody>
-                            </table>
-                            <p class="text-end mt-2"><strong>Aggregate Score:</strong> ${data.aggregate_score}</p>
-                        </div>
-                        <div class="tab-pane fade" id="questions" role="tabpanel" aria-labelledby="questions-tab">
-                            <br>
-                            <h5>Suggested Interview Questions</h5>
-                            <ol>`;
-            
-            if (data.interview_questions && data.interview_questions.length > 0) {
-                data.interview_questions.forEach(question => {
-                    html += `<li>${question}</li>`;
-                });
-            } else {
-                html += `<li>No interview questions generated.</li>`;
-            }
 
-            html += `
-                            </ol>
-                            <h5 class="mt-4">Bench Recommendation</h5>
-                            <ul class="list-group list-group-flush">
-                                <li class="list-group-item"><strong>Retain for Bench:</strong> ${data.bench_recommendation.retain}</li>
-                                <li class="list-group-item"><strong>Ideal Future Roles:</strong> ${data.bench_recommendation.ideal_future_roles.join(', ') || 'None'}</li>
-                                <li class="list-group-item"><strong>Justification:</strong> ${data.bench_recommendation.justification}</li>
-                            </ul>
-                        </div>
-                    </div>
-                </div>`;
+        // === 2. DELETE APPLICATION MODAL HANDLERS ===
+        
+        // 2a. Handle the click on the table's delete button (to open modal)
+        $(document).on('click', '.btn-icon-action.btn-danger', function() {
+            const appId = $(this).data('app-id');
+            const appName = $(this).data('app-name');
             
-            $('#analysisContent').html(html);
+            // Set data attributes on the confirmation button and text in the modal
+            $('#appNamePlaceholder').text(appName);
+            $('#confirmDeleteBtn').data('app-id', appId);
+            $('#confirmDeleteBtn').data('app-name', appName);
+        });
+
+        // 2b. Handle the click on the modal's confirmation button (to execute delete)
+        $('#confirmDeleteBtn').on('click', function() {
+            const appId = $(this).data('app-id');
+            const appName = $(this).data('app-name');
+            
+            if (appId) {
+                executeDelete(appId, appName);
+            } else {
+                displayAlert("Error: Application ID not found for deletion.", 'danger');
+                $('#deleteConfirmationModal').modal('hide');
+            }
+        });
+
+
+        // --- 3. Filter and Pagination Logic ---
+
+        const applicationsTable = $('#applicationsTable tbody');
+        let rows = applicationsTable.find('tr').toArray(); 
+        const today = new Date().toISOString().slice(0, 10);
+
+        function filterAndPaginate() {
+            // Re-select rows to include/exclude recently deleted rows
+            rows = applicationsTable.find('tr').toArray();
+
+            const searchText = $('#searchInput').val().toLowerCase();
+            const dateFilter = $('#dateFilterGroup .btn.active').data('filter');
+            const sourceFilter = $('#sourceFilterGroup .btn.active').data('filter');
+            const atsFilter = $('#atsFilterGroup .btn.active').data('filter');
+            
+            let visibleRowsCount = 0;
+
+            rows.forEach(row => {
+                const $row = $(row);
+                const rowText = $row.text().toLowerCase();
+                const rowDate = $row.data('date');
+                const rowSource = $row.data('source');
+                const rowAts = parseFloat($row.data('ats'));
+
+                let isVisible = true;
+
+                // Search Filter
+                if (searchText && rowText.indexOf(searchText) === -1) {
+                    isVisible = false;
+                }
+                
+                // Date Filter
+                if (isVisible && dateFilter === 'today' && rowDate !== today) {
+                    isVisible = false;
+                }
+
+                // Source Filter
+                if (isVisible && sourceFilter !== 'all' && rowSource !== sourceFilter) {
+                    isVisible = false;
+                }
+
+                // ATS Score Filter
+                if (isVisible && atsFilter !== 'all') {
+                    if (atsFilter === 'high' && rowAts < 70) {
+                        isVisible = false;
+                    } else if (atsFilter === 'medium' && (rowAts < 40 || rowAts >= 70)) {
+                        isVisible = false;
+                    } else if (atsFilter === 'low' && rowAts >= 40) {
+                        isVisible = false;
+                    }
+                }
+                
+                $row.toggle(isVisible);
+                if (isVisible) {
+                    visibleRowsCount++;
+                }
+            });
+
+            $('#noResults').toggle(visibleRowsCount === 0);
         }
 
-        // Event listeners for filters and search
+        // --- 4. Advanced Analysis Modal Logic (Unchanged) ---
+        // (If there was logic here, it remains unchanged)
+
+        // --- 5. Filter Event Listeners ---
+
         $('#searchInput').on('keyup', filterAndPaginate);
         $('#dateFilterGroup .btn').on('click', function() {
             $('#dateFilterGroup .btn').removeClass('active');
@@ -740,6 +715,5 @@
         filterAndPaginate();
     });
 </script>
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
-
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHzI" crossorigin="anonymous"></script>
 {% endblock %}

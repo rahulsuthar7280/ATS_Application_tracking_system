@@ -94,7 +94,7 @@ SQLAlchemy==2.0.43
 sqlparse==0.5.3
 srsly==2.5.1
 tenacity==9.1.2
-thinc==8.3.6
+thinc
 tqdm==4.67.1
 traits==7.0.2
 typer==0.17.3

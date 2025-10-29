@@ -171,7 +171,7 @@ class Application(models.Model):
 
     # --- New fields for ATS analysis ---
     analysis_type = models.CharField(max_length=20, blank=True, null=True, help_text="Type of analysis performed: basic or advanced.")
-    job_description = models.ForeignKey('JobDescriptionDocument', on_delete=models.SET_NULL, null=True, blank=True, help_text="The job description associated with this application.")
+    job_description = models.ForeignKey('CareerPage', on_delete=models.SET_NULL, null=True, blank=True, help_text="The job description associated with this application.")
     match_score = models.DecimalField(max_digits=5, decimal_places=2, blank=True, null=True, help_text="Match score from the advanced analysis.")
     match_summary = models.TextField(blank=True, null=True, help_text="Summary of the match between the resume and job description.")
     
@@ -664,7 +664,7 @@ class CareerAdvanceAnalysis(models.Model):
 
 class CandidateAnalysis(models.Model):
     # Link to the incoming application (only one analysis per application)
-    application = models.OneToOneField(
+    application = models.ForeignKey(
         'Apply_career', # Assuming Apply_career is in the same app or imported
         on_delete=models.CASCADE,
         null=True,  # allow NULL
@@ -737,7 +737,7 @@ class CandidateAnalysis(models.Model):
     conclusion_summary = models.TextField(null=True, blank=True)
     bland_call_id = models.CharField(max_length=100, blank=True, null=True)
     interview_status = models.CharField(max_length=50, null=True, blank=True, default='Pending')
-    
+    interview_date = models.DateTimeField(null=True, blank=True)
     # Note: original_file_name is redundant here since it's above. I'm removing the duplicate.
     # original_file_name = models.CharField(max_length=255, null=True, blank=True) 
 

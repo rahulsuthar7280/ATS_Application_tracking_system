@@ -25,8 +25,9 @@ urlpatterns = [
     # Existing URLs (ensure they are protected with @login_required in views.py)
     path('', views.home, name='home'), # Redirects to dashboard now
     path('resume-analysis/', views.resume_analysis_view, name='resume_analysis'),
-    path('basic_resume_analysis/', views.basic_resume_analysis_view, name='basic_resume_analysis'),
-    path('advance_resume_analysis/', views.advance_resume_analysis_view, name='advance_resume_analysis'),
+    # path('api/get-analysis-details/<int:application_id>/<str:analysis_type>/', views.get_analysis_details, name='get_analysis_details'),
+    path('api/delete-application/<int:app_id>/', views.delete_application, name='delete_application_api'),
+    path('resume-analysis/<int:application_id>/', views.resume_analysis_view, name='resume_analysis_with_id'),    path('advance_resume_analysis/', views.advance_resume_analysis_view, name='advance_resume_analysis'),
     path('initiate_call_interview/', views.initiate_call_interview, name='initiate_call_interview'),
     path('candidate_profile/', views.candidate_profile, name='candidate_profile'),
     path('interviews/', views.interview_dashboard_view, name='interviews'),
