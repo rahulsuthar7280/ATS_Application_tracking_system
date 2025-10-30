@@ -69,6 +69,10 @@ langchain-google-genai
 reportlab
 huggingface_hub
 
+langchain==0.1.16
+langchain-core==0.1.46
+langchain-google-genai==0.0.6
+
 
 
 
